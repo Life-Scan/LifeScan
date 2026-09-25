@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Ambiente e dados locais
+.env
+backend/uploads/
+
+# Node
+node_modules/
+frontend/dist/
+
+# Editores / SO
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

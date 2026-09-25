@@ -1,0 +1,22 @@
+# Opcional: MySQL 8 em container, como alternativa ao MySQL instalado no Windows.
+# Uso: docker compose up -d
+# Porta 3307 para não conflitar com um MySQL local na 3306. Ajuste o DATABASE_URL:
+#   mysql+pymysql://lifescan:lifescan123@localhost:3307/lifescan?charset=utf8mb4
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: lifescan-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: lifescan
+      MYSQL_USER: lifescan
+      MYSQL_PASSWORD: lifescan123
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"
+    volumes:
+      - lifescan-mysql:/var/lib/mysql
+
+volumes:
+  lifescan-mysql:

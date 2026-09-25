@@ -1,1 +1,97 @@
 # LifeScan
+
+Acompanhamento do tratamento de saúde para além do consultório: médico e paciente
+compartilham uma **jornada contínua** com consultas, solicitações com prazo, exames,
+mensagens e uma linha do tempo unificada.
+
+- **Backend:** Python + FastAPI, SQLAlchemy 2.0, Alembic, MySQL (`/backend`)
+- **Frontend:** React + Vite (`/frontend`), a partir da Fase 5
+- **Especificação e decisões:** [`docs/projeto.md`](docs/projeto.md)
+
+> Todos os comandos abaixo são para o **PowerShell** no Windows.
+
+## Pré-requisitos
+
+- Python 3.11+ (testado com 3.13)
+- Node.js 20+ (testado com 24)
+- MySQL 8: instalado no Windows **ou** via Docker (`docker-compose.yml`)
+
+## 1. Banco de dados
+
+### Opção A: MySQL instalado no Windows
+
+Com o serviço `MySQL80` rodando, crie o banco e um usuário da aplicação
+(entre no cliente com `mysql -u root -p` ou use o MySQL Workbench):
+
+```sql
+CREATE DATABASE lifescan CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'lifescan'@'localhost' IDENTIFIED BY 'lifescan123';
+GRANT ALL PRIVILEGES ON lifescan.* TO 'lifescan'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### Opção B: Docker
+
+```powershell
+docker compose up -d
+```
+
+O container expõe o MySQL na porta **3307**. Ajuste o `DATABASE_URL` conforme o
+comentário no `docker-compose.yml`.
+
+## 2. Backend
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+
+Copy-Item .env.example .env   # depois edite DATABASE_URL e JWT_SECRET
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+- API: <http://localhost:8000>
+- Documentação interativa (Swagger): <http://localhost:8000/docs>
+
+> Se o PowerShell bloquear o `Activate.ps1`, rode uma vez:
+> `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+
+### Variáveis do `.env`
+
+| Variável | Descrição |
+|---|---|
+| `DATABASE_URL` | URL do MySQL (`mysql+pymysql://usuario:senha@host:porta/banco?charset=utf8mb4`) |
+| `JWT_SECRET` | Segredo do JWT HS256. Gere com `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
+| `JWT_EXPIRE_MINUTES` | Validade do token (padrão 480) |
+| `CORS_ORIGINS` | Origens permitidas, separadas por vírgula |
+| `UPLOAD_DIR` | Pasta dos arquivos enviados (relativa a `backend/`) |
+| `MAX_UPLOAD_MB` | Tamanho máximo de upload (padrão 30) |
+| `DUE_SOON_DAYS` | Dias para uma solicitação ser considerada "próxima do prazo" (padrão 3) |
+
+### Testes
+
+Os testes usam SQLite em memória e não tocam no MySQL:
+
+```powershell
+cd backend
+.\.venv\Scripts\Activate.ps1
+pytest
+```
+
+### Nova migração (depois de alterar modelos)
+
+```powershell
+alembic revision --autogenerate -m "descricao da mudanca"
+alembic upgrade head
+```
+
+## Endpoints disponíveis
+
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | `/auth/register` | Cadastro (`nome`, `email`, `senha`, `papel`: `medico`/`paciente`); já devolve o token |
+| POST | `/auth/login` | Login (`email`, `senha`) |
+| GET | `/auth/me` | Usuário autenticado |
+| GET | `/health` | Verificação de saúde da API |
