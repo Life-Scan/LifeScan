@@ -1,10 +1,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, String
+from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, agora_utc, coluna_enum
+from app.db.base import Base, DataHora, agora_utc, coluna_enum
 
 
 class PapelUsuario(str, enum.Enum):
@@ -20,4 +20,4 @@ class Usuario(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     senha_hash: Mapped[str] = mapped_column(String(255))
     papel: Mapped[PapelUsuario] = mapped_column(coluna_enum(PapelUsuario, "papel_usuario"))
-    criado_em: Mapped[datetime] = mapped_column(DateTime, default=agora_utc)
+    criado_em: Mapped[datetime] = mapped_column(DataHora, default=agora_utc)

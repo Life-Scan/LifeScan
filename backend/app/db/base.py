@@ -3,12 +3,18 @@
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import Enum
+from sqlalchemy import DateTime, Enum
+from sqlalchemy.dialects.mysql import DATETIME as DATETIME_MYSQL
 from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
     pass
+
+
+# Data/hora com microssegundos no MySQL (o DATETIME padrão guarda só segundos, o que
+# embaralharia a ordem de eventos criados no mesmo segundo na linha do tempo)
+DataHora = DateTime().with_variant(DATETIME_MYSQL(fsp=6), "mysql")
 
 
 def agora_utc() -> datetime:

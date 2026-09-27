@@ -1,18 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from app.db.sessao import obter_sessao
-from app.main import app
-from app.models.solicitacao import Solicitacao
-from tests.conftest import criar_solicitacao
-
-
-def _vencer(solicitacao_id: int) -> None:
-    """Coloca o prazo no passado direto no banco (a API não aceita prazos passados)."""
-    sessao = next(app.dependency_overrides[obter_sessao]())
-    solicitacao = sessao.get(Solicitacao, solicitacao_id)
-    solicitacao.prazo = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=1)
-    sessao.commit()
-    sessao.close()
+from tests.conftest import criar_solicitacao, definir_prazo
 
 
 def test_medico_cria_solicitacoes_de_todos_os_tipos(cliente, medico, jornada):
@@ -46,7 +34,7 @@ def test_paciente_nao_cria_solicitacao(cliente, paciente, jornada):
 
 def test_vencida_e_calculada_e_nao_gravada(cliente, medico, paciente, jornada):
     solicitacao = criar_solicitacao(cliente, medico, jornada)
-    _vencer(solicitacao["id"])
+    definir_prazo(solicitacao["id"], timedelta(days=-1))
 
     lista = cliente.get(f"/journeys/{jornada['id']}/requests", headers=paciente["headers"]).json()
     assert lista[0]["status"] == "pendente"

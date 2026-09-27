@@ -10,8 +10,10 @@ from app.routers import (
     consultas,
     exames,
     jornadas,
+    linha_do_tempo,
     mensagens,
     pacientes,
+    painel,
     solicitacoes,
     vinculos,
 )
@@ -67,6 +69,8 @@ def criar_app() -> FastAPI:
         exames,
         mensagens,
         arquivos,
+        linha_do_tempo,
+        painel,
     ):
         app.include_router(modulo.router)
 

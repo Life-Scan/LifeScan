@@ -1,10 +1,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Text
+from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base, agora_utc, coluna_enum
+from app.db.base import Base, DataHora, agora_utc, coluna_enum
 
 
 class TipoSolicitacao(str, enum.Enum):
@@ -33,12 +33,12 @@ class Solicitacao(Base):
     jornada_id: Mapped[int] = mapped_column(ForeignKey("jornadas.id"), index=True)
     tipo: Mapped[TipoSolicitacao] = mapped_column(coluna_enum(TipoSolicitacao, "tipo_solicitacao"))
     descricao: Mapped[str] = mapped_column(Text)
-    prazo: Mapped[datetime] = mapped_column(DateTime, index=True)
+    prazo: Mapped[datetime] = mapped_column(DataHora, index=True)
     status: Mapped[StatusSolicitacao] = mapped_column(
         coluna_enum(StatusSolicitacao, "status_solicitacao"), default=StatusSolicitacao.pendente
     )
-    atendida_em: Mapped[datetime | None] = mapped_column(DateTime)
-    criado_em: Mapped[datetime] = mapped_column(DateTime, default=agora_utc)
+    atendida_em: Mapped[datetime | None] = mapped_column(DataHora)
+    criado_em: Mapped[datetime] = mapped_column(DataHora, default=agora_utc)
 
     @property
     def vencida(self) -> bool:

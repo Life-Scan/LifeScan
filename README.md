@@ -71,6 +71,22 @@ uvicorn app.main:app --reload
 | `MAX_UPLOAD_MB` | Tamanho máximo de upload (padrão 30) |
 | `DUE_SOON_DAYS` | Dias para uma solicitação ser considerada "próxima do prazo" (padrão 3) |
 
+### Dados de exemplo (opcional)
+
+Cria um médico, um paciente, o vínculo e uma jornada com consulta, solicitações
+(uma vencida), um exame aguardando revisão e mensagens:
+
+```powershell
+python -m scripts.seed
+```
+
+| Papel | Email | Senha |
+|---|---|---|
+| Médico | `medico@lifescan.com` | `lifescan123` |
+| Paciente | `paciente@lifescan.com` | `lifescan123` |
+
+Rodar de novo não duplica nada.
+
 ### Testes
 
 Os testes usam SQLite em memória e não tocam no MySQL:
@@ -116,6 +132,8 @@ alembic upgrade head
 | POST | `/journeys/{id}/messages` | Mensagem (multipart: `conteudo` e/ou `arquivo`) |
 | GET | `/journeys/{id}/messages` | Mensagens da jornada |
 | GET | `/files/{id}/download?inline=` | Download autenticado do arquivo |
+| GET | `/journeys/{id}/timeline?tipos=` | Linha do tempo unificada `{tipo, id, data, resumo, dados}` (filtro: `consulta,exame,solicitacao,mensagem`) |
+| GET | `/dashboard/pending` | Painel de pendências (conteúdo por papel) |
 | GET | `/health` | Verificação de saúde da API |
 
 Uploads aceitam `pdf, png, jpg, jpeg, webp, dcm, txt` com até 30 MB (415 para formato

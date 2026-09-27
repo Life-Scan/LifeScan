@@ -73,6 +73,14 @@ reunindo médico e paciente em uma **jornada contínua**:
 - Jornada `encerrada` é somente leitura (escritas retornam 409); o médico pode reabri-la.
 - Uploads gravados em blocos no disco; acima do limite retorna 413; extensão não permitida retorna 415.
 
+### Linha do tempo e painel
+- Linha do tempo: `{tipo, id, data, resumo, dados}`, com `tipo` em `consulta`, `exame`, `solicitacao`, `mensagem`.
+  A data de uma consulta é a data em que ela aconteceu; dos demais eventos, o momento da criação.
+  Filtro: `?tipos=exame,mensagem`.
+- Datas gravadas com microssegundos no MySQL (`DATETIME(6)`), para manter a ordem de eventos do mesmo segundo.
+- O painel considera só jornadas ativas com vínculo ativo. Exames enviados pelo próprio médico não entram
+  como "aguardando revisão". No painel do paciente, consultas extras aparecem em uma lista separada (lembretes).
+
 ### Frontend
 - Estilos com CSS Modules.
 

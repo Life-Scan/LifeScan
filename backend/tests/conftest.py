@@ -143,3 +143,23 @@ def enviar_exame(
         files={"arquivo": (nome, conteudo)},
         headers=usuario["headers"],
     )
+
+
+def definir_prazo(solicitacao_id: int, deslocamento: timedelta) -> None:
+    """Muda o prazo direto no banco (a API não aceita prazos no passado).
+    O deslocamento é relativo ao momento atual."""
+    from app.models.solicitacao import Solicitacao
+
+    sessao = next(app.dependency_overrides[obter_sessao]())
+    solicitacao = sessao.get(Solicitacao, solicitacao_id)
+    solicitacao.prazo = datetime.now(timezone.utc).replace(tzinfo=None) + deslocamento
+    sessao.commit()
+    sessao.close()
+
+
+def enviar_mensagem(cliente, usuario: dict, jornada: dict, conteudo: str) -> dict:
+    resposta = cliente.post(
+        f"/journeys/{jornada['id']}/messages", data={"conteudo": conteudo}, headers=usuario["headers"]
+    )
+    assert resposta.status_code == 201, resposta.text
+    return resposta.json()

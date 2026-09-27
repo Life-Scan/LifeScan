@@ -1,10 +1,10 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, agora_utc, coluna_enum
+from app.db.base import Base, DataHora, agora_utc, coluna_enum
 from app.models.usuario import Usuario
 
 
@@ -35,8 +35,8 @@ class Jornada(Base):
     status: Mapped[StatusJornada] = mapped_column(
         coluna_enum(StatusJornada, "status_jornada"), default=StatusJornada.ativa
     )
-    criado_em: Mapped[datetime] = mapped_column(DateTime, default=agora_utc)
-    atualizado_em: Mapped[datetime] = mapped_column(DateTime, default=agora_utc, onupdate=agora_utc)
+    criado_em: Mapped[datetime] = mapped_column(DataHora, default=agora_utc)
+    atualizado_em: Mapped[datetime] = mapped_column(DataHora, default=agora_utc, onupdate=agora_utc)
 
     medico: Mapped[Usuario] = relationship(foreign_keys=[medico_id])
     paciente: Mapped[Usuario] = relationship(foreign_keys=[paciente_id])
