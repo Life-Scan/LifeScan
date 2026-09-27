@@ -7,6 +7,7 @@ import os
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["JWT_SECRET"] = "segredo-dos-testes-com-tamanho-suficiente-para-hs256"
 os.environ["JWT_EXPIRE_MINUTES"] = "480"
+os.environ["BCRYPT_ROUNDS"] = "4"
 
 import pytest
 from fastapi.testclient import TestClient
@@ -67,3 +68,38 @@ def medico(cliente):
 @pytest.fixture
 def paciente(cliente):
     return cadastrar(cliente, "Carlos Lima", "carlos@email.com", "paciente")
+
+
+@pytest.fixture
+def outro_medico(cliente):
+    return cadastrar(cliente, "Dr. Bruno Reis", "bruno@clinica.com", "medico")
+
+
+@pytest.fixture
+def outro_paciente(cliente):
+    return cadastrar(cliente, "Maria Alves", "maria@email.com", "paciente")
+
+
+def vincular(cliente, medico: dict, paciente: dict) -> dict:
+    resposta = cliente.post(
+        "/links", json={"paciente_id": paciente["usuario"]["id"]}, headers=medico["headers"]
+    )
+    assert resposta.status_code == 201, resposta.text
+    return resposta.json()
+
+
+def criar_jornada(cliente, medico: dict, paciente: dict, titulo: str = "Controle da hipertensão") -> dict:
+    resposta = cliente.post(
+        "/journeys",
+        json={"paciente_id": paciente["usuario"]["id"], "titulo": titulo},
+        headers=medico["headers"],
+    )
+    assert resposta.status_code == 201, resposta.text
+    return resposta.json()
+
+
+@pytest.fixture
+def jornada(cliente, medico, paciente):
+    """Médico e paciente vinculados, com uma jornada aberta."""
+    vincular(cliente, medico, paciente)
+    return criar_jornada(cliente, medico, paciente)

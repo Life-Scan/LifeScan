@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import obter_configuracoes
 from app.core.erros import registrar_tratadores_erro
-from app.routers import auth
+from app.routers import auth, jornadas, pacientes, vinculos
 
 
 def criar_app() -> FastAPI:
@@ -26,6 +26,9 @@ def criar_app() -> FastAPI:
 
     registrar_tratadores_erro(app)
     app.include_router(auth.router)
+    app.include_router(pacientes.router)
+    app.include_router(vinculos.router)
+    app.include_router(jornadas.router)
 
     @app.get("/health", tags=["Sistema"])
     def verificar_saude() -> dict[str, str]:

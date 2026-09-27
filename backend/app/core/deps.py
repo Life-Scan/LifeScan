@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session
 
 from app.core.seguranca import decodificar_token
 from app.db.sessao import obter_sessao
+from app.models.jornada import Jornada
 from app.models.usuario import PapelUsuario, Usuario
+from app.services.vinculos import vinculo_ativo_entre
 
 esquema_bearer = HTTPBearer(auto_error=False)
 
@@ -56,3 +58,40 @@ def exigir_papel(*papeis: PapelUsuario | str) -> Callable[..., Usuario]:
         return usuario
 
     return verificar
+
+
+def obter_jornada_com_acesso(
+    jornada_id: int,
+    usuario: Usuario = Depends(obter_usuario_atual),
+    sessao: Session = Depends(obter_sessao),
+) -> Jornada:
+    """Carrega a jornada e garante que o usuário é o médico ou o paciente dela
+    e que o vínculo entre os dois está ativo (RNF10)."""
+    jornada = sessao.get(Jornada, jornada_id)
+    if jornada is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Jornada não encontrada.")
+    if usuario.id not in (jornada.medico_id, jornada.paciente_id):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Você não tem acesso a esta jornada.")
+    if not vinculo_ativo_entre(sessao, jornada.medico_id, jornada.paciente_id):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "O vínculo entre médico e paciente está inativo. A jornada não pode ser acessada.",
+        )
+    return jornada
+
+
+def obter_jornada_do_medico(
+    jornada: Jornada = Depends(obter_jornada_com_acesso),
+    usuario: Usuario = Depends(exigir_papel(PapelUsuario.medico)),
+) -> Jornada:
+    """Como obter_jornada_com_acesso, mas só para o médico da jornada."""
+    return jornada
+
+
+def garantir_jornada_editavel(jornada: Jornada) -> None:
+    """Jornadas encerradas ficam somente leitura."""
+    if jornada.encerrada:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Esta jornada está encerrada e não pode ser alterada.",
+        )

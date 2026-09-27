@@ -65,6 +65,7 @@ uvicorn app.main:app --reload
 | `DATABASE_URL` | URL do MySQL (`mysql+pymysql://usuario:senha@host:porta/banco?charset=utf8mb4`) |
 | `JWT_SECRET` | Segredo do JWT HS256. Gere com `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
 | `JWT_EXPIRE_MINUTES` | Validade do token (padrão 480) |
+| `BCRYPT_ROUNDS` | Custo do hash bcrypt (padrão 12; opcional) |
 | `CORS_ORIGINS` | Origens permitidas, separadas por vírgula |
 | `UPLOAD_DIR` | Pasta dos arquivos enviados (relativa a `backend/`) |
 | `MAX_UPLOAD_MB` | Tamanho máximo de upload (padrão 30) |
@@ -94,4 +95,13 @@ alembic upgrade head
 | POST | `/auth/register` | Cadastro (`nome`, `email`, `senha`, `papel`: `medico`/`paciente`); já devolve o token |
 | POST | `/auth/login` | Login (`email`, `senha`) |
 | GET | `/auth/me` | Usuário autenticado |
+| GET | `/patients/search?email=` | Médico busca paciente pelo email exato |
+| POST | `/links` | Médico vincula paciente (`paciente_id`) |
+| GET | `/links` | Médico: seus pacientes. Paciente: seu médico |
+| PATCH | `/links/{id}` | Médico ativa/desativa o vínculo (`ativo`) |
+| POST | `/journeys` | Médico abre a jornada de um paciente vinculado (`paciente_id`, `titulo`, `descricao`) |
+| GET | `/journeys` | Jornadas do usuário (só com vínculo ativo) |
+| GET | `/journeys/{id}` | Detalhe da jornada |
+| PATCH | `/journeys/{id}/step` | Médico altera o passo (`passo_atual`: `consulta`/`exame`/`retorno`) |
+| PATCH | `/journeys/{id}/status` | Médico encerra/reabre (`status`: `ativa`/`encerrada`) |
 | GET | `/health` | Verificação de saúde da API |

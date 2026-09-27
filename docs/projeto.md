@@ -53,8 +53,12 @@ reunindo médico e paciente em uma **jornada contínua**:
 - Datas gravadas em UTC sem fuso; a API devolve com fuso explícito (`...Z`).
 
 ### Regras de negócio simplificadas
-- **Um paciente tem apenas um médico** (um vínculo ativo por paciente).
-- **Um paciente tem apenas uma jornada**, aberta pelo médico vinculado. O médico pode ter várias jornadas (uma por paciente).
+- O sistema atende, por enquanto, **um médico específico**: o médico pode ter vários pacientes,
+  e **cada paciente tem vínculo com um único médico** (`vinculos_medico_paciente.paciente_id` é único).
+  Transferir pacientes entre médicos fica fora do escopo por ora.
+- **Um paciente tem apenas uma jornada**, aberta pelo médico vinculado (`jornadas.paciente_id` é único).
+  O médico pode ter várias jornadas (uma por paciente).
+- A busca de pacientes (`/patients/search`) é por **email exato**, para não expor a lista de usuários.
 - **Consulta extra (RF08)** é um lembrete do médico para o paciente: o paciente só visualiza, sem ações.
   O médico é quem marca a solicitação como atendida ou cancelada.
 - O médico pode desativar/reativar um vínculo (`PATCH /links/{id}`), o que bloqueia o acesso à jornada (RNF10).

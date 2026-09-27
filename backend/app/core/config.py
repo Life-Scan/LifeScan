@@ -19,6 +19,8 @@ class Configuracoes(BaseSettings):
     url_banco: str = Field(validation_alias="DATABASE_URL")
     segredo_jwt: str = Field(validation_alias="JWT_SECRET")
     minutos_expiracao_jwt: int = Field(480, validation_alias="JWT_EXPIRE_MINUTES")
+    # Custo do bcrypt; os testes usam o mínimo (4) para rodarem rápido
+    rodadas_bcrypt: int = Field(12, ge=4, le=31, validation_alias="BCRYPT_ROUNDS")
     origens_cors_texto: str = Field("http://localhost:5173", validation_alias="CORS_ORIGINS")
     pasta_uploads_texto: str = Field("uploads", validation_alias="UPLOAD_DIR")
     tamanho_maximo_upload_mb: int = Field(30, validation_alias="MAX_UPLOAD_MB")

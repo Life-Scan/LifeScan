@@ -11,7 +11,9 @@ ALGORITMO_JWT = "HS256"
 
 
 def gerar_hash_senha(senha: str) -> str:
-    return bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    return bcrypt.hashpw(
+        senha.encode("utf-8"), bcrypt.gensalt(rounds=obter_configuracoes().rodadas_bcrypt)
+    ).decode("utf-8")
 
 
 def verificar_senha(senha: str, senha_hash: str) -> bool:
