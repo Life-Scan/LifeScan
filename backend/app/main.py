@@ -1,9 +1,23 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.core.config import obter_configuracoes
 from app.core.erros import registrar_tratadores_erro
-from app.routers import auth, jornadas, pacientes, vinculos
+from app.routers import (
+    arquivos,
+    auth,
+    consultas,
+    exames,
+    jornadas,
+    mensagens,
+    pacientes,
+    solicitacoes,
+    vinculos,
+)
+
+# Margem para os campos e delimitadores do multipart além do próprio arquivo
+FOLGA_MULTIPART_BYTES = 1024 * 1024
 
 
 def criar_app() -> FastAPI:
@@ -13,6 +27,24 @@ def criar_app() -> FastAPI:
         description="Acompanhamento contínuo do tratamento entre médico e paciente.",
         version="0.1.0",
     )
+
+    # Registrado antes do CORS para que o CORS fique por fora e a resposta 413
+    # também leve os cabeçalhos CORS (senão o navegador mostraria só "erro de CORS").
+    @app.middleware("http")
+    async def limitar_tamanho_requisicao(request: Request, call_next):
+        """Recusa de cara requisições maiores que o limite de upload, antes de ler o corpo.
+        A validação exata do tamanho do arquivo é feita em services/armazenamento.py."""
+        tamanho = request.headers.get("content-length", "")
+        limite = obter_configuracoes().tamanho_maximo_upload_bytes + FOLGA_MULTIPART_BYTES
+        if tamanho.isdigit() and int(tamanho) > limite:
+            return JSONResponse(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                content={
+                    "detail": "Arquivo muito grande. O tamanho máximo é "
+                    f"{obter_configuracoes().tamanho_maximo_upload_mb} MB."
+                },
+            )
+        return await call_next(request)
 
     app.add_middleware(
         CORSMiddleware,
@@ -25,10 +57,18 @@ def criar_app() -> FastAPI:
     )
 
     registrar_tratadores_erro(app)
-    app.include_router(auth.router)
-    app.include_router(pacientes.router)
-    app.include_router(vinculos.router)
-    app.include_router(jornadas.router)
+    for modulo in (
+        auth,
+        pacientes,
+        vinculos,
+        jornadas,
+        consultas,
+        solicitacoes,
+        exames,
+        mensagens,
+        arquivos,
+    ):
+        app.include_router(modulo.router)
 
     @app.get("/health", tags=["Sistema"])
     def verificar_saude() -> dict[str, str]:

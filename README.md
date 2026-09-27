@@ -104,4 +104,20 @@ alembic upgrade head
 | GET | `/journeys/{id}` | Detalhe da jornada |
 | PATCH | `/journeys/{id}/step` | Médico altera o passo (`passo_atual`: `consulta`/`exame`/`retorno`) |
 | PATCH | `/journeys/{id}/status` | Médico encerra/reabre (`status`: `ativa`/`encerrada`) |
+| POST | `/journeys/{id}/consultations` | Médico registra consulta/retorno com prescrições aninhadas |
+| GET | `/journeys/{id}/consultations` | Consultas da jornada |
+| POST | `/journeys/{id}/requests` | Médico cria solicitação com prazo (`tipo`, `descricao`, `prazo`) |
+| GET | `/journeys/{id}/requests?status=` | Solicitações da jornada (com `vencida` calculado) |
+| PATCH | `/requests/{id}/complete` | Médico marca a solicitação como atendida |
+| PATCH | `/requests/{id}/cancel` | Médico cancela a solicitação |
+| POST | `/journeys/{id}/exams` | Envio de exame (multipart: `titulo`, `arquivo`, `solicitacao_id` opcional) |
+| GET | `/journeys/{id}/exams` | Exames da jornada |
+| PATCH | `/exams/{id}/review` | Médico revisa o exame (`observacao_revisao`) |
+| POST | `/journeys/{id}/messages` | Mensagem (multipart: `conteudo` e/ou `arquivo`) |
+| GET | `/journeys/{id}/messages` | Mensagens da jornada |
+| GET | `/files/{id}/download?inline=` | Download autenticado do arquivo |
 | GET | `/health` | Verificação de saúde da API |
+
+Uploads aceitam `pdf, png, jpg, jpeg, webp, dcm, txt` com até 30 MB (415 para formato
+não permitido, 413 para arquivo grande). Os arquivos ficam em `backend/uploads/` com nome
+gerado (UUID) e só são acessíveis pela rota de download.

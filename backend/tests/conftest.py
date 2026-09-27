@@ -1,6 +1,7 @@
 """Configuração dos testes: SQLite em memória, isolado do MySQL de desenvolvimento."""
 
 import os
+from datetime import datetime, timedelta, timezone
 
 # Precisa vir antes de importar a aplicação: as variáveis de ambiente têm
 # prioridade sobre o .env, então os testes nunca tocam o banco real.
@@ -16,13 +17,22 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app import models  # noqa: F401
+from app.core.config import obter_configuracoes
 from app.db.base import Base
 from app.db.sessao import obter_sessao
 from app.main import app
 
 
 @pytest.fixture
-def cliente():
+def config_teste(tmp_path, monkeypatch):
+    """Configuração da aplicação com a pasta de uploads isolada em um diretório temporário."""
+    config = obter_configuracoes()
+    monkeypatch.setattr(config, "pasta_uploads_texto", str(tmp_path / "uploads"))
+    return config
+
+
+@pytest.fixture
+def cliente(config_teste):
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -103,3 +113,33 @@ def jornada(cliente, medico, paciente):
     """Médico e paciente vinculados, com uma jornada aberta."""
     vincular(cliente, medico, paciente)
     return criar_jornada(cliente, medico, paciente)
+
+
+def criar_solicitacao(cliente, medico: dict, jornada: dict, tipo: str = "exame", dias: int = 7) -> dict:
+    prazo = (datetime.now(timezone.utc) + timedelta(days=dias)).isoformat()
+    resposta = cliente.post(
+        f"/journeys/{jornada['id']}/requests",
+        json={"tipo": tipo, "descricao": f"Solicitação de {tipo}", "prazo": prazo},
+        headers=medico["headers"],
+    )
+    assert resposta.status_code == 201, resposta.text
+    return resposta.json()
+
+
+def enviar_exame(
+    cliente,
+    usuario: dict,
+    jornada: dict,
+    nome: str = "hemograma.pdf",
+    conteudo: bytes = b"%PDF-1.4 conteudo de teste",
+    solicitacao_id: int | None = None,
+):
+    dados = {"titulo": "Hemograma completo"}
+    if solicitacao_id is not None:
+        dados["solicitacao_id"] = str(solicitacao_id)
+    return cliente.post(
+        f"/journeys/{jornada['id']}/exams",
+        data=dados,
+        files={"arquivo": (nome, conteudo)},
+        headers=usuario["headers"],
+    )

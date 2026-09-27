@@ -67,6 +67,12 @@ def obter_jornada_com_acesso(
 ) -> Jornada:
     """Carrega a jornada e garante que o usuário é o médico ou o paciente dela
     e que o vínculo entre os dois está ativo (RNF10)."""
+    return carregar_jornada_com_acesso(sessao, usuario, jornada_id)
+
+
+def carregar_jornada_com_acesso(sessao: Session, usuario: Usuario, jornada_id: int) -> Jornada:
+    """Versão sem Depends, para rotas que chegam à jornada a partir de outro recurso
+    (solicitação, exame, arquivo)."""
     jornada = sessao.get(Jornada, jornada_id)
     if jornada is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Jornada não encontrada.")

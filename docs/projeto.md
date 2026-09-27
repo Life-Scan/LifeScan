@@ -60,7 +60,11 @@ reunindo médico e paciente em uma **jornada contínua**:
   O médico pode ter várias jornadas (uma por paciente).
 - A busca de pacientes (`/patients/search`) é por **email exato**, para não expor a lista de usuários.
 - **Consulta extra (RF08)** é um lembrete do médico para o paciente: o paciente só visualiza, sem ações.
-  O médico é quem marca a solicitação como atendida ou cancelada.
+  O médico é quem marca a solicitação como atendida ou cancelada. Por isso a rota
+  `PATCH /requests/{id}/confirm` (do paciente) foi substituída por `PATCH /requests/{id}/complete` (do médico).
+- Solicitações só podem ser criadas com prazo no futuro.
+- A tabela `arquivos` guarda também `jornada_id`, para o download verificar o acesso diretamente.
+- O médico pode revisar um exame de novo para corrigir a observação.
 - O médico pode desativar/reativar um vínculo (`PATCH /links/{id}`), o que bloqueia o acesso à jornada (RNF10).
 - Enviar um exame vinculado a uma solicitação `exame` ou `orientacao_profissional` marca a solicitação como `atendida`.
 - Solicitação vencida = `pendente` com prazo no passado (calculado, não gravado).

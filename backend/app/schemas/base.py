@@ -12,7 +12,17 @@ def _marcar_utc(valor: datetime) -> datetime:
     return valor.replace(tzinfo=timezone.utc) if valor.tzinfo is None else valor
 
 
+def _converter_para_utc_sem_fuso(valor: datetime) -> datetime:
+    # Datas recebidas com fuso são convertidas para UTC; sem fuso, assumimos que já estão em UTC
+    if valor.tzinfo is not None:
+        valor = valor.astimezone(timezone.utc).replace(tzinfo=None)
+    return valor
+
+
+# Saída: data em UTC com fuso explícito
 DataHoraUTC = Annotated[datetime, AfterValidator(_marcar_utc)]
+# Entrada: normalizada para UTC sem fuso, como é gravada no banco
+DataHoraEntrada = Annotated[datetime, AfterValidator(_converter_para_utc_sem_fuso)]
 
 
 class SchemaSaida(BaseModel):
