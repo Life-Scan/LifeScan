@@ -1,0 +1,99 @@
+/* Estilos compartilhados pelas páginas internas */
+
+.cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.subtitulo {
+  color: var(--cor-texto-suave);
+  margin-top: 0.25rem;
+}
+
+.pilha {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.grade {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
+}
+
+.resumos {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.resumo {
+  display: block;
+  padding: 0.9rem 1rem;
+  border-radius: var(--raio);
+  border: 1px solid var(--cor-borda);
+  background: var(--cor-superficie);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: var(--sombra);
+}
+
+.resumo:hover {
+  border-color: var(--cor-primaria);
+}
+
+.resumoNumero {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.resumoRotulo {
+  font-size: 0.88rem;
+  color: var(--cor-texto-suave);
+}
+
+.resumoPerigo .resumoNumero {
+  color: var(--cor-perigo);
+}
+
+.resumoAlerta .resumoNumero {
+  color: var(--cor-alerta);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.9rem;
+  font-size: 0.86rem;
+  color: var(--cor-texto-suave);
+  margin-top: 0.3rem;
+}
+
+.textoItem {
+  margin-top: 0.35rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.linkItem {
+  font-weight: 600;
+  color: var(--cor-texto);
+  text-decoration: none;
+}
+
+.linkItem:hover {
+  color: var(--cor-primaria);
+  text-decoration: underline;
+}
+
+.atualizacao {
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}

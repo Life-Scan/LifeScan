@@ -5,7 +5,7 @@ compartilham uma **jornada contínua** com consultas, solicitações com prazo, 
 mensagens e uma linha do tempo unificada.
 
 - **Backend:** Python + FastAPI, SQLAlchemy 2.0, Alembic, MySQL (`/backend`)
-- **Frontend:** React + Vite (`/frontend`), a partir da Fase 5
+- **Frontend:** React + Vite + React Router + Axios, estilos com CSS Modules (`/frontend`)
 - **Especificação e decisões:** [`docs/projeto.md`](docs/projeto.md)
 
 > Todos os comandos abaixo são para o **PowerShell** no Windows.
@@ -103,6 +103,42 @@ pytest
 alembic revision --autogenerate -m "descricao da mudanca"
 alembic upgrade head
 ```
+
+## 3. Frontend
+
+Com o backend rodando, em outro terminal:
+
+```powershell
+cd frontend
+npm install
+Copy-Item .env.example .env   # ajuste VITE_API_URL se a API não estiver em http://localhost:8000
+npm run dev
+```
+
+Acesse <http://localhost:5173>. Para testar rápido, rode o `python -m scripts.seed` no
+backend e entre com as contas de exemplo.
+
+| Variável | Descrição |
+|---|---|
+| `VITE_API_URL` | Endereço da API (padrão `http://localhost:8000`) |
+| `VITE_MAX_UPLOAD_MB` | Limite de upload validado no navegador; use o mesmo valor do backend |
+
+Build de produção: `npm run build` (gera `frontend/dist`).
+
+### Telas
+
+- **Login e cadastro**, com escolha entre médico e paciente.
+- **Painel de pendências**: o médico vê exames para revisar, solicitações vencidas ou
+  perto do prazo e mensagens sem resposta; o paciente vê o que precisa fazer (vencidas em
+  destaque) e as consultas extras marcadas.
+- **Pacientes** (médico): busca por email, vínculo, ativar/desativar vínculo.
+- **Jornadas**: lista (médico) ou a jornada do paciente, e abertura de nova jornada (médico).
+- **Página da jornada**: passo atual (o médico altera clicando), encerrar/reabrir, e abas de
+  linha do tempo (com filtros), consultas e prescrições, solicitações, exames (envio, revisão,
+  visualizar/baixar) e mensagens com anexo.
+
+O painel, a lista de jornadas, a lista de pacientes e a página da jornada se atualizam a cada
+30 segundos; a atualização pausa quando a aba do navegador fica oculta.
 
 ## Endpoints disponíveis
 

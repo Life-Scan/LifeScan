@@ -82,7 +82,14 @@ reunindo médico e paciente em uma **jornada contínua**:
   como "aguardando revisão". No painel do paciente, consultas extras aparecem em uma lista separada (lembretes).
 
 ### Frontend
-- Estilos com CSS Modules.
+- React + Vite em JavaScript, React Router, Axios; estilos com CSS Modules.
+- O hook de polling se chama `useAtualizacaoPeriodica(buscar, 30000)` (equivale ao `usePolling`
+  da especificação): pausa com a aba oculta e atualiza ao voltar.
+- A página da jornada busca jornada, linha do tempo, consultas, solicitações, exames e mensagens
+  juntos a cada ciclo; o filtro da linha do tempo é aplicado no navegador.
+- Downloads usam o token (a rota exige autenticação): o arquivo é baixado como blob e aberto
+  ou salvo pelo navegador.
+- A aba ativa fica na URL (`/jornadas/3?aba=exames`), o que permite ligar o painel direto à seção certa.
 
 ## Fases
 
