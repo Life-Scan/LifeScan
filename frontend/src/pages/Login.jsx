@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
 import { Alerta } from '../components/ui'
@@ -102,9 +102,6 @@ export default function Login() {
               {enviando ? 'Entrando…' : 'Entrar na minha conta'}<span aria-hidden="true">→</span>
             </button>
           </form>
-          <p className={estilos.rodape}>
-            Ainda não tem conta? <Link to="/cadastro">Criar uma conta</Link>
-          </p>
           <p className={estilos.assinatura}>Seu cuidado tem continuidade aqui.</p>
           </div>
         </section>

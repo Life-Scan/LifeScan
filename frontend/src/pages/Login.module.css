@@ -67,8 +67,6 @@
 .botao span { font-size: 22px; font-weight: 400; }
 .botao:hover:not(:disabled) { background: #0b5d57; }
 .botao:disabled { opacity: .6; cursor: wait; }
-.rodape { margin-top: 28px; text-align: center; font-size: 13px; color: #687b75; }
-.rodape a { font-weight: 650; text-underline-offset: 4px; }
 .assinatura { margin-top: 42px; padding-top: 22px; border-top: 1px solid #e8efeb; text-align: center; font-size: 11px; color: #687b75; }
 
 @media (max-width: 900px) {
