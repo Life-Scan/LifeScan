@@ -209,8 +209,8 @@ function PainelParceiro({ painel }) {
     <Secao id="pendencias" titulo="Solicitações destinadas a você">
       {pendentes.length === 0 ? (
         <EstadoVazio>
-          Nenhuma solicitação no momento. Quando o médico atribuir você ao tratamento de um paciente, as solicitações
-          aparecem aqui.
+          Nenhuma solicitação no momento. Em <Link to="/jornadas">Pacientes</Link> você consulta a ficha de quem foi
+          atribuído a você e envia documentos.
         </EstadoVazio>
       ) : (
         <ul className={ui.lista}>

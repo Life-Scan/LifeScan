@@ -117,8 +117,8 @@ acesso pela tela de Pacientes/Parceiros.
 
 ### Dados de exemplo (opcional)
 
-Cria um paciente e um parceiro já com senha definida e uma jornada com consulta,
-solicitações (uma vencida) e um exame aguardando revisão. Se ainda não houver médico,
+Cria um paciente e um parceiro já com senha definida e uma jornada com ficha preenchida,
+parceiro atribuído, consulta, solicitações (uma vencida) e um exame aguardando revisão. Se ainda não houver médico,
 cria também o médico de exemplo.
 
 ```powershell
@@ -176,10 +176,12 @@ Build de produção: `npm run build` (gera `frontend/dist`).
 - **Painel de pendências**: o médico vê exames para revisar e solicitações vencidas ou perto do
   prazo; o paciente vê o que precisa fazer (vencidas em destaque) e as consultas extras marcadas.
 - **Pacientes** e **Parceiros** (médico): criar conta, reenviar acesso, desativar/reativar.
-- **Jornadas**: lista (médico) ou a jornada do paciente, e abertura de nova jornada (médico).
+- **Jornadas**: lista (médico), a jornada do paciente, ou os pacientes atribuídos (parceiro);
+  abertura de nova jornada (médico).
 - **Página da jornada**: passo atual (o médico altera clicando), encerrar/reabrir, e abas de
-  linha do tempo (com filtros), consultas e prescrições, solicitações e exames (envio, revisão,
-  visualizar/baixar).
+  linha do tempo (com filtros), ficha do paciente, consultas e prescrições, solicitações, exames
+  (envio, revisão, visualizar/baixar) e parceiros atribuídos.
+- **Visão do parceiro**: só a ficha do paciente e os próprios envios.
 
 As listas e a página da jornada se atualizam a cada 30 segundos; a atualização pausa quando a
 aba do navegador fica oculta.
@@ -197,10 +199,15 @@ aba do navegador fica oculta.
 | PATCH | `/users/{id}` | Médico altera `nome`, `profissao` ou `ativo` |
 | POST | `/users/{id}/resend-access` | Médico reenvia os dados de acesso (nova senha provisória) |
 | POST | `/journeys` | Médico abre a jornada de um paciente (`paciente_id`, `titulo`, `descricao`) |
-| GET | `/journeys` | Jornadas do usuário |
+| GET | `/journeys` | Jornadas do usuário (o parceiro vê as que lhe foram atribuídas) |
 | GET | `/journeys/{id}` | Detalhe da jornada |
 | PATCH | `/journeys/{id}/step` | Médico altera o passo (`passo_atual`: `consulta`/`exame`/`retorno`) |
 | PATCH | `/journeys/{id}/status` | Médico encerra/reabre (`status`: `ativa`/`encerrada`) |
+| GET | `/journeys/{id}/patient-record` | Ficha do paciente (médico, paciente e parceiros atribuídos) |
+| PUT | `/journeys/{id}/patient-record` | Médico cria ou substitui a ficha |
+| GET | `/journeys/{id}/partners` | Parceiros atribuídos à jornada |
+| POST | `/journeys/{id}/partners` | Médico atribui um parceiro (`parceiro_id`) |
+| DELETE | `/journeys/{id}/partners/{parceiro_id}` | Médico remove o parceiro da jornada |
 | POST | `/journeys/{id}/consultations` | Médico registra consulta/retorno com prescrições aninhadas |
 | GET | `/journeys/{id}/consultations` | Consultas da jornada |
 | POST | `/journeys/{id}/requests` | Médico cria solicitação com prazo (`tipo`, `descricao`, `prazo`) |
@@ -208,7 +215,7 @@ aba do navegador fica oculta.
 | PATCH | `/requests/{id}/complete` | Médico marca a solicitação como atendida |
 | PATCH | `/requests/{id}/cancel` | Médico cancela a solicitação |
 | POST | `/journeys/{id}/exams` | Envio de exame (multipart: `titulo`, `arquivo`, `solicitacao_id` opcional) |
-| GET | `/journeys/{id}/exams` | Exames da jornada |
+| GET | `/journeys/{id}/exams` | Exames da jornada (o parceiro vê só os próprios envios) |
 | PATCH | `/exams/{id}/review` | Médico revisa o exame (`observacao_revisao`) |
 | GET | `/files/{id}/download?inline=` | Download autenticado do arquivo |
 | GET | `/journeys/{id}/timeline?tipos=` | Linha do tempo unificada `{tipo, id, data, resumo, dados}` (filtro: `consulta,exame,solicitacao`) |

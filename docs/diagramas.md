@@ -3,9 +3,8 @@
 Diagramas em [Mermaid](https://mermaid.js.org). O GitHub mostra os diagramas desenhados; também
 dá para colar o código em <https://mermaid.live>.
 
-Os diagramas mostram o **modelo-alvo**. O que ainda não foi implementado está indicado:
-`FichaPaciente`, `AtribuicaoParceiro`, a categoria dos documentos (hoje a tabela se chama
-`exames`) e o destinatário das solicitações.
+Os diagramas mostram o **modelo-alvo**. Ainda não foram implementados: a categoria dos
+documentos (hoje a tabela se chama `exames`) e o destinatário das solicitações.
 
 ## Diagrama de classes
 
@@ -81,7 +80,6 @@ classDiagram
     }
     class AtribuicaoParceiro {
         +int id
-        +bool ativo
         +datetime criado_em
     }
     class Consulta {
@@ -177,9 +175,9 @@ erDiagram
     }
     FICHAS_PACIENTE {
         int id PK
-        int paciente_id FK,UK "pendente de implementação"
+        int paciente_id FK,UK "uma ficha por paciente"
         date data_nascimento
-        varchar sexo
+        enum sexo "masculino | feminino | outro"
         int altura_cm
         decimal peso_kg
         text diagnosticos
@@ -203,9 +201,8 @@ erDiagram
     }
     JORNADA_PARCEIROS {
         int id PK
-        int jornada_id FK "pendente de implementação"
+        int jornada_id FK "UK junto com parceiro_id"
         int parceiro_id FK
-        boolean ativo
         datetime criado_em
     }
     CONSULTAS {

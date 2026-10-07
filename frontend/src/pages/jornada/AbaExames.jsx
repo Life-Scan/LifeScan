@@ -8,14 +8,23 @@ import estilos from './Jornada.module.css'
 
 const TIPOS_COM_ENVIO = ['exame', 'orientacao_profissional']
 
-export default function AbaExames({ exames, solicitacoes, solicitacaoInicial, jornada, ehMedico, editavel, atualizar }) {
+export default function AbaExames({
+  exames,
+  solicitacoes,
+  solicitacaoInicial,
+  jornada,
+  ehMedico,
+  ehParceiro,
+  editavel,
+  atualizar,
+}) {
   const abertas = solicitacoes.filter((s) => s.status === 'pendente' && TIPOS_COM_ENVIO.includes(s.tipo))
   const [formularioAberto, setFormularioAberto] = useState(Boolean(solicitacaoInicial) && editavel)
 
   return (
     <div className={estilos.pilha}>
       <div className={ui.cartaoCabecalho} style={{ marginBottom: 0 }}>
-        <h2>Exames e documentos</h2>
+        <h2>{ehParceiro ? 'Meus envios' : 'Exames e documentos'}</h2>
         {editavel && !formularioAberto && (
           <button type="button" className={ui.botao} onClick={() => setFormularioAberto(true)}>
             Enviar arquivo
@@ -37,7 +46,9 @@ export default function AbaExames({ exames, solicitacoes, solicitacaoInicial, jo
       )}
 
       {exames.length === 0 ? (
-        <EstadoVazio>Nenhum exame ou documento enviado.</EstadoVazio>
+        <EstadoVazio>
+          {ehParceiro ? 'Você ainda não enviou documentos para este paciente.' : 'Nenhum exame ou documento enviado.'}
+        </EstadoVazio>
       ) : (
         <ul className={ui.lista}>
           {exames.map((exame) => (

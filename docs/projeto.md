@@ -38,14 +38,14 @@ com prazo, documentos e uma linha do tempo.
 | RF13 | O médico registra consultas e retornos com prescrições. | Implementado |
 | RF14 | O médico cria solicitações com prazo. | Implementado (destinatário parceiro: pendente) |
 | RF15 | O paciente vê as consultas extras marcadas pelo médico, como lembrete. | Implementado |
-| RF16 | Médico e paciente enviam exames e documentos. | Implementado (categorias e envio pelo parceiro: pendente) |
+| RF16 | Médico, paciente e parceiro atribuído enviam exames e documentos. | Implementado (categorias: pendente) |
 | RF17 | Documento vinculado a uma solicitação pendente marca a solicitação como atendida. | Implementado |
 | RF18 | O médico revisa documentos (status + observação). | Implementado |
 | RF19 | Linha do tempo unificada da jornada, em ordem cronológica e com filtro por tipo. | Implementado |
-| RF20 | Painel de pendências por tipo de usuário. | Implementado (painel do parceiro: pendente) |
-| RF21 | O médico mantém a ficha do paciente (dados clínicos resumidos). | Pendente |
-| RF22 | O médico atribui parceiros à jornada de um paciente. | Pendente |
-| RF23 | O parceiro vê a ficha dos pacientes atribuídos, as solicitações destinadas a ele e os próprios envios. | Pendente |
+| RF20 | Painel de pendências por tipo de usuário. | Implementado (pendências do parceiro: pendente) |
+| RF21 | O médico mantém a ficha do paciente (dados clínicos resumidos). | Implementado |
+| RF22 | O médico atribui parceiros à jornada de um paciente. | Implementado |
+| RF23 | O parceiro vê a ficha dos pacientes atribuídos, as solicitações destinadas a ele e os próprios envios. | Implementado (solicitações destinadas: pendente) |
 
 Removidos em relação à primeira versão: cadastro público, vínculo médico-paciente por busca de
 email e o chat entre médico e paciente.
@@ -61,7 +61,7 @@ email e o chat entre médico e paciente.
 | RNF05 | Backend em FastAPI; frontend em React + Vite. |
 | RNF06 | CORS com origens vindas do `.env`. |
 | RNF07 | Senhas com bcrypt; JWT HS256 com validade de 480 min. |
-| RNF08 | Acesso à jornada: o médico e o paciente dono, com conta ativa. (Parceiro atribuído: pendente.) |
+| RNF08 | Acesso à jornada: o médico e o paciente dono, com conta ativa; o parceiro atribuído, apenas à ficha e aos próprios envios. |
 | RNF09 | Senha provisória gerada pelo sistema; no banco fica só o hash; expira em 7 dias (conta nova) ou 60 min (redefinição), configurável. |
 | RNF10 | Envio de email configurável; em desenvolvimento, modo "console" (mostra o email no terminal da API). |
 | RNF11 | "Esqueci minha senha" responde igual para email existente ou não. |
@@ -95,6 +95,20 @@ email e o chat entre médico e paciente.
 - Paciente desativado perde o acesso; o médico continua vendo a jornada.
 - Jornada `encerrada` é somente leitura (escritas retornam 409); o médico pode reabri-la.
 
+### Ficha do paciente e parceiros
+- A ficha é um resumo clínico mantido pelo médico, com todos os campos opcionais: nascimento, sexo,
+  altura, peso, diagnósticos, alergias, medicamentos em uso, restrições, objetivos e observações.
+  A idade é calculada. Salvar substitui a ficha inteira.
+- Uma ficha por paciente (`fichas_paciente.paciente_id` é único), acessada pela jornada.
+  Continua editável com a jornada encerrada, porque descreve o paciente e não o tratamento.
+- O paciente lê a própria ficha; só o médico edita.
+- O médico atribui parceiros à jornada (`jornada_parceiros`). Remover a atribuição apaga a linha e
+  tira o acesso; os documentos que o parceiro enviou permanecem na jornada.
+- **O parceiro atribuído vê** os dados básicos da jornada, a ficha do paciente e os próprios envios
+  (com a revisão do médico). **Não vê** consultas, prescrições, solicitações, linha do tempo, a lista
+  de parceiros nem os documentos de outras pessoas, e só baixa os arquivos que enviou.
+- Paciente e parceiro podem ser trabalhados pelo médico antes do primeiro acesso deles.
+
 ### Solicitações e documentos
 - **Consulta extra** é um lembrete do médico para o paciente: o paciente só visualiza.
   O médico marca a solicitação como atendida (`PATCH /requests/{id}/complete`) ou a cancela.
@@ -120,6 +134,5 @@ email e o chat entre médico e paciente.
 
 | Fase | Conteúdo |
 |---|---|
-| **7. Ficha do paciente e parceiros** | Ficha mantida pelo médico (nascimento, sexo, altura, peso, diagnósticos, alergias, medicamentos, restrições, objetivos, observações). Atribuição de parceiro à jornada. O parceiro vê a ficha, as solicitações destinadas a ele e os próprios envios, e não vê consultas, prescrições nem documentos de outras pessoas. |
-| **8. Documentos** | `exames` vira `documentos` com categoria (exame, laudo, plano alimentar, plano de treino, orientação, outro). Solicitação com destinatário (paciente ou parceiro). |
+| **8. Documentos** | `exames` vira `documentos` com categoria (exame, laudo, plano alimentar, plano de treino, orientação, outro). Solicitação com destinatário (paciente ou parceiro): o parceiro passa a ver e atender as solicitações destinadas a ele, e elas entram no painel dele. |
 | **9. Endurecimento** | Limite de tentativas de login e de pedidos de senha, envio real de email por SMTP, testes cobrindo os três tipos de usuário. |

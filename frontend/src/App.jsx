@@ -34,10 +34,8 @@ export default function App() {
           <Route path="/" element={<Navigate to="/painel" replace />} />
           <Route path="/painel" element={<Painel />} />
 
-          <Route element={<RotaProtegida tipos={['medico', 'paciente']} />}>
-            <Route path="/jornadas" element={<Jornadas />} />
-            <Route path="/jornadas/:id" element={<Jornada />} />
-          </Route>
+          <Route path="/jornadas" element={<Jornadas />} />
+          <Route path="/jornadas/:id" element={<Jornada />} />
 
           <Route element={<RotaProtegida tipos={['medico']} />}>
             <Route path="/pacientes" element={<Contas tipo="paciente" />} />

@@ -7,37 +7,63 @@ import { useAuth } from '../../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../../hooks/useAtualizacaoPeriodica'
 import AbaConsultas from './AbaConsultas'
 import AbaExames from './AbaExames'
+import AbaFicha from './AbaFicha'
 import AbaLinhaDoTempo from './AbaLinhaDoTempo'
+import AbaParceiros from './AbaParceiros'
 import AbaSolicitacoes from './AbaSolicitacoes'
 import CabecalhoJornada from './CabecalhoJornada'
 import estilos from './Jornada.module.css'
 
 const ABAS = [
   { id: 'linha', rotulo: 'Linha do tempo' },
+  { id: 'ficha', rotulo: 'Ficha' },
   { id: 'consultas', rotulo: 'Consultas' },
   { id: 'solicitacoes', rotulo: 'Solicitações' },
   { id: 'exames', rotulo: 'Exames' },
+  { id: 'parceiros', rotulo: 'Parceiros' },
 ]
 
-/** Carrega tudo da jornada de uma vez; o polling repete essa busca a cada 30 s. */
-async function carregarJornada(id) {
-  const [jornada, linhaDoTempo, consultas, solicitacoes, exames] = await Promise.all([
+// O parceiro só tem acesso à ficha do paciente e aos próprios envios
+const ABAS_PARCEIRO = [
+  { id: 'ficha', rotulo: 'Ficha do paciente' },
+  { id: 'exames', rotulo: 'Meus envios' },
+]
+
+/** Carrega tudo o que o usuário pode ver da jornada; o polling repete essa busca a cada 30 s. */
+async function carregarJornada(id, ehParceiro) {
+  if (ehParceiro) {
+    const [jornada, ficha, exames] = await Promise.all([
+      servicos.obterJornada(id),
+      servicos.obterFicha(id),
+      servicos.listarExames(id),
+    ])
+    return { jornada, ficha, exames, linhaDoTempo: [], consultas: [], solicitacoes: [], parceiros: [] }
+  }
+  const [jornada, linhaDoTempo, ficha, consultas, solicitacoes, exames, parceiros] = await Promise.all([
     servicos.obterJornada(id),
     servicos.obterLinhaDoTempo(id),
+    servicos.obterFicha(id),
     servicos.listarConsultas(id),
     servicos.listarSolicitacoes(id),
     servicos.listarExames(id),
+    servicos.listarParceirosDaJornada(id),
   ])
-  return { jornada, linhaDoTempo, consultas, solicitacoes, exames }
+  return { jornada, linhaDoTempo, ficha, consultas, solicitacoes, exames, parceiros }
 }
 
 export default function Jornada() {
   const { id } = useParams()
-  const { usuario, ehMedico } = useAuth()
+  const { usuario, ehMedico, ehParceiro } = useAuth()
   const [parametros, setParametros] = useSearchParams()
-  const abaAtual = ABAS.some((aba) => aba.id === parametros.get('aba')) ? parametros.get('aba') : 'linha'
 
-  const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(() => carregarJornada(id), undefined, [id])
+  const abas = ehParceiro ? ABAS_PARCEIRO : ABAS
+  const abaAtual = abas.some((aba) => aba.id === parametros.get('aba')) ? parametros.get('aba') : abas[0].id
+
+  const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(
+    () => carregarJornada(id, ehParceiro),
+    undefined,
+    [id, ehParceiro],
+  )
 
   /** Troca de aba mantendo o histórico do navegador; `extras` vira parâmetro da URL. */
   function irParaAba(aba, extras = {}) {
@@ -56,15 +82,15 @@ export default function Jornada() {
             : mensagemDeErro(erro, 'Não foi possível carregar a jornada.')}
         </Alerta>
         <p>
-          <Link to="/jornadas">Voltar para as jornadas</Link>
+          <Link to="/jornadas">Voltar</Link>
         </p>
       </div>
     )
   }
 
-  const { jornada, linhaDoTempo, consultas, solicitacoes, exames } = dados
+  const { jornada, linhaDoTempo, ficha, consultas, solicitacoes, exames, parceiros } = dados
   const editavel = jornada.status === 'ativa'
-  const contexto = { jornada, usuario, ehMedico, editavel, atualizar, irParaAba }
+  const contexto = { jornada, usuario, ehMedico, ehParceiro, editavel, atualizar, irParaAba }
 
   const contagens = {
     solicitacoes: solicitacoes.filter((s) => s.status === 'pendente').length,
@@ -74,7 +100,7 @@ export default function Jornada() {
   return (
     <div className={estilos.pilha}>
       <Link to="/jornadas" className={estilos.voltar}>
-        ← Jornadas
+        ← {ehParceiro ? 'Pacientes' : 'Jornadas'}
       </Link>
 
       <CabecalhoJornada {...contexto} />
@@ -90,7 +116,7 @@ export default function Jornada() {
       )}
 
       <div className={estilos.abas} role="tablist" aria-label="Seções da jornada">
-        {ABAS.map((aba) => (
+        {abas.map((aba) => (
           <button
             key={aba.id}
             type="button"
@@ -109,6 +135,7 @@ export default function Jornada() {
 
       <div role="tabpanel" id={`painel-${abaAtual}`} aria-labelledby={`aba-${abaAtual}`} className={ui.cartao}>
         {abaAtual === 'linha' && <AbaLinhaDoTempo eventos={linhaDoTempo} {...contexto} />}
+        {abaAtual === 'ficha' && <AbaFicha ficha={ficha} {...contexto} />}
         {abaAtual === 'consultas' && <AbaConsultas consultas={consultas} {...contexto} />}
         {abaAtual === 'solicitacoes' && <AbaSolicitacoes solicitacoes={solicitacoes} {...contexto} />}
         {abaAtual === 'exames' && (
@@ -119,6 +146,7 @@ export default function Jornada() {
             {...contexto}
           />
         )}
+        {abaAtual === 'parceiros' && <AbaParceiros parceiros={parceiros} {...contexto} />}
       </div>
     </div>
   )

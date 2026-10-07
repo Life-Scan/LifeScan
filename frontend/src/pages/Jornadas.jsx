@@ -8,18 +8,20 @@ import { ROTULOS_PASSO, formatarData } from '../utils/formatacao'
 import estilos from './Paginas.module.css'
 
 export default function Jornadas() {
-  const { ehMedico } = useAuth()
+  const { ehMedico, ehParceiro } = useAuth()
   const { dados: jornadas, erro, carregando } = useAtualizacaoPeriodica(listarJornadas)
 
   return (
     <div className={estilos.pilha}>
       <div className={estilos.cabecalho}>
         <div>
-          <h1>{ehMedico ? 'Jornadas' : 'Minha jornada'}</h1>
+          <h1>{ehMedico ? 'Jornadas' : ehParceiro ? 'Pacientes' : 'Minha jornada'}</h1>
           <p className={estilos.subtitulo}>
             {ehMedico
               ? 'Acompanhe o tratamento de cada paciente.'
-              : 'O acompanhamento do seu tratamento com o seu médico.'}
+              : ehParceiro
+                ? 'Pacientes em cujo tratamento o médico incluiu você.'
+                : 'O acompanhamento do seu tratamento com o seu médico.'}
           </p>
         </div>
         {ehMedico && (
@@ -38,6 +40,8 @@ export default function Jornadas() {
               Nenhuma jornada aberta. Cadastre um paciente em <Link to="/pacientes">Pacientes</Link> e abra a
               jornada dele.
             </>
+          ) : ehParceiro ? (
+            'Nenhum paciente atribuído a você no momento.'
           ) : (
             'Seu médico ainda não abriu uma jornada para você.'
           )}
@@ -50,9 +54,10 @@ export default function Jornadas() {
               <div className={ui.cabecalhoItem}>
                 <div>
                   <Link to={`/jornadas/${jornada.id}`} className={estilos.linkItem}>
-                    {jornada.titulo}
+                    {ehParceiro ? jornada.paciente.nome : jornada.titulo}
                   </Link>
                   <div className={estilos.meta}>
+                    {ehParceiro && <span>{jornada.titulo}</span>}
                     <span>{ehMedico ? `Paciente: ${jornada.paciente.nome}` : `Médico(a): ${jornada.medico.nome}`}</span>
                     <span>Aberta em {formatarData(jornada.criado_em)}</span>
                     <span>Atualizada em {formatarData(jornada.atualizado_em)}</span>

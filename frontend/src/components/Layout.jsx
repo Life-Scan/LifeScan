@@ -6,7 +6,7 @@ import estilos from './Layout.module.css'
 const ROTULOS_TIPO = { medico: 'Médico(a)', paciente: 'Paciente' }
 
 export default function Layout() {
-  const { usuario, ehMedico, ehPaciente, sair } = useAuth()
+  const { usuario, ehMedico, ehParceiro, sair } = useAuth()
   const navegar = useNavigate()
 
   function aoSair() {
@@ -39,11 +39,9 @@ export default function Layout() {
                 </NavLink>
               </>
             )}
-            {(ehMedico || ehPaciente) && (
-              <NavLink to="/jornadas" className={classeLink}>
-                {ehMedico ? 'Jornadas' : 'Minha jornada'}
-              </NavLink>
-            )}
+            <NavLink to="/jornadas" className={classeLink}>
+              {ehMedico ? 'Jornadas' : ehParceiro ? 'Pacientes' : 'Minha jornada'}
+            </NavLink>
           </nav>
 
           <div className={estilos.usuario}>

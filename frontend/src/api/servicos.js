@@ -23,6 +23,15 @@ export const criarJornada = (jornada) => dados(api.post('/journeys', jornada))
 export const alterarPasso = (id, passo) => dados(api.patch(`/journeys/${id}/step`, { passo_atual: passo }))
 export const alterarStatusJornada = (id, status) => dados(api.patch(`/journeys/${id}/status`, { status }))
 
+// Ficha do paciente e parceiros da jornada
+export const obterFicha = (jornadaId) => dados(api.get(`/journeys/${jornadaId}/patient-record`))
+export const salvarFicha = (jornadaId, ficha) => dados(api.put(`/journeys/${jornadaId}/patient-record`, ficha))
+export const listarParceirosDaJornada = (jornadaId) => dados(api.get(`/journeys/${jornadaId}/partners`))
+export const atribuirParceiro = (jornadaId, parceiroId) =>
+  dados(api.post(`/journeys/${jornadaId}/partners`, { parceiro_id: parceiroId }))
+export const removerParceiro = (jornadaId, parceiroId) =>
+  dados(api.delete(`/journeys/${jornadaId}/partners/${parceiroId}`))
+
 // Consultas
 export const listarConsultas = (jornadaId) => dados(api.get(`/journeys/${jornadaId}/consultations`))
 export const registrarConsulta = (jornadaId, consulta) =>

@@ -62,3 +62,12 @@ export const ROTULOS_TIPO_EVENTO = {
   solicitacao: 'Solicitação',
   exame: 'Exame',
 }
+
+export const ROTULOS_SEXO = { masculino: 'Masculino', feminino: 'Feminino', outro: 'Outro' }
+
+/** Formata uma data sem hora ("1978-03-14") sem deslocar o dia por causa do fuso. */
+export function formatarDataSemHora(iso) {
+  if (!iso) return ''
+  const [ano, mes, dia] = iso.split('-')
+  return `${dia}/${mes}/${ano}`
+}
