@@ -139,7 +139,7 @@ email e o chat entre médico e paciente.
 - React + Vite em JavaScript, React Router, Axios; estilos com CSS Modules.
 - O hook de polling se chama `useAtualizacaoPeriodica(buscar, 30000)`.
 - Downloads usam o token: o arquivo é baixado como blob e aberto ou salvo pelo navegador.
-- A aba ativa da jornada fica na URL (`/jornadas/3?aba=exames`).
+- A aba ativa da jornada fica na URL (`/jornadas/3?aba=documentos`).
 
 ## Próximas fases
 
