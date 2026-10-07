@@ -118,9 +118,7 @@ def test_primeiro_acesso_exige_troca_de_senha(cliente, medico):
         assert bloqueio.json()["detail"] == "Defina uma nova senha para continuar usando o sistema."
 
     troca = cliente.post(
-        "/auth/change-password",
-        json={"senha_atual": provisoria, "nova_senha": "minha-senha-nova"},
-        headers=acesso["headers"],
+        "/auth/set-password", json={"nova_senha": "minha-senha-nova"}, headers=acesso["headers"]
     )
     assert troca.status_code == 200
     assert troca.json()["deve_trocar_senha"] is False
@@ -141,35 +139,41 @@ def test_senha_provisoria_expirada_nao_permite_login(cliente, medico):
     assert "expirou" in resposta.json()["detail"]
 
 
-# --- Troca de senha
+# --- Definição de senha
 
 
-def test_troca_de_senha_voluntaria(cliente, paciente):
-    resposta = cliente.post(
+def test_nao_existe_troca_de_senha_fora_do_primeiro_acesso(cliente, medico, paciente):
+    """Quem já definiu a senha não tem como trocá-la por aqui: usa "esqueci minha senha"."""
+    for usuario in (medico, paciente):
+        resposta = cliente.post("/auth/set-password", json={"nova_senha": "outra-senha"}, headers=usuario["headers"])
+        assert resposta.status_code == 403
+        assert "Esqueci minha senha" in resposta.json()["detail"]
+    # A senha continua a mesma, e a rota antiga não existe mais
+    entrar(cliente, "carlos@email.com", SENHA)
+    antiga = cliente.post(
         "/auth/change-password",
         json={"senha_atual": SENHA, "nova_senha": "outra-senha"},
         headers=paciente["headers"],
     )
-    assert resposta.status_code == 200
-    assert cliente.post("/auth/login", json={"email": "carlos@email.com", "senha": SENHA}).status_code == 401
-    entrar(cliente, "carlos@email.com", "outra-senha")
+    assert antiga.status_code == 404
 
 
-def test_troca_de_senha_valida_senha_atual_e_nova(cliente, paciente):
-    url, headers = "/auth/change-password", paciente["headers"]
+def test_validacoes_ao_definir_a_senha(cliente, medico):
+    criar_conta(cliente, medico, "paciente", "Carlos Lima", "carlos@email.com")
+    provisoria = senha_provisoria_enviada("carlos@email.com")
+    headers = entrar(cliente, "carlos@email.com", provisoria)["headers"]
+    url = "/auth/set-password"
 
-    errada = cliente.post(url, json={"senha_atual": "errada", "nova_senha": "outra-senha"}, headers=headers)
-    assert errada.status_code == 400
-    assert errada.json()["detail"] == "A senha atual está incorreta."
-
-    igual = cliente.post(url, json={"senha_atual": SENHA, "nova_senha": SENHA}, headers=headers)
-    assert igual.status_code == 422
-
-    curta = cliente.post(url, json={"senha_atual": SENHA, "nova_senha": "123"}, headers=headers)
+    curta = cliente.post(url, json={"nova_senha": "123"}, headers=headers)
     assert curta.status_code == 422
     assert curta.json()["erros"][0]["mensagem"] == "Deve ter pelo menos 6 caracteres."
 
-    assert cliente.post(url, json={"senha_atual": SENHA, "nova_senha": "outra-senha"}).status_code == 401
+    igual = cliente.post(url, json={"nova_senha": provisoria}, headers=headers)
+    assert igual.status_code == 422
+    assert igual.json()["detail"] == "Escolha uma senha diferente da senha provisória."
+
+    assert cliente.post(url, json={"nova_senha": "senha-valida"}).status_code == 401
+    assert cliente.post(url, json={"nova_senha": "senha-valida"}, headers=headers).status_code == 200
 
 
 # --- Esqueci minha senha
@@ -190,11 +194,7 @@ def test_esqueci_minha_senha_envia_provisoria_e_mantem_a_senha_atual(cliente, pa
     provisoria = senha_provisoria_enviada("carlos@email.com")
     acesso = entrar(cliente, "carlos@email.com", provisoria)
     assert acesso["usuario"]["deve_trocar_senha"] is True
-    cliente.post(
-        "/auth/change-password",
-        json={"senha_atual": provisoria, "nova_senha": "senha-recuperada"},
-        headers=acesso["headers"],
-    )
+    cliente.post("/auth/set-password", json={"nova_senha": "senha-recuperada"}, headers=acesso["headers"])
     entrar(cliente, "carlos@email.com", "senha-recuperada")
     assert cliente.post("/auth/login", json={"email": "carlos@email.com", "senha": SENHA}).status_code == 401
 

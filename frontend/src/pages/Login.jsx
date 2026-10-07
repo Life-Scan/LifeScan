@@ -24,7 +24,7 @@ export default function Login() {
     try {
       const usuario = await entrar(email, senha)
       // Quem entrou com a senha provisória precisa definir a própria senha antes de tudo
-      navegar(usuario.deve_trocar_senha ? '/trocar-senha' : local.state?.de || '/painel', { replace: true })
+      navegar(usuario.deve_trocar_senha ? '/definir-senha' : local.state?.de || '/painel', { replace: true })
     } catch (erroLogin) {
       setErro(mensagemDeErro(erroLogin))
       setEnviando(false)

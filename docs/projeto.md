@@ -28,11 +28,11 @@ com prazo, documentos e uma linha do tempo.
 | RF03 | O médico cria a conta de um paciente informando nome e email. | Implementado |
 | RF04 | O médico cria a conta de um parceiro informando nome, email e profissão. | Implementado |
 | RF05 | Os dados de acesso são enviados por email, com senha provisória que expira. | Implementado (email em modo console) |
-| RF06 | No primeiro acesso, a troca da senha provisória é obrigatória. | Implementado |
+| RF06 | No primeiro acesso, a pessoa define a própria senha antes de usar o sistema. | Implementado |
 | RF07 | O médico reenvia o acesso (nova senha provisória) e vê quem ainda não entrou. | Implementado |
 | RF08 | O médico ativa e desativa contas; conta desativada não entra no sistema. | Implementado |
 | RF09 | "Esqueci minha senha": nova senha provisória por email, sem invalidar a atual. | Implementado |
-| RF10 | Qualquer usuário altera a própria senha. | Implementado |
+| RF10 | Não há troca de senha dentro do sistema; quem quiser trocar usa "esqueci minha senha". | Implementado |
 | RF11 | Somente o médico abre a jornada de um paciente; cada paciente tem uma única jornada. | Implementado |
 | RF12 | O médico altera o passo atual (`consulta`/`exame`/`retorno`) e encerra ou reabre a jornada. | Implementado |
 | RF13 | O médico registra consultas e retornos com prescrições. | Implementado |
@@ -79,7 +79,11 @@ email e o chat entre médico e paciente.
 ### Contas e senhas
 - **Senha provisória por email** (escolha do projeto): o email leva o login e uma senha provisória;
   entrar com ela liga `deve_trocar_senha`, e o backend bloqueia todas as rotas exceto `/auth/me` e
-  `/auth/change-password` até a troca.
+  `/auth/set-password` até a pessoa definir a senha.
+- **Definir a senha só existe nesse momento** (`POST /auth/set-password`, apenas `nova_senha`): a
+  pessoa acabou de provar que tem a provisória, então ela não é pedida de novo. Fora disso a rota
+  responde 403. A opção "alterar senha" foi removida por não fazer sentido no fluxo; o caminho
+  para trocar é "esqueci minha senha".
 - A senha provisória convive com a definitiva: pedir "esqueci minha senha" **não invalida a senha
   atual**, para que ninguém consiga trancar a conta de outra pessoa só sabendo o email.
 - Uma nova senha provisória substitui a anterior.
@@ -136,7 +140,13 @@ email e o chat entre médico e paciente.
   "aguardando revisão". No painel do paciente, consultas extras aparecem em uma lista separada.
 
 ### Frontend
-- React + Vite em JavaScript, React Router, Axios; estilos com CSS Modules.
+- React + Vite em JavaScript, React Router, Axios; estilos com CSS Modules; ícones `lucide-react`.
+- Menu lateral em telas largas e barra no topo em telas estreitas.
+- **Pacientes e parceiros ficam em uma única tela** (`/usuarios`): o tipo é escolhido no formulário
+  e as listas aparecem em seções separadas.
+- Confirmações (desativar conta, encerrar jornada, cancelar solicitação, remover parceiro) usam uma
+  janela própria (`useConfirmar`), não o `window.confirm` do navegador.
+- A linha do tempo é montada a partir de `dados` de cada evento, com etiquetas de status.
 - O hook de polling se chama `useAtualizacaoPeriodica(buscar, 30000)`.
 - Downloads usam o token: o arquivo é baixado como blob e aberto ou salvo pelo navegador.
 - A aba ativa da jornada fica na URL (`/jornadas/3?aba=documentos`).

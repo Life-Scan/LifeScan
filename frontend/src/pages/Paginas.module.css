@@ -22,59 +22,87 @@
 .grade {
   display: grid;
   gap: 1.25rem;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   align-items: start;
 }
 
 .resumos {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 .resumo {
-  display: block;
-  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
   border-radius: var(--raio);
   border: 1px solid var(--cor-borda);
   background: var(--cor-superficie);
   color: inherit;
   text-decoration: none;
   box-shadow: var(--sombra);
+  transition: border-color 0.15s;
 }
 
 .resumo:hover {
-  border-color: var(--cor-primaria);
+  border-color: var(--cor-borda-forte);
+}
+
+.resumoIcone {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 10px;
+  background: var(--cor-superficie-suave);
+  color: var(--cor-texto-suave);
 }
 
 .resumoNumero {
   display: block;
-  font-size: 1.8rem;
+  font-size: 1.65rem;
   font-weight: 700;
   line-height: 1.1;
 }
 
 .resumoRotulo {
-  font-size: 0.88rem;
+  display: block;
+  font-size: 0.86rem;
   color: var(--cor-texto-suave);
 }
 
-.resumoPerigo .resumoNumero {
+/* O tom só é aplicado quando há itens: zero fica neutro */
+
+.resumo_perigo .resumoIcone {
+  background: var(--cor-perigo-clara);
   color: var(--cor-perigo);
 }
 
-.resumoAlerta .resumoNumero {
+.resumo_perigo .resumoNumero {
+  color: var(--cor-perigo);
+}
+
+.resumo_alerta .resumoIcone {
+  background: var(--cor-alerta-clara);
   color: var(--cor-alerta);
+}
+
+.resumo_info .resumoIcone {
+  background: var(--cor-info-clara);
+  color: var(--cor-info);
 }
 
 .meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 0.9rem;
-  font-size: 0.86rem;
+  gap: 0.2rem 0.9rem;
+  font-size: 0.84rem;
   color: var(--cor-texto-suave);
   margin-top: 0.3rem;
 }
+
 
 .textoItem {
   margin-top: 0.35rem;
@@ -95,5 +123,82 @@
 
 .atualizacao {
   font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
+
+.contagem {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  margin-left: 0.25rem;
+  border-radius: 999px;
+  background: var(--cor-superficie-suave);
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto-suave);
+  font-size: 0.8rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* Escolha entre paciente e parceiro ao criar um usuário */
+
+.escolha {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.6rem;
+  max-width: 520px;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.escolha legend {
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+  padding: 0;
+}
+
+.opcao {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-pequeno);
+  cursor: pointer;
+  margin: 0;
+}
+
+.opcao input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.opcao:hover {
+  border-color: var(--cor-primaria);
+}
+
+.opcao:has(input:focus-visible) {
+  outline: 2px solid var(--cor-primaria);
+  outline-offset: 2px;
+}
+
+.opcaoSelecionada {
+  composes: opcao;
+  border-color: var(--cor-primaria);
+  background: var(--cor-primaria-clara);
+  box-shadow: 0 0 0 1px var(--cor-primaria);
+}
+
+.opcaoRotulo {
+  font-weight: 600;
+}
+
+.opcaoDescricao {
+  font-size: 0.82rem;
+  font-weight: 400;
   color: var(--cor-texto-suave);
 }

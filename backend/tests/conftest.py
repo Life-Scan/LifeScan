@@ -103,8 +103,8 @@ def criar_conta_ativa(cliente, medico: dict, tipo: str, nome: str, email: str, p
     provisoria = senha_provisoria_enviada(email)
     primeiro_acesso = entrar(cliente, email, provisoria)
     troca = cliente.post(
-        "/auth/change-password",
-        json={"senha_atual": provisoria, "nova_senha": SENHA},
+        "/auth/set-password",
+        json={"nova_senha": SENHA},
         headers=primeiro_acesso["headers"],
     )
     assert troca.status_code == 200, troca.text

@@ -63,7 +63,7 @@ export default function NovaJornada() {
         {disponiveis?.length === 0 && !erro && (
           <EstadoVazio>
             Todos os seus pacientes já têm jornada, ou você ainda não cadastrou nenhum.{' '}
-            <Link to="/pacientes">Cadastrar paciente</Link>
+            <Link to="/usuarios">Cadastrar paciente</Link>
           </EstadoVazio>
         )}
         {disponiveis?.length > 0 && (

@@ -1,3 +1,4 @@
+import { FileText, Pencil, Upload } from 'lucide-react'
 import { useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
@@ -48,6 +49,7 @@ export default function AbaDocumentos({
         <h2>{ehParceiro ? 'Meus envios' : 'Documentos'}</h2>
         {editavel && !formularioAberto && (
           <button type="button" className={ui.botao} onClick={() => setFormularioAberto(true)}>
+            <Upload size={16} aria-hidden="true" />
             Enviar documento
           </button>
         )}
@@ -95,7 +97,7 @@ export default function AbaDocumentos({
       )}
 
       {visiveis.length === 0 ? (
-        <EstadoVazio>
+        <EstadoVazio icone={FileText}>
           {ehParceiro ? 'Você ainda não enviou documentos para este paciente.' : 'Nenhum documento enviado.'}
         </EstadoVazio>
       ) : (
@@ -165,6 +167,7 @@ function ItemDocumento({ documento, solicitacao, podeRevisar, atualizar }) {
       {podeRevisar && !revisando && (
         <div className={estilos.acoesItem}>
           <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={() => setRevisando(true)}>
+            <Pencil size={14} aria-hidden="true" />
             {revisado ? 'Editar revisão' : 'Revisar documento'}
           </button>
         </div>

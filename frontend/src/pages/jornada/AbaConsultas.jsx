@@ -1,3 +1,4 @@
+import { Plus, Stethoscope } from 'lucide-react'
 import { useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
@@ -22,6 +23,7 @@ export default function AbaConsultas({ consultas, jornada, ehMedico, editavel, a
         <h2>Consultas e retornos</h2>
         {ehMedico && editavel && !formularioAberto && (
           <button type="button" className={ui.botao} onClick={() => setFormularioAberto(true)}>
+            <Plus size={16} aria-hidden="true" />
             Registrar consulta
           </button>
         )}
@@ -39,7 +41,7 @@ export default function AbaConsultas({ consultas, jornada, ehMedico, editavel, a
       )}
 
       {consultas.length === 0 ? (
-        <EstadoVazio>Nenhuma consulta registrada.</EstadoVazio>
+        <EstadoVazio icone={Stethoscope}>Nenhuma consulta registrada.</EstadoVazio>
       ) : (
         <ul className={ui.lista}>
           {consultas.map((consulta) => (
@@ -181,7 +183,8 @@ function FormularioConsulta({ jornadaId, aoConcluir, aoCancelar }) {
           className={`${ui.botaoSecundario} ${ui.botaoPequeno}`}
           onClick={() => setPrescricoes((atuais) => [...atuais, prescricaoVazia()])}
         >
-          + Adicionar prescrição
+          <Plus size={14} aria-hidden="true" />
+          Adicionar prescrição
         </button>
       </fieldset>
 

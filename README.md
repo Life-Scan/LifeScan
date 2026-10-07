@@ -6,7 +6,7 @@ O paciente acompanha o que precisa fazer; parceiros (nutricionista, fisioterapeu
 colaboram com documentos da sua área.
 
 - **Backend:** Python + FastAPI, SQLAlchemy 2.0, Alembic, MySQL (`/backend`)
-- **Frontend:** React + Vite + React Router + Axios, estilos com CSS Modules (`/frontend`)
+- **Frontend:** React + Vite + React Router + Axios, estilos com CSS Modules e ícones `lucide-react` (`/frontend`)
 - **Especificação e decisões:** [`docs/projeto.md`](docs/projeto.md)
 - **Diagramas:** [`docs/diagramas.md`](docs/diagramas.md)
 
@@ -20,7 +20,10 @@ Não existe cadastro público.
 2. O médico cria as contas de **pacientes** e **parceiros**, informando nome e email
    (e a profissão, no caso do parceiro).
 3. O sistema envia por email os dados de acesso, com uma **senha provisória** válida por 7 dias.
-4. No primeiro login, a pessoa é obrigada a escolher a própria senha.
+4. No primeiro login, a pessoa é levada a escolher a própria senha (a provisória não é pedida de novo).
+
+Não existe uma opção de "alterar senha" dentro do sistema: quem quiser trocar usa
+"Esqueci minha senha" na tela de login.
 
 O sistema não depende de o paciente entrar: assim que a conta existe, o médico já pode abrir
 a jornada e registrar tudo.
@@ -95,7 +98,7 @@ python -m scripts.criar_medico --email ana@clinica.com --redefinir-senha
 ```
 
 Pacientes e parceiros usam "Esqueci minha senha" na tela de login, ou o médico reenvia o
-acesso pela tela de Pacientes/Parceiros.
+acesso pela tela **Pacientes e parceiros**.
 
 ### Variáveis do `.env`
 
@@ -173,11 +176,14 @@ Build de produção: `npm run build` (gera `frontend/dist`).
 
 ### Telas
 
-- **Login**, **Esqueci minha senha** e **Definir/alterar senha** (obrigatória no primeiro acesso).
+- **Login**, **Esqueci minha senha** e **Defina sua senha** (só no primeiro acesso ou depois de
+  pedir uma senha provisória).
 - **Painel de pendências**: o médico vê documentos para revisar e solicitações vencidas ou perto
   do prazo; o paciente vê o que precisa fazer (vencidas em destaque) e as consultas extras
   marcadas; o parceiro vê as solicitações destinadas a ele.
-- **Pacientes** e **Parceiros** (médico): criar conta, reenviar acesso, desativar/reativar.
+- **Pacientes e parceiros** (médico): uma tela só. No formulário, o médico escolhe se está
+  cadastrando um paciente ou um parceiro; abaixo, uma seção lista os pacientes e outra os
+  parceiros, com reenviar acesso e desativar/reativar.
 - **Jornadas**: lista (médico), a jornada do paciente, ou os pacientes atribuídos (parceiro);
   abertura de nova jornada (médico).
 - **Página da jornada**: passo atual (o médico altera clicando), encerrar/reabrir, e abas de
@@ -195,7 +201,7 @@ aba do navegador fica oculta.
 |---|---|---|
 | POST | `/auth/login` | Login (`email`, `senha`), com a senha definitiva ou a provisória |
 | GET | `/auth/me` | Usuário autenticado |
-| POST | `/auth/change-password` | Troca a senha (`senha_atual`, `nova_senha`) |
+| POST | `/auth/set-password` | Define a senha (`nova_senha`) depois de entrar com a provisória |
 | POST | `/auth/forgot-password` | Envia uma senha provisória por email (`email`) |
 | POST | `/users` | Médico cria conta de paciente ou parceiro (`tipo_usuario`, `nome`, `email`, `profissao`) |
 | GET | `/users?tipo=` | Médico lista as contas (`paciente` / `parceiro`) |

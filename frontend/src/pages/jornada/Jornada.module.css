@@ -4,9 +4,18 @@
 }
 
 .voltar {
-  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--cor-texto-suave);
   text-decoration: none;
   width: fit-content;
+}
+
+.voltar:hover {
+  color: var(--cor-primaria);
 }
 
 .texto {
@@ -18,8 +27,8 @@
 .meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 0.9rem;
-  font-size: 0.86rem;
+  gap: 0.2rem 0.9rem;
+  font-size: 0.84rem;
   color: var(--cor-texto-suave);
   margin-top: 0.3rem;
 }
@@ -29,8 +38,8 @@
 }
 
 .formularioDestaque {
-  padding: 1rem;
-  border: 1px solid var(--cor-primaria);
+  padding: 1.1rem;
+  border: 1px solid var(--cor-borda-forte);
   border-radius: var(--raio-pequeno);
   background: var(--cor-superficie-suave);
 }
@@ -50,12 +59,25 @@
   flex-wrap: wrap;
 }
 
+.identificacao {
+  display: flex;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.tituloLinha {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
 .pessoas {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1.1rem;
-  margin-top: 0.4rem;
-  font-size: 0.9rem;
+  gap: 0.2rem 1.1rem;
+  margin-top: 0.3rem;
+  font-size: 0.88rem;
   color: var(--cor-texto-suave);
 }
 
@@ -66,89 +88,125 @@
 
 .descricao {
   margin-top: 0.6rem;
-  max-width: 70ch;
+  max-width: 72ch;
+  color: var(--cor-texto-suave);
+}
+
+/* Passo atual: três etapas em linha, ligadas por um traço */
+
+.passoLinha {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  padding-top: 1rem;
+  border-top: 1px solid var(--cor-borda);
 }
 
 .rotuloPasso {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  margin-bottom: 0.45rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cor-texto-suave);
 }
 
 .passos {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .passo {
-  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Traço entre uma etapa e a seguinte */
+.passo + .passo::before {
+  content: '';
+  width: 1.75rem;
+  height: 2px;
+  background: var(--cor-borda-forte);
+}
+
+.passoConcluido + .passo::before,
+.passo + .passoAtual::before {
+  background: var(--cor-primaria);
 }
 
 .botaoPasso {
-  width: 100%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.75rem;
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio-pequeno);
+  gap: 0.45rem;
+  padding: 0.3rem 0.8rem 0.3rem 0.35rem;
+  border: 1px solid var(--cor-borda-forte);
+  border-radius: 999px;
   background: var(--cor-superficie);
   font-weight: 600;
+  font-size: 0.88rem;
   color: var(--cor-texto-suave);
-  text-align: left;
 }
 
 button.botaoPasso {
   cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 
 button.botaoPasso:hover:not(:disabled) {
   border-color: var(--cor-primaria);
+  color: var(--cor-primaria-escura);
 }
 
 .numeroPasso {
   display: inline-grid;
   place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.4rem;
+  height: 1.4rem;
   border-radius: 50%;
   background: var(--cor-superficie-suave);
-  border: 1px solid var(--cor-borda);
-  font-size: 0.8rem;
+  border: 1px solid var(--cor-borda-forte);
+  font-size: 0.74rem;
   flex-shrink: 0;
 }
 
 .passoConcluido .botaoPasso {
+  border-color: var(--cor-primaria);
   color: var(--cor-primaria-escura);
 }
 
 .passoConcluido .numeroPasso {
   background: var(--cor-primaria-clara);
   border-color: transparent;
+  color: var(--cor-primaria-escura);
 }
 
 .passoAtual .botaoPasso {
   border-color: var(--cor-primaria);
-  background: var(--cor-primaria-clara);
-  color: var(--cor-primaria-escura);
-  box-shadow: 0 0 0 1px var(--cor-primaria);
+  background: var(--cor-primaria);
+  color: #fff;
+}
+
+.passoAtual button.botaoPasso:hover:not(:disabled) {
+  color: #fff;
 }
 
 .passoAtual .numeroPasso {
-  background: var(--cor-primaria);
-  border-color: var(--cor-primaria);
-  color: #fff;
+  background: #fff;
+  border-color: #fff;
+  color: var(--cor-primaria-escura);
 }
 
 /* Abas */
 
 .abas {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.15rem;
   overflow-x: auto;
   border-bottom: 1px solid var(--cor-borda);
   scrollbar-width: thin;
@@ -158,12 +216,14 @@ button.botaoPasso:hover:not(:disabled) {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.6rem 0.9rem;
+  padding: 0.65rem 0.9rem;
+  margin-bottom: -1px;
   border: none;
-  border-bottom: 3px solid transparent;
+  border-bottom: 2px solid transparent;
   background: none;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.92rem;
   color: var(--cor-texto-suave);
   white-space: nowrap;
 }
@@ -186,11 +246,11 @@ button.botaoPasso:hover:not(:disabled) {
   border-radius: 999px;
   background: var(--cor-alerta-clara);
   color: var(--cor-alerta);
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 700;
 }
 
-/* Linha do tempo */
+/* Filtros em forma de pílula (linha do tempo e documentos) */
 
 .filtros {
   display: flex;
@@ -199,12 +259,21 @@ button.botaoPasso:hover:not(:disabled) {
 }
 
 .filtro {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.3rem 0.75rem;
   border-radius: 999px;
-  border: 1px solid var(--cor-borda);
+  border: 1px solid var(--cor-borda-forte);
   background: var(--cor-superficie);
+  color: var(--cor-texto-suave);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.filtro:hover {
+  color: var(--cor-texto);
 }
 
 .filtroAtivo {
@@ -212,8 +281,9 @@ button.botaoPasso:hover:not(:disabled) {
   border-color: var(--cor-primaria);
   background: var(--cor-primaria-clara);
   color: var(--cor-primaria-escura);
-  font-weight: 600;
 }
+
+/* Linha do tempo */
 
 .linhaDoTempo {
   list-style: none;
@@ -226,8 +296,8 @@ button.botaoPasso:hover:not(:disabled) {
   content: '';
   position: absolute;
   left: 1.05rem;
-  top: 0.5rem;
-  bottom: 0.5rem;
+  top: 0.75rem;
+  bottom: 0.75rem;
   width: 2px;
   background: var(--cor-borda);
 }
@@ -236,7 +306,7 @@ button.botaoPasso:hover:not(:disabled) {
   position: relative;
   display: flex;
   gap: 0.85rem;
-  padding: 0.5rem 0;
+  padding: 0.6rem 0;
 }
 
 .iconeEvento {
@@ -244,35 +314,67 @@ button.botaoPasso:hover:not(:disabled) {
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 2.15rem;
+  height: 2.15rem;
   flex-shrink: 0;
   border-radius: 50%;
-  background: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-  font-size: 1rem;
+  /* O contorno branco "corta" a linha vertical atrás do ícone */
+  box-shadow: 0 0 0 4px var(--cor-superficie);
+}
+
+.icone_consulta {
+  background: var(--cor-primaria-clara);
+  color: var(--cor-primaria-escura);
+}
+
+.icone_solicitacao {
+  background: var(--cor-alerta-clara);
+  color: var(--cor-alerta);
+}
+
+.icone_documento {
+  background: var(--cor-info-clara);
+  color: var(--cor-info);
 }
 
 .corpoEvento {
   flex: 1;
   min-width: 0;
-  padding: 0.55rem 0.8rem;
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio-pequeno);
-  background: var(--cor-superficie);
+  padding-top: 0.2rem;
 }
 
-.metaEvento {
+.topoEvento {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
-  font-size: 0.82rem;
-  color: var(--cor-texto-suave);
 }
 
-.resumoEvento {
-  margin: 0.2rem 0;
+.tituloEvento {
+  padding: 0;
+  border: none;
+  background: none;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tituloEvento:hover {
+  color: var(--cor-primaria);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dataEvento {
+  margin-left: auto;
+  font-size: 0.82rem;
+  color: var(--cor-texto-suave);
+  white-space: nowrap;
+}
+
+.textoEvento {
+  margin-top: 0.2rem;
+  white-space: pre-wrap;
   word-break: break-word;
 }
 
@@ -285,7 +387,7 @@ button.botaoPasso:hover:not(:disabled) {
 }
 
 .prescricoes h3 {
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   margin-bottom: 0.3rem;
 }
 
@@ -304,11 +406,12 @@ button.botaoPasso:hover:not(:disabled) {
   gap: 0.75rem;
   margin: 0;
   justify-items: start;
+  background: var(--cor-superficie);
 }
 
 .grupoPrescricoes legend {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   padding: 0 0.3rem;
 }
 
@@ -320,7 +423,7 @@ button.botaoPasso:hover:not(:disabled) {
   align-items: end;
 }
 
-/* Exames */
+/* Documentos */
 
 .revisao {
   margin-top: 0.7rem;
@@ -331,31 +434,19 @@ button.botaoPasso:hover:not(:disabled) {
   font-size: 0.92rem;
 }
 
-@media (max-width: 720px) {
-  .linhaPrescricao {
-    grid-template-columns: 1fr;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px dashed var(--cor-borda);
-  }
-
-  .passos {
-    grid-template-columns: 1fr;
-  }
-
-}
-
 /* Ficha do paciente */
 
 .fichaBasicos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
+  gap: 0.6rem;
   margin: 0;
 }
 
 .fichaTextos {
   display: grid;
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0.6rem;
   margin: 0;
 }
 
@@ -367,18 +458,60 @@ button.botaoPasso:hover:not(:disabled) {
 }
 
 .fichaItem dt {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 600;
   color: var(--cor-texto-suave);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
 
 .fichaItem dd {
   margin: 0.15rem 0 0;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .fichaItem dd.texto {
   font-weight: 400;
+}
+
+@media (max-width: 720px) {
+  .linhaPrescricao {
+    grid-template-columns: 1fr;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px dashed var(--cor-borda);
+  }
+
+  .dataEvento {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+
+  .passo + .passo::before {
+    width: 0.75rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .identificacao > :first-child {
+    display: none;
+  }
+
+  .cabecalho h1 {
+    font-size: 1.3rem;
+  }
+
+  .passos {
+    flex-wrap: nowrap;
+  }
+
+  .botaoPasso {
+    padding: 0.25rem 0.6rem 0.25rem 0.3rem;
+    font-size: 0.8rem;
+    gap: 0.3rem;
+  }
+
+  .numeroPasso {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
 }

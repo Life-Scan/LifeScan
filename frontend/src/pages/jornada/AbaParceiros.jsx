@@ -1,18 +1,26 @@
+import { Handshake, UserPlus, UserX } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { mensagemDeErro } from '../../api/cliente'
 import { atribuirParceiro, listarContas, removerParceiro } from '../../api/servicos'
-import { Alerta, EstadoVazio, estilos as ui } from '../../components/ui'
+import { useConfirmar } from '../../components/Confirmacao'
+import { Alerta, Avatar, EstadoVazio, estilos as ui } from '../../components/ui'
 import { formatarData } from '../../utils/formatacao'
 import estilos from './Jornada.module.css'
 
 export default function AbaParceiros({ parceiros, jornada, ehMedico, editavel, atualizar }) {
+  const confirmar = useConfirmar()
   const [erro, setErro] = useState('')
 
   async function remover({ parceiro }) {
-    const pergunta = `Remover ${parceiro.nome} desta jornada? O acesso à ficha é retirado; os documentos já enviados permanecem.`
-    if (!window.confirm(pergunta)) return
+    const confirmado = await confirmar({
+      titulo: `Remover ${parceiro.nome} desta jornada?`,
+      mensagem: 'O acesso à ficha do paciente é retirado. Os documentos que já foram enviados permanecem.',
+      rotuloConfirmar: 'Remover parceiro',
+      perigo: true,
+    })
+    if (!confirmado) return
     setErro('')
     try {
       await removerParceiro(jornada.id, parceiro.id)
@@ -39,18 +47,21 @@ export default function AbaParceiros({ parceiros, jornada, ehMedico, editavel, a
       <Alerta tipo="erro">{erro}</Alerta>
 
       {parceiros.length === 0 ? (
-        <EstadoVazio>Nenhum parceiro atribuído a esta jornada.</EstadoVazio>
+        <EstadoVazio icone={Handshake}>Nenhum parceiro atribuído a esta jornada.</EstadoVazio>
       ) : (
         <ul className={ui.lista}>
           {parceiros.map((atribuicao) => (
             <li key={atribuicao.id} className={ui.itemLista}>
-              <div className={ui.cabecalhoItem}>
-                <div>
-                  <strong>{atribuicao.parceiro.nome}</strong>
-                  <div className={estilos.meta}>
-                    <span>{atribuicao.parceiro.profissao}</span>
-                    <span>{atribuicao.parceiro.email}</span>
-                    <span>Desde {formatarData(atribuicao.criado_em)}</span>
+              <div className={ui.linhaComAcoes}>
+                <div className={ui.pessoa}>
+                  <Avatar nome={atribuicao.parceiro.nome} tipo="parceiro" />
+                  <div>
+                    <strong>{atribuicao.parceiro.nome}</strong>
+                    <div className={estilos.meta}>
+                      <span>{atribuicao.parceiro.profissao}</span>
+                      <span>{atribuicao.parceiro.email}</span>
+                      <span>Desde {formatarData(atribuicao.criado_em)}</span>
+                    </div>
                   </div>
                 </div>
                 {ehMedico && (
@@ -59,6 +70,7 @@ export default function AbaParceiros({ parceiros, jornada, ehMedico, editavel, a
                     className={`${ui.botaoPerigo} ${ui.botaoPequeno}`}
                     onClick={() => remover(atribuicao)}
                   >
+                    <UserX size={14} aria-hidden="true" />
                     Remover
                   </button>
                 )}
@@ -113,7 +125,7 @@ function FormularioAtribuicao({ jornadaId, atribuidos, aoAtribuir }) {
           {contas.length === 0
             ? 'Você ainda não cadastrou parceiros. '
             : 'Todos os parceiros ativos já estão nesta jornada. '}
-          <Link to="/parceiros">Cadastrar parceiro</Link>
+          <Link to="/usuarios">Cadastrar parceiro</Link>
         </p>
         <Alerta tipo="erro">{erro}</Alerta>
       </div>
@@ -123,7 +135,7 @@ function FormularioAtribuicao({ jornadaId, atribuidos, aoAtribuir }) {
   return (
     <form className={`${ui.formulario} ${estilos.formularioDestaque}`} onSubmit={aoEnviar}>
       <Alerta tipo="erro">{erro}</Alerta>
-      <div className={ui.acoes}>
+      <div className={ui.acoes} style={{ alignItems: 'flex-end' }}>
         <div style={{ flex: '1 1 260px' }}>
           <label htmlFor="atribuir-parceiro">Atribuir parceiro</label>
           <select id="atribuir-parceiro" value={parceiroId} onChange={(e) => setParceiroId(e.target.value)} required>
@@ -136,6 +148,7 @@ function FormularioAtribuicao({ jornadaId, atribuidos, aoAtribuir }) {
           </select>
         </div>
         <button type="submit" className={ui.botao} disabled={enviando || !parceiroId}>
+          <UserPlus size={16} aria-hidden="true" />
           {enviando ? 'Atribuindo…' : 'Atribuir'}
         </button>
       </div>

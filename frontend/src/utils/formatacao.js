@@ -80,3 +80,22 @@ export function formatarDataSemHora(iso) {
   const [ano, mes, dia] = iso.split('-')
   return `${dia}/${mes}/${ano}`
 }
+
+const TITULOS = ['dr.', 'dra.', 'dr', 'dra', 'sr.', 'sra.', 'sr', 'sra', 'prof.', 'profa.']
+
+/** Partes do nome sem títulos como "Dra." ou "Sr.". */
+function partesDoNome(nome) {
+  const partes = nome.trim().split(/\s+/)
+  const semTitulo = partes.filter((parte) => !TITULOS.includes(parte.toLowerCase()))
+  return semTitulo.length > 0 ? semTitulo : partes
+}
+
+/** Primeiro nome para saudações: "Dra. Ana Souza" -> "Ana". */
+export const primeiroNome = (nome) => partesDoNome(nome)[0]
+
+/** Iniciais para o avatar: "Dra. Ana Souza" -> "AS"; "Carlos" -> "C". */
+export function iniciais(nome) {
+  const partes = partesDoNome(nome)
+  const letras = partes.length > 1 ? [partes[0], partes.at(-1)] : [partes[0]]
+  return letras.map((parte) => parte[0].toUpperCase()).join('')
+}

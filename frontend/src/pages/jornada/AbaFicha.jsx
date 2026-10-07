@@ -1,3 +1,4 @@
+import { NotebookPen, Pencil } from 'lucide-react'
 import { useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
@@ -27,6 +28,7 @@ export default function AbaFicha({ ficha, jornada, ehMedico, ehParceiro, atualiz
         </div>
         {ehMedico && !editando && (
           <button type="button" className={ui.botao} onClick={() => setEditando(true)}>
+            <Pencil size={15} aria-hidden="true" />
             {ficha.preenchida ? 'Editar ficha' : 'Preencher ficha'}
           </button>
         )}
@@ -45,7 +47,7 @@ export default function AbaFicha({ ficha, jornada, ehMedico, ehParceiro, atualiz
       ) : ficha.preenchida ? (
         <VisualizacaoFicha ficha={ficha} />
       ) : (
-        <EstadoVazio>
+        <EstadoVazio icone={NotebookPen}>
           {ehMedico
             ? 'A ficha ainda não foi preenchida. Ela resume o paciente para você e para os parceiros atribuídos.'
             : 'O médico ainda não preencheu esta ficha.'}

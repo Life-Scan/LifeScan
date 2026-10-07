@@ -177,11 +177,7 @@ def criar_conta_ativa_existente(cliente) -> dict:
     """Primeiro acesso de uma conta já criada: entra com a provisória e define a senha."""
     provisoria = senha_provisoria_enviada("carlos@email.com")
     acesso = entrar(cliente, "carlos@email.com", provisoria)
-    cliente.post(
-        "/auth/change-password",
-        json={"senha_atual": provisoria, "nova_senha": SENHA},
-        headers=acesso["headers"],
-    )
+    cliente.post("/auth/set-password", json={"nova_senha": SENHA}, headers=acesso["headers"])
     return entrar(cliente, "carlos@email.com")
 
 

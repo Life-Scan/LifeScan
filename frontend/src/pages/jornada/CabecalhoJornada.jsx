@@ -1,14 +1,18 @@
+import { Check, Lock, LockOpen } from 'lucide-react'
 import { useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
 import { alterarPasso, alterarStatusJornada } from '../../api/servicos'
-import { Alerta, Etiqueta, estilos as ui } from '../../components/ui'
+import { useConfirmar } from '../../components/Confirmacao'
+import { Alerta, Avatar, Etiqueta, estilos as ui } from '../../components/ui'
 import { PASSOS, ROTULOS_PASSO, formatarData } from '../../utils/formatacao'
 import estilos from './Jornada.module.css'
 
 export default function CabecalhoJornada({ jornada, ehMedico, editavel, atualizar }) {
+  const confirmar = useConfirmar()
   const [erro, setErro] = useState('')
   const [ocupado, setOcupado] = useState(false)
+  const ativa = jornada.status === 'ativa'
 
   async function executar(acao) {
     setErro('')
@@ -28,13 +32,22 @@ export default function CabecalhoJornada({ jornada, ehMedico, editavel, atualiza
     executar(() => alterarPasso(jornada.id, passo))
   }
 
-  function alternarStatus() {
-    const encerrar = jornada.status === 'ativa'
-    const confirmacao = encerrar
-      ? 'Encerrar esta jornada? Ela ficará somente para consulta até ser reaberta.'
-      : 'Reabrir esta jornada?'
-    if (!window.confirm(confirmacao)) return
-    executar(() => alterarStatusJornada(jornada.id, encerrar ? 'encerrada' : 'ativa'))
+  async function alternarStatus() {
+    const confirmado = await confirmar(
+      ativa
+        ? {
+            titulo: 'Encerrar esta jornada?',
+            mensagem: 'Ela fica disponível apenas para consulta, sem novos registros, até ser reaberta.',
+            rotuloConfirmar: 'Encerrar jornada',
+            perigo: true,
+          }
+        : {
+            titulo: 'Reabrir esta jornada?',
+            mensagem: 'Voltará a ser possível registrar consultas, solicitações e documentos.',
+            rotuloConfirmar: 'Reabrir jornada',
+          },
+    )
+    if (confirmado) executar(() => alterarStatusJornada(jornada.id, ativa ? 'encerrada' : 'ativa'))
   }
 
   const podeMudarPasso = ehMedico && editavel
@@ -43,47 +56,55 @@ export default function CabecalhoJornada({ jornada, ehMedico, editavel, atualiza
   return (
     <header className={`${ui.cartao} ${estilos.cabecalho}`}>
       <div className={estilos.cabecalhoTopo}>
-        <div>
-          <div className={ui.acoes}>
-            <h1>{jornada.titulo}</h1>
-            <Etiqueta variante={jornada.status === 'ativa' ? 'sucesso' : 'neutra'}>
-              {jornada.status === 'ativa' ? 'Ativa' : 'Encerrada'}
-            </Etiqueta>
+        <div className={estilos.identificacao}>
+          <Avatar nome={jornada.paciente.nome} grande />
+          <div>
+            <div className={estilos.tituloLinha}>
+              <h1>{jornada.titulo}</h1>
+              <Etiqueta variante={ativa ? 'sucesso' : 'neutra'}>{ativa ? 'Ativa' : 'Encerrada'}</Etiqueta>
+            </div>
+            <div className={estilos.pessoas}>
+              <span>
+                Paciente: <strong>{jornada.paciente.nome}</strong>
+              </span>
+              <span>
+                Médico(a): <strong>{jornada.medico.nome}</strong>
+              </span>
+              <span>Aberta em {formatarData(jornada.criado_em)}</span>
+            </div>
+            {jornada.descricao && <p className={estilos.descricao}>{jornada.descricao}</p>}
           </div>
-          <div className={estilos.pessoas}>
-            <span>
-              Paciente: <strong>{jornada.paciente.nome}</strong>
-            </span>
-            <span>
-              Médico(a): <strong>{jornada.medico.nome}</strong>
-            </span>
-            <span>Aberta em {formatarData(jornada.criado_em)}</span>
-          </div>
-          {jornada.descricao && <p className={estilos.descricao}>{jornada.descricao}</p>}
         </div>
         {ehMedico && (
           <button
             type="button"
-            className={`${jornada.status === 'ativa' ? ui.botaoPerigo : ui.botaoSecundario} ${ui.botaoPequeno}`}
+            className={`${ativa ? ui.botaoPerigo : ui.botaoSecundario} ${ui.botaoPequeno}`}
             onClick={alternarStatus}
             disabled={ocupado}
           >
-            {jornada.status === 'ativa' ? 'Encerrar jornada' : 'Reabrir jornada'}
+            {ativa ? <Lock size={14} aria-hidden="true" /> : <LockOpen size={14} aria-hidden="true" />}
+            {ativa ? 'Encerrar jornada' : 'Reabrir jornada'}
           </button>
         )}
       </div>
 
-      <div>
-        <p className={estilos.rotuloPasso}>
-          Passo atual{podeMudarPasso && <span className={ui.suave}> (clique para alterar)</span>}
-        </p>
+      <div className={estilos.passoLinha}>
+        <span className={estilos.rotuloPasso}>Passo atual</span>
         <ol className={estilos.passos}>
           {PASSOS.map((passo, indice) => {
-            const classe = [
-              estilos.passo,
-              indice < indiceAtual ? estilos.passoConcluido : '',
-              indice === indiceAtual ? estilos.passoAtual : '',
-            ].join(' ')
+            const concluido = indice < indiceAtual
+            const atual = indice === indiceAtual
+            const classe = [estilos.passo, concluido ? estilos.passoConcluido : '', atual ? estilos.passoAtual : '']
+              .filter(Boolean)
+              .join(' ')
+            const conteudo = (
+              <>
+                <span className={estilos.numeroPasso}>
+                  {concluido ? <Check size={12} strokeWidth={3} aria-hidden="true" /> : indice + 1}
+                </span>
+                {ROTULOS_PASSO[passo]}
+              </>
+            )
             return (
               <li key={passo} className={classe}>
                 {podeMudarPasso ? (
@@ -92,21 +113,21 @@ export default function CabecalhoJornada({ jornada, ehMedico, editavel, atualiza
                     className={estilos.botaoPasso}
                     onClick={() => mudarPasso(passo)}
                     disabled={ocupado}
-                    aria-current={indice === indiceAtual ? 'step' : undefined}
+                    aria-current={atual ? 'step' : undefined}
+                    title={atual ? 'Passo atual' : `Mudar para ${ROTULOS_PASSO[passo]}`}
                   >
-                    <span className={estilos.numeroPasso}>{indice + 1}</span>
-                    {ROTULOS_PASSO[passo]}
+                    {conteudo}
                   </button>
                 ) : (
-                  <span className={estilos.botaoPasso} aria-current={indice === indiceAtual ? 'step' : undefined}>
-                    <span className={estilos.numeroPasso}>{indice + 1}</span>
-                    {ROTULOS_PASSO[passo]}
+                  <span className={estilos.botaoPasso} aria-current={atual ? 'step' : undefined}>
+                    {conteudo}
                   </span>
                 )}
               </li>
             )
           })}
         </ol>
+        {podeMudarPasso && <span className={ui.ajuda}>Clique em uma etapa para alterar.</span>}
       </div>
       <Alerta tipo="erro">{erro}</Alerta>
     </header>

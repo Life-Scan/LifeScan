@@ -8,11 +8,11 @@ from app.db.base import agora_utc
 from app.db.sessao import obter_sessao
 from app.models.usuario import Usuario
 from app.schemas.auth import (
+    DefinicaoSenhaEntrada,
     EsqueciSenhaEntrada,
     LoginEntrada,
     MensagemSaida,
     TokenSaida,
-    TrocaSenhaEntrada,
     UsuarioSaida,
 )
 from app.services.contas import (
@@ -70,21 +70,27 @@ def obter_eu(usuario: Usuario = Depends(obter_usuario_autenticado)) -> Usuario:
     return usuario
 
 
-@router.post("/change-password", response_model=UsuarioSaida)
-def trocar_senha(
-    dados: TrocaSenhaEntrada,
+@router.post("/set-password", response_model=UsuarioSaida)
+def definir_senha(
+    dados: DefinicaoSenhaEntrada,
     usuario: Usuario = Depends(obter_usuario_autenticado),
     sessao: Session = Depends(obter_sessao),
 ) -> Usuario:
-    """Define a senha da própria pessoa. Obrigatório depois de entrar com a provisória."""
-    provisoria_valida = senha_provisoria_confere(usuario, dados.senha_atual) and not senha_provisoria_expirada(usuario)
-    if not _senha_definitiva_confere(usuario, dados.senha_atual) and not provisoria_valida:
-        # 400 e não 401: a sessão continua válida, só a senha digitada está errada
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "A senha atual está incorreta.")
-    if dados.nova_senha == dados.senha_atual:
+    """Define a senha da própria pessoa depois de entrar com a senha provisória.
+
+    Só funciona nesse momento (primeiro acesso ou "esqueci minha senha"): a pessoa acabou
+    de provar que tem a provisória, então não é pedida de novo. Não existe troca de senha
+    fora desse fluxo; quem quiser trocar usa "esqueci minha senha".
+    """
+    if not usuario.deve_trocar_senha:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            'Para trocar a senha, saia e use "Esqueci minha senha" na tela de login.',
+        )
+    if senha_provisoria_confere(usuario, dados.nova_senha):
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
-            "A nova senha precisa ser diferente da atual.",
+            "Escolha uma senha diferente da senha provisória.",
         )
 
     usuario.senha_hash = gerar_hash_senha(dados.nova_senha)

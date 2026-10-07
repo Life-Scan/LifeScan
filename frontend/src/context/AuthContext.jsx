@@ -26,9 +26,9 @@ export function AuthProvider({ children }) {
     return dadosUsuario
   }, [])
 
-  /** Troca a senha e atualiza o usuário em memória (libera quem entrou com a provisória). */
-  const trocarSenha = useCallback(async (senhaAtual, novaSenha) => {
-    const atualizado = await servicos.trocarSenha(senhaAtual, novaSenha)
+  /** Define a senha de quem entrou com a provisória e libera o uso do sistema. */
+  const definirSenha = useCallback(async (novaSenha) => {
+    const atualizado = await servicos.definirSenha(novaSenha)
     setUsuario(atualizado)
     return atualizado
   }, [])
@@ -46,10 +46,10 @@ export function AuthProvider({ children }) {
       ehPaciente: usuario?.tipo_usuario === 'paciente',
       ehParceiro: usuario?.tipo_usuario === 'parceiro',
       entrar,
-      trocarSenha,
+      definirSenha,
       sair,
     }),
-    [usuario, carregando, entrar, trocarSenha, sair],
+    [usuario, carregando, entrar, definirSenha, sair],
   )
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>

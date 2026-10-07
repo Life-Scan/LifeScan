@@ -29,8 +29,7 @@ class LoginEntrada(BaseModel):
     senha: str
 
 
-class TrocaSenhaEntrada(BaseModel):
-    senha_atual: str
+class DefinicaoSenhaEntrada(BaseModel):
     nova_senha: SenhaNova
 
 

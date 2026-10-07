@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { mensagemDeErro } from '../../api/cliente'
@@ -107,7 +108,8 @@ export default function Jornada() {
   return (
     <div className={estilos.pilha}>
       <Link to="/jornadas" className={estilos.voltar}>
-        ← {ehParceiro ? 'Pacientes' : 'Jornadas'}
+        <ArrowLeft size={15} aria-hidden="true" />
+        {ehParceiro ? 'Pacientes' : 'Jornadas'}
       </Link>
 
       <CabecalhoJornada {...contexto} />

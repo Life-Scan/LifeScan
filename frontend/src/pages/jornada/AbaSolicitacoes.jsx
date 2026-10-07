@@ -1,7 +1,9 @@
+import { Ban, Check, ClipboardList, Plus, Upload } from 'lucide-react'
 import { useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
 import { cancelarSolicitacao, concluirSolicitacao, criarSolicitacao } from '../../api/servicos'
+import { useConfirmar } from '../../components/Confirmacao'
 import { Alerta, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
 import {
   ROTULOS_STATUS_SOLICITACAO,
@@ -40,6 +42,7 @@ export default function AbaSolicitacoes({
   atualizar,
   irParaAba,
 }) {
+  const confirmar = useConfirmar()
   const [formularioAberto, setFormularioAberto] = useState(false)
   const [erro, setErro] = useState('')
 
@@ -49,7 +52,7 @@ export default function AbaSolicitacoes({
   )
 
   async function executar(acao, confirmacao) {
-    if (confirmacao && !window.confirm(confirmacao)) return
+    if (confirmacao && !(await confirmar(confirmacao))) return
     setErro('')
     try {
       await acao()
@@ -65,6 +68,7 @@ export default function AbaSolicitacoes({
         <h2>{ehParceiro ? 'Solicitações para você' : 'Solicitações'}</h2>
         {ehMedico && editavel && !formularioAberto && (
           <button type="button" className={ui.botao} onClick={() => setFormularioAberto(true)}>
+            <Plus size={16} aria-hidden="true" />
             Nova solicitação
           </button>
         )}
@@ -85,7 +89,7 @@ export default function AbaSolicitacoes({
       <Alerta tipo="erro">{erro}</Alerta>
 
       {ordenadas.length === 0 ? (
-        <EstadoVazio>
+        <EstadoVazio icone={ClipboardList}>
           {ehParceiro ? 'O médico ainda não fez solicitações para você.' : 'Nenhuma solicitação nesta jornada.'}
         </EstadoVazio>
       ) : (
@@ -122,6 +126,7 @@ export default function AbaSolicitacoes({
                         className={`${ui.botao} ${ui.botaoPequeno}`}
                         onClick={() => irParaAba('documentos', { solicitacao: String(solicitacao.id) })}
                       >
+                        <Upload size={14} aria-hidden="true" />
                         Enviar documento
                       </button>
                     )}
@@ -140,15 +145,23 @@ export default function AbaSolicitacoes({
                           className={`${ui.botaoSecundario} ${ui.botaoPequeno}`}
                           onClick={() => executar(() => concluirSolicitacao(solicitacao.id))}
                         >
+                          <Check size={14} aria-hidden="true" />
                           Marcar como atendida
                         </button>
                         <button
                           type="button"
                           className={`${ui.botaoPerigo} ${ui.botaoPequeno}`}
                           onClick={() =>
-                            executar(() => cancelarSolicitacao(solicitacao.id), 'Cancelar esta solicitação?')
+                            executar(() => cancelarSolicitacao(solicitacao.id), {
+                              titulo: 'Cancelar esta solicitação?',
+                              mensagem: 'Ela deixa de aparecer como pendência. Esta ação não pode ser desfeita.',
+                              rotuloConfirmar: 'Cancelar solicitação',
+                              rotuloCancelar: 'Voltar',
+                              perigo: true,
+                            })
                           }
                         >
+                          <Ban size={14} aria-hidden="true" />
                           Cancelar
                         </button>
                       </>

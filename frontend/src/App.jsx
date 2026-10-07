@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import RotaProtegida from './components/RotaProtegida'
 import { useAuth } from './context/AuthContext'
-import Contas from './pages/Contas'
+import DefinirSenha from './pages/DefinirSenha'
 import EsqueciSenha from './pages/EsqueciSenha'
 import Jornada from './pages/jornada/Jornada'
 import Jornadas from './pages/Jornadas'
@@ -11,7 +11,7 @@ import Login from './pages/Login'
 import NaoEncontrada from './pages/NaoEncontrada'
 import NovaJornada from './pages/NovaJornada'
 import Painel from './pages/Painel'
-import TrocarSenha from './pages/TrocarSenha'
+import Usuarios from './pages/Usuarios'
 
 /** Login e "esqueci minha senha": quem já está logado vai direto para o painel. */
 function SomenteVisitante({ children }) {
@@ -27,8 +27,8 @@ export default function App() {
       <Route path="/esqueci-senha" element={<SomenteVisitante><EsqueciSenha /></SomenteVisitante>} />
 
       <Route element={<RotaProtegida />}>
-        {/* Fora do Layout: no primeiro acesso a pessoa só pode trocar a senha */}
-        <Route path="/trocar-senha" element={<TrocarSenha />} />
+        {/* Fora do Layout: no primeiro acesso a pessoa só pode definir a senha */}
+        <Route path="/definir-senha" element={<DefinirSenha />} />
 
         <Route element={<Layout />}>
           <Route path="/" element={<Navigate to="/painel" replace />} />
@@ -38,8 +38,7 @@ export default function App() {
           <Route path="/jornadas/:id" element={<Jornada />} />
 
           <Route element={<RotaProtegida tipos={['medico']} />}>
-            <Route path="/pacientes" element={<Contas tipo="paciente" />} />
-            <Route path="/parceiros" element={<Contas tipo="parceiro" />} />
+            <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/jornadas/nova" element={<NovaJornada />} />
           </Route>
 

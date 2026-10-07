@@ -32,7 +32,7 @@ def obter_usuario_autenticado(
     """Usuário do token, desde que a conta exista e esteja ativa.
 
     Não exige a troca da senha provisória: é usado justamente pelas rotas que a
-    pessoa precisa alcançar para trocá-la (/auth/me e /auth/change-password).
+    pessoa precisa alcançar para defini-la (/auth/me e /auth/set-password).
     """
     if credenciais is None:
         raise _nao_autenticado("Não autenticado. Faça login para continuar.")
