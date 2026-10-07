@@ -3,7 +3,7 @@
 from app.models.arquivo import Arquivo
 from app.models.atribuicao import AtribuicaoParceiro
 from app.models.consulta import Consulta, Prescricao, TipoConsulta
-from app.models.exame import Exame, StatusExame
+from app.models.documento import CategoriaDocumento, Documento, StatusDocumento
 from app.models.ficha import FichaPaciente, Sexo
 from app.models.jornada import Jornada, PassoJornada, StatusJornada
 from app.models.solicitacao import Solicitacao, StatusSolicitacao, TipoSolicitacao
@@ -13,14 +13,15 @@ __all__ = [
     "Arquivo",
     "AtribuicaoParceiro",
     "Consulta",
-    "Exame",
+    "CategoriaDocumento",
+    "Documento",
     "FichaPaciente",
     "Jornada",
     "PassoJornada",
     "Prescricao",
     "Sexo",
     "Solicitacao",
-    "StatusExame",
+    "StatusDocumento",
     "StatusJornada",
     "StatusSolicitacao",
     "TipoConsulta",

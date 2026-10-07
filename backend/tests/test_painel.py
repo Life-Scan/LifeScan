@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from tests.conftest import criar_jornada, criar_solicitacao, definir_prazo, enviar_exame
+from tests.conftest import criar_jornada, criar_solicitacao, definir_prazo, enviar_documento
 
 
 def _painel(cliente, usuario) -> dict:
@@ -13,7 +13,7 @@ def test_painel_vazio_por_tipo_de_usuario(cliente, medico, paciente, jornada):
     assert _painel(cliente, medico) == {
         "tipo_usuario": "medico",
         "dias_prazo_proximo": 3,
-        "exames_aguardando_revisao": [],
+        "documentos_aguardando_revisao": [],
         "solicitacoes_vencidas": [],
         "solicitacoes_proximas_do_prazo": [],
     }
@@ -28,14 +28,14 @@ def test_painel_exige_login(cliente):
     assert cliente.get("/dashboard/pending").status_code == 401
 
 
-def test_medico_ve_exames_aguardando_revisao(cliente, medico, paciente, jornada):
-    enviar_exame(cliente, paciente, jornada)
-    revisado = enviar_exame(cliente, paciente, jornada).json()
-    cliente.patch(f"/exams/{revisado['id']}/review", json={}, headers=medico["headers"])
+def test_medico_ve_documentos_aguardando_revisao(cliente, medico, paciente, jornada):
+    enviar_documento(cliente, paciente, jornada)
+    revisado = enviar_documento(cliente, paciente, jornada).json()
+    cliente.patch(f"/documents/{revisado['id']}/review", json={}, headers=medico["headers"])
     # Arquivo enviado pelo próprio médico não entra como pendência dele
-    enviar_exame(cliente, medico, jornada)
+    enviar_documento(cliente, medico, jornada)
 
-    exames = _painel(cliente, medico)["exames_aguardando_revisao"]
+    exames = _painel(cliente, medico)["documentos_aguardando_revisao"]
     assert len(exames) == 1
     assert exames[0]["status"] == "enviado"
     assert exames[0]["jornada"]["paciente"]["nome"] == "Carlos Lima"
@@ -69,7 +69,7 @@ def test_paciente_ve_pendencias_e_consultas_extras(cliente, medico, paciente, jo
     futura = criar_solicitacao(cliente, medico, jornada, tipo="orientacao_profissional", dias=20)
     consulta_extra = criar_solicitacao(cliente, medico, jornada, tipo="consulta_extra", dias=4)
     atendida = criar_solicitacao(cliente, medico, jornada, tipo="exame")
-    enviar_exame(cliente, paciente, jornada, solicitacao_id=atendida["id"])
+    enviar_documento(cliente, paciente, jornada, solicitacao_id=atendida["id"])
 
     painel = _painel(cliente, paciente)
     pendentes = painel["solicitacoes_pendentes"]
@@ -89,18 +89,18 @@ def test_painel_do_paciente_so_mostra_a_propria_jornada(cliente, medico, pacient
 
 def test_painel_do_medico_reune_todos_os_pacientes(cliente, medico, paciente, outro_paciente, jornada):
     outra_jornada = criar_jornada(cliente, medico, outro_paciente)
-    enviar_exame(cliente, paciente, jornada)
-    enviar_exame(cliente, outro_paciente, outra_jornada)
+    enviar_documento(cliente, paciente, jornada)
+    enviar_documento(cliente, outro_paciente, outra_jornada)
 
-    exames = _painel(cliente, medico)["exames_aguardando_revisao"]
+    exames = _painel(cliente, medico)["documentos_aguardando_revisao"]
     assert {e["jornada"]["paciente"]["nome"] for e in exames} == {"Carlos Lima", "Maria Alves"}
 
 
 def test_jornada_encerrada_sai_do_painel(cliente, medico, paciente, jornada):
-    enviar_exame(cliente, paciente, jornada)
+    enviar_documento(cliente, paciente, jornada)
     criar_solicitacao(cliente, medico, jornada, dias=1)
-    assert len(_painel(cliente, medico)["exames_aguardando_revisao"]) == 1
+    assert len(_painel(cliente, medico)["documentos_aguardando_revisao"]) == 1
 
     cliente.patch(f"/journeys/{jornada['id']}/status", json={"status": "encerrada"}, headers=medico["headers"])
-    assert _painel(cliente, medico)["exames_aguardando_revisao"] == []
+    assert _painel(cliente, medico)["documentos_aguardando_revisao"] == []
     assert _painel(cliente, paciente)["solicitacoes_pendentes"] == []

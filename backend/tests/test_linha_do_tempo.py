@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from tests.conftest import criar_solicitacao, enviar_exame
+from tests.conftest import criar_solicitacao, enviar_documento
 
 
 def _registrar_consulta(cliente, medico, jornada, data: datetime, tipo: str = "consulta") -> dict:
@@ -22,7 +22,7 @@ def _montar_jornada_com_historico(cliente, medico, paciente, jornada):
     # Consulta realizada no passado, antes de tudo que foi criado agora
     _registrar_consulta(cliente, medico, jornada, agora - timedelta(days=10))
     solicitacao = criar_solicitacao(cliente, medico, jornada, tipo="exame")
-    enviar_exame(cliente, paciente, jornada, solicitacao_id=solicitacao["id"])
+    enviar_documento(cliente, paciente, jornada, solicitacao_id=solicitacao["id"])
     criar_solicitacao(cliente, medico, jornada, tipo="consulta_extra")
     # Retorno marcado para o futuro fica no fim
     _registrar_consulta(cliente, medico, jornada, agora + timedelta(days=5), tipo="retorno")
@@ -35,7 +35,7 @@ def test_linha_do_tempo_em_ordem_cronologica(cliente, medico, paciente, jornada)
     assert resposta.status_code == 200
     eventos = resposta.json()
 
-    assert [e["tipo"] for e in eventos] == ["consulta", "solicitacao", "exame", "solicitacao", "consulta"]
+    assert [e["tipo"] for e in eventos] == ["consulta", "solicitacao", "documento", "solicitacao", "consulta"]
     datas = [e["data"] for e in eventos]
     assert datas == sorted(datas)
     for evento in eventos:
@@ -51,7 +51,7 @@ def test_resumos_e_dados_de_cada_evento(cliente, medico, paciente, jornada):
     # O exame atendeu a solicitação, e o resumo reflete o status atual
     assert eventos[1]["resumo"].endswith("(atendida)")
     assert eventos[1]["dados"]["status"] == "atendida"
-    assert eventos[2]["resumo"] == "Carlos Lima enviou: Hemograma completo"
+    assert eventos[2]["resumo"] == "Carlos Lima enviou exame: Hemograma completo"
     assert eventos[2]["dados"]["arquivo"]["nome_original"] == "hemograma.pdf"
     assert eventos[3]["resumo"].startswith("Solicitação de consulta extra")
     assert eventos[4]["resumo"] == "Retorno realizado (1 prescrição)"
@@ -61,16 +61,16 @@ def test_filtro_por_tipo(cliente, medico, paciente, jornada):
     _montar_jornada_com_historico(cliente, medico, paciente, jornada)
     url = f"/journeys/{jornada['id']}/timeline"
 
-    so_exames = cliente.get(url, params={"tipos": "exame"}, headers=medico["headers"]).json()
-    assert [e["tipo"] for e in so_exames] == ["exame"]
+    so_documentos = cliente.get(url, params={"tipos": "documento"}, headers=medico["headers"]).json()
+    assert [e["tipo"] for e in so_documentos] == ["documento"]
 
-    varios = cliente.get(url, params={"tipos": "consulta, exame"}, headers=medico["headers"]).json()
-    assert [e["tipo"] for e in varios] == ["consulta", "exame", "consulta"]
+    varios = cliente.get(url, params={"tipos": "consulta, documento"}, headers=medico["headers"]).json()
+    assert [e["tipo"] for e in varios] == ["consulta", "documento", "consulta"]
 
 
 def test_filtro_com_tipo_invalido_retorna_422(cliente, medico, jornada):
-    # "mensagem" deixou de existir junto com o chat
-    for tipos in ("exame,receita", "mensagem"):
+    # "mensagem" deixou de existir junto com o chat, e "exame" virou "documento"
+    for tipos in ("documento,receita", "mensagem", "exame"):
         resposta = cliente.get(
             f"/journeys/{jornada['id']}/timeline", params={"tipos": tipos}, headers=medico["headers"]
         )

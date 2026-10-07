@@ -5,7 +5,7 @@ from tests.conftest import (
     criar_conta_ativa,
     criar_jornada,
     criar_solicitacao,
-    enviar_exame,
+    enviar_documento,
 )
 
 
@@ -108,10 +108,12 @@ def test_parceiro_lista_apenas_as_jornadas_atribuidas(cliente, medico, parceiro_
     assert jornadas[0]["paciente"]["nome"] == "Carlos Lima"
 
 
-def test_parceiro_nao_ve_consultas_solicitacoes_nem_linha_do_tempo(cliente, medico, parceiro_atribuido, jornada):
+def test_parceiro_nao_ve_consultas_nem_linha_do_tempo(cliente, medico, parceiro_atribuido, jornada):
     criar_solicitacao(cliente, medico, jornada)
     base = f"/journeys/{jornada['id']}"
-    for rota in ("consultations", "requests", "timeline", "partners"):
+    # As solicitações destinadas ao paciente não aparecem para o parceiro
+    assert cliente.get(f"{base}/requests", headers=parceiro_atribuido["headers"]).json() == []
+    for rota in ("consultations", "timeline", "partners"):
         resposta = cliente.get(f"{base}/{rota}", headers=parceiro_atribuido["headers"])
         assert resposta.status_code == 403, rota
         assert resposta.json()["detail"] == "Parceiros têm acesso apenas à ficha do paciente e aos próprios envios."
@@ -134,41 +136,41 @@ def test_parceiro_nao_altera_a_jornada(cliente, parceiro_atribuido, jornada):
 def test_parceiro_envia_documento_e_ve_apenas_os_proprios_envios(
     cliente, medico, paciente, parceiro_atribuido, jornada
 ):
-    enviar_exame(cliente, paciente, jornada, nome="hemograma.pdf")
-    envio = enviar_exame(cliente, parceiro_atribuido, jornada, nome="plano_alimentar.pdf", conteudo=b"%PDF plano")
+    enviar_documento(cliente, paciente, jornada, nome="hemograma.pdf")
+    envio = enviar_documento(cliente, parceiro_atribuido, jornada, nome="plano_alimentar.pdf", conteudo=b"%PDF plano")
     assert envio.status_code == 201, envio.text
     assert envio.json()["enviado_por"]["nome"] == "Marina Costa"
 
-    do_parceiro = cliente.get(f"/journeys/{jornada['id']}/exams", headers=parceiro_atribuido["headers"]).json()
+    do_parceiro = cliente.get(f"/journeys/{jornada['id']}/documents", headers=parceiro_atribuido["headers"]).json()
     assert [e["arquivo"]["nome_original"] for e in do_parceiro] == ["plano_alimentar.pdf"]
 
     # Médico e paciente veem os dois
     for usuario in (medico, paciente):
-        todos = cliente.get(f"/journeys/{jornada['id']}/exams", headers=usuario["headers"]).json()
+        todos = cliente.get(f"/journeys/{jornada['id']}/documents", headers=usuario["headers"]).json()
         assert len(todos) == 2
 
 
 def test_envio_do_parceiro_aparece_para_o_medico_revisar(cliente, medico, parceiro_atribuido, jornada):
-    exame = enviar_exame(cliente, parceiro_atribuido, jornada, nome="plano.pdf").json()
+    exame = enviar_documento(cliente, parceiro_atribuido, jornada, nome="plano.pdf").json()
 
     painel = cliente.get("/dashboard/pending", headers=medico["headers"]).json()
-    assert [e["id"] for e in painel["exames_aguardando_revisao"]] == [exame["id"]]
+    assert [e["id"] for e in painel["documentos_aguardando_revisao"]] == [exame["id"]]
 
     revisao = cliente.patch(
-        f"/exams/{exame['id']}/review", json={"observacao_revisao": "Plano aprovado."}, headers=medico["headers"]
+        f"/documents/{exame['id']}/review", json={"observacao_revisao": "Plano aprovado."}, headers=medico["headers"]
     )
     assert revisao.status_code == 200
     # O parceiro vê a revisão do próprio envio, mas não pode revisar
-    do_parceiro = cliente.get(f"/journeys/{jornada['id']}/exams", headers=parceiro_atribuido["headers"]).json()
+    do_parceiro = cliente.get(f"/journeys/{jornada['id']}/documents", headers=parceiro_atribuido["headers"]).json()
     assert do_parceiro[0]["observacao_revisao"] == "Plano aprovado."
     assert cliente.patch(
-        f"/exams/{exame['id']}/review", json={}, headers=parceiro_atribuido["headers"]
+        f"/documents/{exame['id']}/review", json={}, headers=parceiro_atribuido["headers"]
     ).status_code == 403
 
 
 def test_parceiro_baixa_so_os_arquivos_que_enviou(cliente, medico, paciente, parceiro_atribuido, jornada):
-    do_paciente = enviar_exame(cliente, paciente, jornada).json()
-    do_parceiro = enviar_exame(cliente, parceiro_atribuido, jornada, nome="plano.pdf", conteudo=b"%PDF plano").json()
+    do_paciente = enviar_documento(cliente, paciente, jornada).json()
+    do_parceiro = enviar_documento(cliente, parceiro_atribuido, jornada, nome="plano.pdf", conteudo=b"%PDF plano").json()
     headers = parceiro_atribuido["headers"]
 
     proprio = cliente.get(f"/files/{do_parceiro['arquivo']['id']}/download", headers=headers)
@@ -184,24 +186,25 @@ def test_parceiro_baixa_so_os_arquivos_que_enviou(cliente, medico, paciente, par
         assert cliente.get(f"/files/{do_parceiro['arquivo']['id']}/download", headers=usuario["headers"]).status_code == 200
 
 
-def test_parceiro_nao_vincula_envio_a_solicitacao(cliente, medico, parceiro_atribuido, jornada):
+def test_parceiro_nao_atende_solicitacao_destinada_ao_paciente(cliente, medico, parceiro_atribuido, jornada):
     solicitacao = criar_solicitacao(cliente, medico, jornada, tipo="orientacao_profissional")
-    resposta = enviar_exame(cliente, parceiro_atribuido, jornada, solicitacao_id=solicitacao["id"])
-    assert resposta.status_code == 403
+    resposta = enviar_documento(cliente, parceiro_atribuido, jornada, solicitacao_id=solicitacao["id"])
+    # Para o parceiro, é como se a solicitação não existisse
+    assert resposta.status_code == 404
 
 
 def test_parceiro_nao_envia_sem_atribuicao_nem_em_jornada_encerrada(cliente, medico, parceiro, jornada):
-    assert enviar_exame(cliente, parceiro, jornada).status_code == 403
+    assert enviar_documento(cliente, parceiro, jornada).status_code == 403
 
     atribuir_parceiro(cliente, medico, jornada, parceiro)
     cliente.patch(f"/journeys/{jornada['id']}/status", json={"status": "encerrada"}, headers=medico["headers"])
-    assert enviar_exame(cliente, parceiro, jornada).status_code == 409
+    assert enviar_documento(cliente, parceiro, jornada).status_code == 409
 
 
 def test_um_parceiro_nao_ve_os_envios_de_outro(cliente, medico, parceiro_atribuido, jornada):
     outro = criar_conta_ativa(cliente, medico, "parceiro", "Rui Prado", "rui@fisio.com", "Fisioterapeuta")
     atribuir_parceiro(cliente, medico, jornada, outro)
-    envio = enviar_exame(cliente, parceiro_atribuido, jornada, nome="plano.pdf").json()
+    envio = enviar_documento(cliente, parceiro_atribuido, jornada, nome="plano.pdf").json()
 
-    assert cliente.get(f"/journeys/{jornada['id']}/exams", headers=outro["headers"]).json() == []
+    assert cliente.get(f"/journeys/{jornada['id']}/documents", headers=outro["headers"]).json() == []
     assert cliente.get(f"/files/{envio['arquivo']['id']}/download", headers=outro["headers"]).status_code == 403

@@ -28,7 +28,7 @@ def _interpretar_tipos(texto: str | None) -> set[TipoEvento] | None:
 def obter_linha_do_tempo(
     tipos: str | None = Query(
         None,
-        description="Filtro opcional, separado por vírgula: consulta, exame, solicitacao",
+        description="Filtro opcional, separado por vírgula: consulta, documento, solicitacao",
     ),
     jornada: Jornada = Depends(obter_jornada_com_acesso),
     sessao: Session = Depends(obter_sessao),

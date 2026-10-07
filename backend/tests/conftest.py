@@ -179,30 +179,39 @@ def parceiro_atribuido(cliente, medico, parceiro, jornada):
     return parceiro
 
 
-def criar_solicitacao(cliente, medico: dict, jornada: dict, tipo: str = "exame", dias: int = 7) -> dict:
+def criar_solicitacao(
+    cliente, medico: dict, jornada: dict, tipo: str = "exame", dias: int = 7, destinatario: dict | None = None
+) -> dict:
+    """Solicitação para o paciente da jornada ou, com `destinatario`, para um parceiro atribuído."""
     prazo = (datetime.now(timezone.utc) + timedelta(days=dias)).isoformat()
+    dados = {"tipo": tipo, "descricao": f"Solicitação de {tipo}", "prazo": prazo}
+    if destinatario is not None:
+        dados["destinatario_id"] = destinatario["usuario"]["id"]
     resposta = cliente.post(
         f"/journeys/{jornada['id']}/requests",
-        json={"tipo": tipo, "descricao": f"Solicitação de {tipo}", "prazo": prazo},
+        json=dados,
         headers=medico["headers"],
     )
     assert resposta.status_code == 201, resposta.text
     return resposta.json()
 
 
-def enviar_exame(
+def enviar_documento(
     cliente,
     usuario: dict,
     jornada: dict,
     nome: str = "hemograma.pdf",
     conteudo: bytes = b"%PDF-1.4 conteudo de teste",
     solicitacao_id: int | None = None,
+    categoria: str | None = None,
 ):
     dados = {"titulo": "Hemograma completo"}
+    if categoria is not None:
+        dados["categoria"] = categoria
     if solicitacao_id is not None:
         dados["solicitacao_id"] = str(solicitacao_id)
     return cliente.post(
-        f"/journeys/{jornada['id']}/exams",
+        f"/journeys/{jornada['id']}/documents",
         data=dados,
         files={"arquivo": (nome, conteudo)},
         headers=usuario["headers"],

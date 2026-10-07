@@ -100,7 +100,7 @@ def carregar_jornada_com_acesso(
     atribuído à jornada: ele não vê consultas, solicitações nem a linha do tempo.
 
     Versão sem Depends, para rotas que chegam à jornada a partir de outro recurso
-    (solicitação, exame, arquivo).
+    (solicitação, documento, arquivo).
     """
     jornada = sessao.get(Jornada, jornada_id)
     if jornada is None:

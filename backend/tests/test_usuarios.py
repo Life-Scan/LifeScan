@@ -160,7 +160,7 @@ def test_medico_trabalha_na_jornada_antes_do_primeiro_acesso_do_paciente(cliente
     assert consulta.status_code == 201
 
     exame = cliente.post(
-        f"/journeys/{jornada_id}/exams",
+        f"/journeys/{jornada_id}/documents",
         data={"titulo": "Exame trazido na consulta"},
         files={"arquivo": ("exame.pdf", b"%PDF")},
         headers=medico["headers"],
@@ -170,7 +170,7 @@ def test_medico_trabalha_na_jornada_antes_do_primeiro_acesso_do_paciente(cliente
     # Quando o paciente finalmente entra, encontra tudo lá
     paciente = criar_conta_ativa_existente(cliente)
     eventos = cliente.get(f"/journeys/{jornada_id}/timeline", headers=paciente["headers"]).json()
-    assert [e["tipo"] for e in eventos] == ["consulta", "exame"]
+    assert [e["tipo"] for e in eventos] == ["consulta", "documento"]
 
 
 def criar_conta_ativa_existente(cliente) -> dict:

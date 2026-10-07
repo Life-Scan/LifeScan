@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from app.schemas.base import SchemaSaida
-from app.schemas.exame import ExameSaida
+from app.schemas.documento import DocumentoSaida
 from app.schemas.solicitacao import SolicitacaoSaida
 from app.schemas.usuario import UsuarioResumo
 
@@ -14,7 +14,7 @@ class JornadaResumo(SchemaSaida):
     paciente: UsuarioResumo
 
 
-class ExamePendente(ExameSaida):
+class DocumentoPendente(DocumentoSaida):
     jornada: JornadaResumo
 
 
@@ -25,7 +25,8 @@ class SolicitacaoPendente(SolicitacaoSaida):
 class PainelMedico(BaseModel):
     tipo_usuario: Literal["medico"] = "medico"
     dias_prazo_proximo: int
-    exames_aguardando_revisao: list[ExamePendente]
+    documentos_aguardando_revisao: list[DocumentoPendente]
+    # Todas as solicitações pendentes, do paciente e dos parceiros
     solicitacoes_vencidas: list[SolicitacaoPendente]
     solicitacoes_proximas_do_prazo: list[SolicitacaoPendente]
 
@@ -40,5 +41,5 @@ class PainelPaciente(BaseModel):
 
 class PainelParceiro(BaseModel):
     tipo_usuario: Literal["parceiro"] = "parceiro"
-    # Solicitações destinadas ao parceiro (preenchido quando os parceiros forem atribuídos às jornadas)
+    # Solicitações destinadas ao parceiro, vencidas primeiro
     solicitacoes_pendentes: list[SolicitacaoPendente]

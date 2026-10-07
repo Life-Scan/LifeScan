@@ -19,8 +19,9 @@ from app.db.sessao import SessaoLocal
 from app.models import (
     Arquivo,
     AtribuicaoParceiro,
+    CategoriaDocumento,
     Consulta,
-    Exame,
+    Documento,
     FichaPaciente,
     Jornada,
     PassoJornada,
@@ -167,6 +168,7 @@ def criar_dados_de_exemplo() -> None:
             [
                 Solicitacao(
                     jornada_id=jornada.id,
+                    destinatario_id=paciente.id,
                     tipo=TipoSolicitacao.exame,
                     descricao="Hemograma completo e perfil lipídico",
                     prazo=agora - timedelta(days=2),  # vencida
@@ -174,13 +176,16 @@ def criar_dados_de_exemplo() -> None:
                 ),
                 Solicitacao(
                     jornada_id=jornada.id,
+                    # Destinada à nutricionista parceira, que é atribuída à jornada logo abaixo
+                    destinatario_id=parceiro.id,
                     tipo=TipoSolicitacao.orientacao_profissional,
-                    descricao="Enviar o plano alimentar da nutricionista",
+                    descricao="Montar e enviar o plano alimentar com redução de sódio",
                     prazo=agora + timedelta(days=2),
                     criado_em=agora - timedelta(days=20),
                 ),
                 Solicitacao(
                     jornada_id=jornada.id,
+                    destinatario_id=paciente.id,
                     tipo=TipoSolicitacao.consulta_extra,
                     descricao="Consulta extra para reavaliar a dose da medicação",
                     prazo=agora + timedelta(days=7),
@@ -200,9 +205,10 @@ def criar_dados_de_exemplo() -> None:
         sessao.add(arquivo)
         sessao.flush()
         sessao.add(
-            Exame(
+            Documento(
                 jornada_id=jornada.id,
                 enviado_por_id=paciente.id,
+                categoria=CategoriaDocumento.outro,
                 titulo="Diário de medições de pressão",
                 arquivo_id=arquivo.id,
                 criado_em=agora - timedelta(days=3),
