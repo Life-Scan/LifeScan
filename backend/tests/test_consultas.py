@@ -69,6 +69,6 @@ def test_nao_registra_consulta_em_jornada_encerrada(cliente, medico, jornada):
     assert resposta.status_code == 409
 
 
-def test_terceiros_nao_veem_consultas(cliente, outro_medico, jornada):
-    resposta = cliente.get(f"/journeys/{jornada['id']}/consultations", headers=outro_medico["headers"])
+def test_terceiros_nao_veem_consultas(cliente, outro_paciente, jornada):
+    resposta = cliente.get(f"/journeys/{jornada['id']}/consultations", headers=outro_paciente["headers"])
     assert resposta.status_code == 403

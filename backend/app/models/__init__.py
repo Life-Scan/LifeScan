@@ -4,18 +4,14 @@ from app.models.arquivo import Arquivo
 from app.models.consulta import Consulta, Prescricao, TipoConsulta
 from app.models.exame import Exame, StatusExame
 from app.models.jornada import Jornada, PassoJornada, StatusJornada
-from app.models.mensagem import Mensagem
 from app.models.solicitacao import Solicitacao, StatusSolicitacao, TipoSolicitacao
-from app.models.usuario import PapelUsuario, Usuario
-from app.models.vinculo import VinculoMedicoPaciente
+from app.models.usuario import TipoUsuario, Usuario
 
 __all__ = [
     "Arquivo",
     "Consulta",
     "Exame",
     "Jornada",
-    "Mensagem",
-    "PapelUsuario",
     "PassoJornada",
     "Prescricao",
     "Solicitacao",
@@ -24,6 +20,6 @@ __all__ = [
     "StatusSolicitacao",
     "TipoConsulta",
     "TipoSolicitacao",
+    "TipoUsuario",
     "Usuario",
-    "VinculoMedicoPaciente",
 ]

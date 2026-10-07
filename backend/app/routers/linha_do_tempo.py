@@ -28,10 +28,10 @@ def _interpretar_tipos(texto: str | None) -> set[TipoEvento] | None:
 def obter_linha_do_tempo(
     tipos: str | None = Query(
         None,
-        description="Filtro opcional, separado por vírgula: consulta, exame, solicitacao, mensagem",
+        description="Filtro opcional, separado por vírgula: consulta, exame, solicitacao",
     ),
     jornada: Jornada = Depends(obter_jornada_com_acesso),
     sessao: Session = Depends(obter_sessao),
 ) -> list[EventoLinhaDoTempo]:
-    """Linha do tempo da jornada em ordem cronológica (RF12)."""
+    """Linha do tempo da jornada em ordem cronológica."""
     return montar_linha_do_tempo(sessao, jornada, _interpretar_tipos(tipos))

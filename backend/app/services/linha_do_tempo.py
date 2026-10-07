@@ -1,4 +1,4 @@
-"""Monta a linha do tempo unificada da jornada (RF12)."""
+"""Monta a linha do tempo unificada da jornada."""
 
 from collections.abc import Iterable
 
@@ -8,12 +8,10 @@ from sqlalchemy.orm import Session
 from app.models.consulta import Consulta, TipoConsulta
 from app.models.exame import Exame, StatusExame
 from app.models.jornada import Jornada
-from app.models.mensagem import Mensagem
 from app.models.solicitacao import Solicitacao, StatusSolicitacao, TipoSolicitacao
 from app.schemas.consulta import ConsultaSaida
 from app.schemas.exame import ExameSaida
 from app.schemas.linha_do_tempo import EventoLinhaDoTempo, TipoEvento
-from app.schemas.mensagem import MensagemSaida
 from app.schemas.solicitacao import SolicitacaoSaida
 
 ROTULOS_SOLICITACAO = {
@@ -34,11 +32,7 @@ ORDEM_TIPOS = {
     TipoEvento.consulta: 0,
     TipoEvento.solicitacao: 1,
     TipoEvento.exame: 2,
-    TipoEvento.mensagem: 3,
 }
-
-TAMANHO_MAXIMO_RESUMO_MENSAGEM = 80
-
 
 def _encurtar(texto: str, limite: int) -> str:
     texto = " ".join(texto.split())
@@ -101,32 +95,10 @@ def _eventos_de_exames(exames: Iterable[Exame]) -> list[EventoLinhaDoTempo]:
     return eventos
 
 
-def _eventos_de_mensagens(mensagens: Iterable[Mensagem]) -> list[EventoLinhaDoTempo]:
-    eventos = []
-    for mensagem in mensagens:
-        nome = mensagem.remetente.nome
-        if mensagem.conteudo:
-            resumo = f"{nome}: {_encurtar(mensagem.conteudo, TAMANHO_MAXIMO_RESUMO_MENSAGEM)}"
-            if mensagem.arquivo is not None:
-                resumo += " (com anexo)"
-        else:
-            resumo = f"{nome} enviou um anexo: {mensagem.arquivo.nome_original}"
-        eventos.append(
-            EventoLinhaDoTempo(
-                tipo=TipoEvento.mensagem,
-                id=mensagem.id,
-                data=mensagem.criado_em,
-                resumo=resumo,
-                dados=MensagemSaida.model_validate(mensagem).model_dump(mode="json"),
-            )
-        )
-    return eventos
-
-
 def montar_linha_do_tempo(
     sessao: Session, jornada: Jornada, tipos: set[TipoEvento] | None = None
 ) -> list[EventoLinhaDoTempo]:
-    """Reúne consultas, solicitações, exames e mensagens em ordem cronológica.
+    """Reúne consultas, solicitações e exames em ordem cronológica.
 
     Datas usadas: consulta = data da consulta; demais = momento em que foram criadas.
     """
@@ -142,9 +114,6 @@ def montar_linha_do_tempo(
     if TipoEvento.exame in tipos:
         exames = sessao.scalars(select(Exame).where(Exame.jornada_id == jornada.id))
         eventos += _eventos_de_exames(exames)
-    if TipoEvento.mensagem in tipos:
-        mensagens = sessao.scalars(select(Mensagem).where(Mensagem.jornada_id == jornada.id))
-        eventos += _eventos_de_mensagens(mensagens)
 
     eventos.sort(key=lambda evento: (evento.data, ORDEM_TIPOS[evento.tipo], evento.id))
     return eventos

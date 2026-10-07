@@ -1,9 +1,10 @@
-"""Cria dados de exemplo: um médico, um paciente, o vínculo e uma jornada com histórico.
+"""Cria dados de exemplo: médico, paciente, parceiro e uma jornada com histórico.
 
 Uso (na pasta backend, com o venv ativo e o banco migrado):
     python -m scripts.seed
 
-Pode ser executado mais de uma vez: se o médico de exemplo já existir, nada é feito.
+Pode ser executado mais de uma vez: se o paciente de exemplo já existir, nada é feito.
+Se já houver um médico (criado com scripts.criar_medico), ele é reaproveitado.
 """
 
 import uuid
@@ -20,20 +21,20 @@ from app.models import (
     Consulta,
     Exame,
     Jornada,
-    Mensagem,
-    PapelUsuario,
     PassoJornada,
     Prescricao,
     Solicitacao,
     TipoConsulta,
     TipoSolicitacao,
+    TipoUsuario,
     Usuario,
-    VinculoMedicoPaciente,
 )
+from app.models.usuario import PROFISSAO_MEDICO
 
 SENHA_EXEMPLO = "lifescan123"
 EMAIL_MEDICO = "medico@lifescan.com"
 EMAIL_PACIENTE = "paciente@lifescan.com"
+EMAIL_PARCEIRO = "parceiro@lifescan.com"
 
 
 def _gravar_arquivo_texto(jornada_id: int, usuario_id: int, nome: str, conteudo: str) -> Arquivo:
@@ -54,19 +55,42 @@ def _gravar_arquivo_texto(jornada_id: int, usuario_id: int, nome: str, conteudo:
 
 def criar_dados_de_exemplo() -> None:
     with SessaoLocal() as sessao:
-        if sessao.scalar(select(Usuario.id).where(Usuario.email == EMAIL_MEDICO)):
+        if sessao.scalar(select(Usuario.id).where(Usuario.email == EMAIL_PACIENTE)):
             print("Os dados de exemplo já existem. Nada foi alterado.")
             return
 
         agora = agora_utc()
         senha_hash = gerar_hash_senha(SENHA_EXEMPLO)
 
-        medico = Usuario(nome="Dra. Ana Souza", email=EMAIL_MEDICO, senha_hash=senha_hash, papel=PapelUsuario.medico)
-        paciente = Usuario(nome="Carlos Lima", email=EMAIL_PACIENTE, senha_hash=senha_hash, papel=PapelUsuario.paciente)
-        sessao.add_all([medico, paciente])
+        medico = sessao.scalar(select(Usuario).where(Usuario.tipo_usuario == TipoUsuario.medico))
+        medico_criado = medico is None
+        if medico_criado:
+            medico = Usuario(
+                tipo_usuario=TipoUsuario.medico,
+                nome="Dra. Ana Souza",
+                email=EMAIL_MEDICO,
+                profissao=PROFISSAO_MEDICO,
+                senha_hash=senha_hash,
+            )
+            sessao.add(medico)
+
+        # Contas de exemplo já com senha definida, para dispensar o fluxo da senha provisória
+        paciente = Usuario(
+            tipo_usuario=TipoUsuario.paciente,
+            nome="Carlos Lima",
+            email=EMAIL_PACIENTE,
+            senha_hash=senha_hash,
+        )
+        parceiro = Usuario(
+            tipo_usuario=TipoUsuario.parceiro,
+            nome="Marina Costa",
+            email=EMAIL_PARCEIRO,
+            profissao="Nutricionista",
+            senha_hash=senha_hash,
+        )
+        sessao.add_all([paciente, parceiro])
         sessao.flush()
 
-        sessao.add(VinculoMedicoPaciente(medico_id=medico.id, paciente_id=paciente.id))
         jornada = Jornada(
             medico_id=medico.id,
             paciente_id=paciente.id,
@@ -137,28 +161,16 @@ def criar_dados_de_exemplo() -> None:
             )
         )
 
-        sessao.add_all(
-            [
-                Mensagem(
-                    jornada_id=jornada.id,
-                    remetente_id=medico.id,
-                    conteudo="Olá, Carlos! Lembre-se de medir a pressão todos os dias e anotar os valores.",
-                    criado_em=agora - timedelta(days=19),
-                ),
-                Mensagem(
-                    jornada_id=jornada.id,
-                    remetente_id=paciente.id,
-                    conteudo="Doutora, enviei o diário de medições. A pressão está baixando!",
-                    criado_em=agora - timedelta(days=3),
-                ),
-            ]
-        )
-
         sessao.commit()
+        email_medico = medico.email
 
     print("Dados de exemplo criados:")
-    print(f"  Médico:   {EMAIL_MEDICO} / {SENHA_EXEMPLO}")
+    if medico_criado:
+        print(f"  Médico:   {EMAIL_MEDICO} / {SENHA_EXEMPLO}")
+    else:
+        print(f"  Médico:   {email_medico} (conta já existente, senha inalterada)")
     print(f"  Paciente: {EMAIL_PACIENTE} / {SENHA_EXEMPLO}")
+    print(f"  Parceiro: {EMAIL_PARCEIRO} / {SENHA_EXEMPLO}")
 
 
 if __name__ == "__main__":

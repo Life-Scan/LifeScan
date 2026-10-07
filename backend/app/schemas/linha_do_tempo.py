@@ -10,7 +10,6 @@ class TipoEvento(str, enum.Enum):
     consulta = "consulta"
     exame = "exame"
     solicitacao = "solicitacao"
-    mensagem = "mensagem"
 
 
 class EventoLinhaDoTempo(BaseModel):

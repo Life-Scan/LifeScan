@@ -119,9 +119,9 @@ def test_paciente_nao_revisa_exame(cliente, paciente, jornada):
     assert resposta.status_code == 403
 
 
-def test_outro_medico_nao_revisa_exame(cliente, outro_medico, paciente, jornada):
+def test_parceiro_nao_revisa_exame(cliente, parceiro, paciente, jornada):
     exame = enviar_exame(cliente, paciente, jornada).json()
-    resposta = cliente.patch(f"/exams/{exame['id']}/review", json={}, headers=outro_medico["headers"])
+    resposta = cliente.patch(f"/exams/{exame['id']}/review", json={}, headers=parceiro["headers"])
     assert resposta.status_code == 403
 
 
@@ -140,11 +140,11 @@ def test_download_do_arquivo(cliente, medico, paciente, jornada):
     assert inline.headers["content-disposition"].startswith("inline")
 
 
-def test_download_exige_acesso_a_jornada(cliente, outro_medico, paciente, jornada):
+def test_download_exige_acesso_a_jornada(cliente, outro_paciente, paciente, jornada):
     exame = enviar_exame(cliente, paciente, jornada).json()
     url = f"/files/{exame['arquivo']['id']}/download"
     assert cliente.get(url).status_code == 401
-    assert cliente.get(url, headers=outro_medico["headers"]).status_code == 403
+    assert cliente.get(url, headers=outro_paciente["headers"]).status_code == 403
     assert cliente.get("/files/999/download", headers=paciente["headers"]).status_code == 404
 
 

@@ -24,12 +24,12 @@ def verificar_senha(senha: str, senha_hash: str) -> bool:
         return False
 
 
-def criar_token_acesso(usuario_id: int, papel: str) -> str:
+def criar_token_acesso(usuario_id: int, tipo_usuario: str) -> str:
     config = obter_configuracoes()
     agora = datetime.now(timezone.utc)
     carga = {
         "sub": str(usuario_id),
-        "papel": papel,
+        "tipo_usuario": tipo_usuario,
         "iat": agora,
         "exp": agora + timedelta(minutes=config.minutos_expiracao_jwt),
     }

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import (
     carregar_jornada_com_acesso,
-    exigir_papel,
+    exigir_tipo,
     garantir_jornada_editavel,
     obter_jornada_com_acesso,
     obter_jornada_do_medico,
@@ -13,7 +13,7 @@ from app.db.base import agora_utc
 from app.db.sessao import obter_sessao
 from app.models.jornada import Jornada
 from app.models.solicitacao import Solicitacao, StatusSolicitacao
-from app.models.usuario import PapelUsuario, Usuario
+from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.solicitacao import SolicitacaoEntrada, SolicitacaoSaida
 
 router = APIRouter(tags=["Solicitações"])
@@ -73,7 +73,7 @@ def _obter_solicitacao_pendente_do_medico(
 @router.patch("/requests/{solicitacao_id}/complete", response_model=SolicitacaoSaida)
 def concluir_solicitacao(
     solicitacao_id: int,
-    medico: Usuario = Depends(exigir_papel(PapelUsuario.medico)),
+    medico: Usuario = Depends(exigir_tipo(TipoUsuario.medico)),
     sessao: Session = Depends(obter_sessao),
 ) -> Solicitacao:
     """O médico marca a solicitação como atendida (ex.: a consulta extra aconteceu)."""
@@ -86,7 +86,7 @@ def concluir_solicitacao(
 @router.patch("/requests/{solicitacao_id}/cancel", response_model=SolicitacaoSaida)
 def cancelar_solicitacao(
     solicitacao_id: int,
-    medico: Usuario = Depends(exigir_papel(PapelUsuario.medico)),
+    medico: Usuario = Depends(exigir_tipo(TipoUsuario.medico)),
     sessao: Session = Depends(obter_sessao),
 ) -> Solicitacao:
     solicitacao = _obter_solicitacao_pendente_do_medico(solicitacao_id, medico, sessao)

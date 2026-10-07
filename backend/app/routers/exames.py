@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import (
     carregar_jornada_com_acesso,
-    exigir_papel,
+    exigir_tipo,
     garantir_jornada_editavel,
     obter_jornada_com_acesso,
     obter_usuario_atual,
@@ -14,7 +14,7 @@ from app.db.sessao import obter_sessao
 from app.models.exame import Exame, StatusExame
 from app.models.jornada import Jornada
 from app.models.solicitacao import TIPOS_ATENDIDOS_POR_ENVIO, Solicitacao, StatusSolicitacao
-from app.models.usuario import PapelUsuario, Usuario
+from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.exame import ExameSaida, RevisaoEntrada
 from app.services.armazenamento import confirmar_ou_remover, salvar_upload
 
@@ -95,7 +95,7 @@ def listar_exames(
 def revisar_exame(
     exame_id: int,
     dados: RevisaoEntrada,
-    medico: Usuario = Depends(exigir_papel(PapelUsuario.medico)),
+    medico: Usuario = Depends(exigir_tipo(TipoUsuario.medico)),
     sessao: Session = Depends(obter_sessao),
 ) -> Exame:
     """O médico revisa o exame, com uma observação opcional (RF09). Pode revisar de novo para corrigir a observação."""
