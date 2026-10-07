@@ -1,7 +1,7 @@
 # LifeScan
 
 Centraliza os dados do tratamento de saúde do paciente para ajudar o trabalho do médico:
-consultas, prescrições, solicitações com prazo, exames e uma linha do tempo unificada.
+consultas, prescrições, solicitações com prazo, documentos e uma linha do tempo unificada.
 O paciente acompanha o que precisa fazer; parceiros (nutricionista, fisioterapeuta…)
 colaboram com documentos da sua área.
 
@@ -118,7 +118,8 @@ acesso pela tela de Pacientes/Parceiros.
 ### Dados de exemplo (opcional)
 
 Cria um paciente e um parceiro já com senha definida e uma jornada com ficha preenchida,
-parceiro atribuído, consulta, solicitações (uma vencida) e um exame aguardando revisão. Se ainda não houver médico,
+parceiro atribuído, consulta, solicitações (uma vencida e uma destinada ao parceiro) e um
+documento aguardando revisão. Se ainda não houver médico,
 cria também o médico de exemplo.
 
 ```powershell
@@ -173,15 +174,17 @@ Build de produção: `npm run build` (gera `frontend/dist`).
 ### Telas
 
 - **Login**, **Esqueci minha senha** e **Definir/alterar senha** (obrigatória no primeiro acesso).
-- **Painel de pendências**: o médico vê exames para revisar e solicitações vencidas ou perto do
-  prazo; o paciente vê o que precisa fazer (vencidas em destaque) e as consultas extras marcadas.
+- **Painel de pendências**: o médico vê documentos para revisar e solicitações vencidas ou perto
+  do prazo; o paciente vê o que precisa fazer (vencidas em destaque) e as consultas extras
+  marcadas; o parceiro vê as solicitações destinadas a ele.
 - **Pacientes** e **Parceiros** (médico): criar conta, reenviar acesso, desativar/reativar.
 - **Jornadas**: lista (médico), a jornada do paciente, ou os pacientes atribuídos (parceiro);
   abertura de nova jornada (médico).
 - **Página da jornada**: passo atual (o médico altera clicando), encerrar/reabrir, e abas de
-  linha do tempo (com filtros), ficha do paciente, consultas e prescrições, solicitações, exames
-  (envio, revisão, visualizar/baixar) e parceiros atribuídos.
-- **Visão do parceiro**: só a ficha do paciente e os próprios envios.
+  linha do tempo (com filtros), ficha do paciente, consultas e prescrições, solicitações (para o
+  paciente ou para um parceiro), documentos por categoria (envio, revisão, visualizar/baixar) e
+  parceiros atribuídos.
+- **Visão do parceiro**: só a ficha do paciente, as solicitações destinadas a ele e os próprios envios.
 
 As listas e a página da jornada se atualizam a cada 30 segundos; a atualização pausa quando a
 aba do navegador fica oculta.
@@ -210,17 +213,19 @@ aba do navegador fica oculta.
 | DELETE | `/journeys/{id}/partners/{parceiro_id}` | Médico remove o parceiro da jornada |
 | POST | `/journeys/{id}/consultations` | Médico registra consulta/retorno com prescrições aninhadas |
 | GET | `/journeys/{id}/consultations` | Consultas da jornada |
-| POST | `/journeys/{id}/requests` | Médico cria solicitação com prazo (`tipo`, `descricao`, `prazo`) |
-| GET | `/journeys/{id}/requests?status=` | Solicitações da jornada (com `vencida` calculado) |
+| POST | `/journeys/{id}/requests` | Médico cria solicitação com prazo (`tipo`, `descricao`, `prazo`, `destinatario_id` opcional: paciente ou parceiro atribuído) |
+| GET | `/journeys/{id}/requests?status=` | Solicitações da jornada (o parceiro vê só as destinadas a ele) |
 | PATCH | `/requests/{id}/complete` | Médico marca a solicitação como atendida |
 | PATCH | `/requests/{id}/cancel` | Médico cancela a solicitação |
-| POST | `/journeys/{id}/exams` | Envio de exame (multipart: `titulo`, `arquivo`, `solicitacao_id` opcional) |
-| GET | `/journeys/{id}/exams` | Exames da jornada (o parceiro vê só os próprios envios) |
-| PATCH | `/exams/{id}/review` | Médico revisa o exame (`observacao_revisao`) |
+| POST | `/journeys/{id}/documents` | Envio de documento (multipart: `titulo`, `categoria`, `arquivo`, `solicitacao_id` opcional) |
+| GET | `/journeys/{id}/documents?categoria=` | Documentos da jornada (o parceiro vê só os próprios envios) |
+| PATCH | `/documents/{id}/review` | Médico revisa o documento (`observacao_revisao`) |
 | GET | `/files/{id}/download?inline=` | Download autenticado do arquivo |
-| GET | `/journeys/{id}/timeline?tipos=` | Linha do tempo unificada `{tipo, id, data, resumo, dados}` (filtro: `consulta,exame,solicitacao`) |
+| GET | `/journeys/{id}/timeline?tipos=` | Linha do tempo unificada `{tipo, id, data, resumo, dados}` (filtro: `consulta,documento,solicitacao`) |
 | GET | `/dashboard/pending` | Painel de pendências (conteúdo por tipo de usuário) |
 | GET | `/health` | Verificação de saúde da API |
+
+Categorias de documento: `exame`, `laudo`, `plano_alimentar`, `plano_treino`, `orientacao`, `outro`.
 
 Uploads aceitam `pdf, png, jpg, jpeg, webp, dcm, txt` com até 30 MB (415 para formato
 não permitido, 413 para arquivo grande). Os arquivos ficam em `backend/uploads/` com nome

@@ -44,17 +44,18 @@ export const criarSolicitacao = (jornadaId, solicitacao) =>
 export const concluirSolicitacao = (id) => dados(api.patch(`/requests/${id}/complete`))
 export const cancelarSolicitacao = (id) => dados(api.patch(`/requests/${id}/cancel`))
 
-// Exames
-export const listarExames = (jornadaId) => dados(api.get(`/journeys/${jornadaId}/exams`))
-export function enviarExame(jornadaId, { titulo, arquivo, solicitacaoId }) {
+// Documentos (exames, laudos, planos alimentares, planos de treino, orientações...)
+export const listarDocumentos = (jornadaId) => dados(api.get(`/journeys/${jornadaId}/documents`))
+export function enviarDocumento(jornadaId, { titulo, categoria, arquivo, solicitacaoId }) {
   const formulario = new FormData()
   formulario.append('titulo', titulo)
+  formulario.append('categoria', categoria)
   formulario.append('arquivo', arquivo)
   if (solicitacaoId) formulario.append('solicitacao_id', solicitacaoId)
-  return dados(api.post(`/journeys/${jornadaId}/exams`, formulario))
+  return dados(api.post(`/journeys/${jornadaId}/documents`, formulario))
 }
-export const revisarExame = (id, observacao) =>
-  dados(api.patch(`/exams/${id}/review`, { observacao_revisao: observacao }))
+export const revisarDocumento = (id, observacao) =>
+  dados(api.patch(`/documents/${id}/review`, { observacao_revisao: observacao }))
 
 // Linha do tempo e painel
 export const obterLinhaDoTempo = (jornadaId, tipos) =>

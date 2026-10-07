@@ -5,6 +5,7 @@ import { Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } fr
 import { useAuth } from '../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import {
+  ROTULOS_CATEGORIA,
   ROTULOS_TIPO_SOLICITACAO,
   formatarData,
   formatarDataHora,
@@ -73,7 +74,7 @@ function PrazoSolicitacao({ solicitacao }) {
   )
 }
 
-function ItemSolicitacao({ solicitacao, mostrarPaciente }) {
+function ItemSolicitacao({ solicitacao, mostrarPaciente, mostrarDestinatario }) {
   return (
     <li className={solicitacao.vencida ? ui.itemListaDestaque : ui.itemLista}>
       <div className={ui.cabecalhoItem}>
@@ -86,6 +87,11 @@ function ItemSolicitacao({ solicitacao, mostrarPaciente }) {
       <div className={estilos.meta}>
         <span>Prazo: {formatarDataHora(solicitacao.prazo)}</span>
         {mostrarPaciente && <span>Paciente: {solicitacao.jornada.paciente.nome}</span>}
+        {mostrarDestinatario && solicitacao.destinatario.tipo_usuario === 'parceiro' && (
+          <span>
+            A cargo de: {solicitacao.destinatario.nome} ({solicitacao.destinatario.profissao})
+          </span>
+        )}
       </div>
     </li>
   )
@@ -93,7 +99,7 @@ function ItemSolicitacao({ solicitacao, mostrarPaciente }) {
 
 function PainelMedico({ painel }) {
   const {
-    exames_aguardando_revisao: exames,
+    documentos_aguardando_revisao: documentos,
     solicitacoes_vencidas: vencidas,
     solicitacoes_proximas_do_prazo: proximas,
     dias_prazo_proximo: diasPrazo,
@@ -102,25 +108,29 @@ function PainelMedico({ painel }) {
   return (
     <>
       <div className={estilos.resumos}>
-        <Resumo numero={exames.length} rotulo="Exames para revisar" destino="#exames" variante="resumoAlerta" />
+        <Resumo numero={documentos.length} rotulo="Documentos para revisar" destino="#documentos" variante="resumoAlerta" />
         <Resumo numero={vencidas.length} rotulo="Solicitações vencidas" destino="#vencidas" variante="resumoPerigo" />
         <Resumo numero={proximas.length} rotulo={`Vencem em até ${diasPrazo} dias`} destino="#proximas" variante="resumoAlerta" />
       </div>
 
       <div className={estilos.grade}>
-        <Secao id="exames" titulo="Exames aguardando revisão">
-          {exames.length === 0 ? (
-            <EstadoVazio>Nenhum exame aguardando revisão.</EstadoVazio>
+        <Secao id="documentos" titulo="Documentos aguardando revisão">
+          {documentos.length === 0 ? (
+            <EstadoVazio>Nenhum documento aguardando revisão.</EstadoVazio>
           ) : (
             <ul className={ui.lista}>
-              {exames.map((exame) => (
-                <li key={exame.id} className={ui.itemLista}>
-                  <Link to={linkJornada(exame.jornada.id, 'exames')} className={estilos.linkItem}>
-                    {exame.titulo}
-                  </Link>
+              {documentos.map((documento) => (
+                <li key={documento.id} className={ui.itemLista}>
+                  <div className={ui.cabecalhoItem}>
+                    <Link to={linkJornada(documento.jornada.id, 'documentos')} className={estilos.linkItem}>
+                      {documento.titulo}
+                    </Link>
+                    <Etiqueta variante="info">{ROTULOS_CATEGORIA[documento.categoria]}</Etiqueta>
+                  </div>
                   <div className={estilos.meta}>
-                    <span>Paciente: {exame.jornada.paciente.nome}</span>
-                    <span>Enviado em {formatarData(exame.criado_em)}</span>
+                    <span>Paciente: {documento.jornada.paciente.nome}</span>
+                    <span>Enviado por {documento.enviado_por.nome}</span>
+                    <span>{formatarData(documento.criado_em)}</span>
                   </div>
                 </li>
               ))}
@@ -134,7 +144,7 @@ function PainelMedico({ painel }) {
           ) : (
             <ul className={ui.lista}>
               {vencidas.map((s) => (
-                <ItemSolicitacao key={s.id} solicitacao={s} mostrarPaciente />
+                <ItemSolicitacao key={s.id} solicitacao={s} mostrarPaciente mostrarDestinatario />
               ))}
             </ul>
           )}
@@ -146,7 +156,7 @@ function PainelMedico({ painel }) {
           ) : (
             <ul className={ui.lista}>
               {proximas.map((s) => (
-                <ItemSolicitacao key={s.id} solicitacao={s} mostrarPaciente />
+                <ItemSolicitacao key={s.id} solicitacao={s} mostrarPaciente mostrarDestinatario />
               ))}
             </ul>
           )}
@@ -209,7 +219,7 @@ function PainelParceiro({ painel }) {
     <Secao id="pendencias" titulo="Solicitações destinadas a você">
       {pendentes.length === 0 ? (
         <EstadoVazio>
-          Nenhuma solicitação no momento. Em <Link to="/jornadas">Pacientes</Link> você consulta a ficha de quem foi
+          Nenhuma solicitação pendente. Em <Link to="/jornadas">Pacientes</Link> você consulta a ficha de quem foi
           atribuído a você e envia documentos.
         </EstadoVazio>
       ) : (

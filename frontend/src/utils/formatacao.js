@@ -55,12 +55,21 @@ export const ROTULOS_STATUS_SOLICITACAO = {
   cancelada: 'Cancelada',
 }
 
-export const ROTULOS_STATUS_EXAME = { enviado: 'Aguardando revisão', revisado: 'Revisado' }
+export const ROTULOS_STATUS_DOCUMENTO = { enviado: 'Aguardando revisão', revisado: 'Revisado' }
+
+export const ROTULOS_CATEGORIA = {
+  exame: 'Exame',
+  laudo: 'Laudo',
+  plano_alimentar: 'Plano alimentar',
+  plano_treino: 'Plano de treino',
+  orientacao: 'Orientação',
+  outro: 'Outro',
+}
 
 export const ROTULOS_TIPO_EVENTO = {
   consulta: 'Consulta',
   solicitacao: 'Solicitação',
-  exame: 'Exame',
+  documento: 'Documento',
 }
 
 export const ROTULOS_SEXO = { masculino: 'Masculino', feminino: 'Feminino', outro: 'Outro' }

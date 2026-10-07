@@ -13,7 +13,7 @@ import {
 } from '../../utils/formatacao'
 import estilos from './Jornada.module.css'
 
-// Solicitações que o paciente atende enviando um documento
+// Solicitações que o destinatário atende enviando um documento
 const TIPOS_COM_ENVIO = ['exame', 'orientacao_profissional']
 
 const ORDEM_STATUS = { pendente: 0, atendida: 1, cancelada: 2 }
@@ -24,7 +24,22 @@ export function EtiquetaSolicitacao({ solicitacao }) {
   return <Etiqueta variante={variantes[solicitacao.status]}>{ROTULOS_STATUS_SOLICITACAO[solicitacao.status]}</Etiqueta>
 }
 
-export default function AbaSolicitacoes({ solicitacoes, jornada, ehMedico, editavel, atualizar, irParaAba }) {
+/** "Carlos Lima" para o paciente; "Marina Costa (Nutricionista)" para um parceiro. */
+export function nomeDoDestinatario({ nome, tipo_usuario: tipo, profissao }) {
+  return tipo === 'parceiro' && profissao ? `${nome} (${profissao})` : nome
+}
+
+export default function AbaSolicitacoes({
+  solicitacoes,
+  parceiros,
+  jornada,
+  usuario,
+  ehMedico,
+  ehParceiro,
+  editavel,
+  atualizar,
+  irParaAba,
+}) {
   const [formularioAberto, setFormularioAberto] = useState(false)
   const [erro, setErro] = useState('')
 
@@ -47,7 +62,7 @@ export default function AbaSolicitacoes({ solicitacoes, jornada, ehMedico, edita
   return (
     <div className={estilos.pilha}>
       <div className={ui.cartaoCabecalho} style={{ marginBottom: 0 }}>
-        <h2>Solicitações</h2>
+        <h2>{ehParceiro ? 'Solicitações para você' : 'Solicitações'}</h2>
         {ehMedico && editavel && !formularioAberto && (
           <button type="button" className={ui.botao} onClick={() => setFormularioAberto(true)}>
             Nova solicitação
@@ -57,7 +72,8 @@ export default function AbaSolicitacoes({ solicitacoes, jornada, ehMedico, edita
 
       {formularioAberto && (
         <FormularioSolicitacao
-          jornadaId={jornada.id}
+          jornada={jornada}
+          parceiros={parceiros}
           aoConcluir={async () => {
             setFormularioAberto(false)
             await atualizar()
@@ -69,11 +85,15 @@ export default function AbaSolicitacoes({ solicitacoes, jornada, ehMedico, edita
       <Alerta tipo="erro">{erro}</Alerta>
 
       {ordenadas.length === 0 ? (
-        <EstadoVazio>Nenhuma solicitação nesta jornada.</EstadoVazio>
+        <EstadoVazio>
+          {ehParceiro ? 'O médico ainda não fez solicitações para você.' : 'Nenhuma solicitação nesta jornada.'}
+        </EstadoVazio>
       ) : (
         <ul className={ui.lista}>
           {ordenadas.map((solicitacao) => {
             const pendente = solicitacao.status === 'pendente'
+            const paraMim = solicitacao.destinatario.id === usuario.id
+            const paraParceiro = solicitacao.destinatario.tipo_usuario === 'parceiro'
             return (
               <li key={solicitacao.id} className={solicitacao.vencida ? ui.itemListaDestaque : ui.itemLista}>
                 <div className={ui.cabecalhoItem}>
@@ -82,6 +102,10 @@ export default function AbaSolicitacoes({ solicitacoes, jornada, ehMedico, edita
                 </div>
                 <p className={estilos.texto}>{solicitacao.descricao}</p>
                 <div className={estilos.meta}>
+                  {/* Para o parceiro todas são dele; para os demais, só destaca as que vão a um parceiro */}
+                  {!ehParceiro && (ehMedico || paraParceiro) && (
+                    <span>Para: {nomeDoDestinatario(solicitacao.destinatario)}</span>
+                  )}
                   <span>
                     {solicitacao.tipo === 'consulta_extra' ? 'Marcada para' : 'Prazo'}:{' '}
                     {formatarDataHora(solicitacao.prazo)}
@@ -92,17 +116,22 @@ export default function AbaSolicitacoes({ solicitacoes, jornada, ehMedico, edita
 
                 {pendente && editavel && (
                   <div className={`${ui.acoes} ${estilos.acoesItem}`}>
-                    {!ehMedico && TIPOS_COM_ENVIO.includes(solicitacao.tipo) && (
+                    {!ehMedico && paraMim && TIPOS_COM_ENVIO.includes(solicitacao.tipo) && (
                       <button
                         type="button"
                         className={`${ui.botao} ${ui.botaoPequeno}`}
-                        onClick={() => irParaAba('exames', { solicitacao: String(solicitacao.id) })}
+                        onClick={() => irParaAba('documentos', { solicitacao: String(solicitacao.id) })}
                       >
                         Enviar documento
                       </button>
                     )}
-                    {!ehMedico && solicitacao.tipo === 'consulta_extra' && (
+                    {!ehMedico && paraMim && solicitacao.tipo === 'consulta_extra' && (
                       <span className={ui.ajuda}>Lembrete do seu médico: compareça na data marcada.</span>
+                    )}
+                    {!ehMedico && !paraMim && (
+                      <span className={ui.ajuda}>
+                        Esta solicitação é para {solicitacao.destinatario.nome}; você não precisa fazer nada.
+                      </span>
                     )}
                     {ehMedico && (
                       <>
@@ -135,19 +164,33 @@ export default function AbaSolicitacoes({ solicitacoes, jornada, ehMedico, edita
   )
 }
 
-function FormularioSolicitacao({ jornadaId, aoConcluir, aoCancelar }) {
+function FormularioSolicitacao({ jornada, parceiros, aoConcluir, aoCancelar }) {
   const [tipo, setTipo] = useState('exame')
+  const [destinatarioId, setDestinatarioId] = useState(String(jornada.paciente.id))
   const [descricao, setDescricao] = useState('')
   const [prazo, setPrazo] = useState(() => paraCampoDataHora(new Date(Date.now() + 7 * 86_400_000)))
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+
+  // A consulta extra é um lembrete para o paciente e não pode ir para um parceiro
+  const soPaciente = tipo === 'consulta_extra'
+
+  function aoMudarTipo(novoTipo) {
+    setTipo(novoTipo)
+    if (novoTipo === 'consulta_extra') setDestinatarioId(String(jornada.paciente.id))
+  }
 
   async function aoEnviar(evento) {
     evento.preventDefault()
     setErro('')
     setEnviando(true)
     try {
-      await criarSolicitacao(jornadaId, { tipo, descricao, prazo: campoDataHoraParaIso(prazo) })
+      await criarSolicitacao(jornada.id, {
+        tipo,
+        descricao,
+        prazo: campoDataHoraParaIso(prazo),
+        destinatario_id: Number(destinatarioId),
+      })
       await aoConcluir()
     } catch (erroEnvio) {
       setErro(mensagemDeErro(erroEnvio))
@@ -162,10 +205,26 @@ function FormularioSolicitacao({ jornadaId, aoConcluir, aoCancelar }) {
       <div className={ui.linhaCampos}>
         <div>
           <label htmlFor="solicitacao-tipo">Tipo</label>
-          <select id="solicitacao-tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
+          <select id="solicitacao-tipo" value={tipo} onChange={(e) => aoMudarTipo(e.target.value)}>
             {Object.entries(ROTULOS_TIPO_SOLICITACAO).map(([valor, rotulo]) => (
               <option key={valor} value={valor}>
                 {rotulo}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="solicitacao-destinatario">Para quem</label>
+          <select
+            id="solicitacao-destinatario"
+            value={destinatarioId}
+            onChange={(e) => setDestinatarioId(e.target.value)}
+            disabled={soPaciente}
+          >
+            <option value={jornada.paciente.id}>{jornada.paciente.nome} (paciente)</option>
+            {parceiros.map(({ parceiro }) => (
+              <option key={parceiro.id} value={parceiro.id}>
+                {parceiro.nome} ({parceiro.profissao})
               </option>
             ))}
           </select>
@@ -182,6 +241,11 @@ function FormularioSolicitacao({ jornadaId, aoConcluir, aoCancelar }) {
           />
         </div>
       </div>
+      {parceiros.length === 0 && !soPaciente && (
+        <p className={ui.ajuda}>
+          Para pedir algo a um parceiro (ex.: plano alimentar), atribua-o a esta jornada na aba Parceiros.
+        </p>
+      )}
       <div>
         <label htmlFor="solicitacao-descricao">Descrição</label>
         <textarea
@@ -192,12 +256,12 @@ function FormularioSolicitacao({ jornadaId, aoConcluir, aoCancelar }) {
           minLength={3}
           placeholder={
             tipo === 'orientacao_profissional'
-              ? 'Ex.: Enviar o plano alimentar da nutricionista'
+              ? 'Ex.: Montar e enviar o plano alimentar'
               : 'Ex.: Hemograma completo e perfil lipídico'
           }
         />
       </div>
-      {tipo === 'consulta_extra' && (
+      {soPaciente && (
         <p className={ui.ajuda}>O paciente verá esta consulta como um lembrete. Você a marca como atendida depois.</p>
       )}
       <div className={ui.acoes}>

@@ -3,8 +3,7 @@
 Diagramas em [Mermaid](https://mermaid.js.org). O GitHub mostra os diagramas desenhados; também
 dá para colar o código em <https://mermaid.live>.
 
-Os diagramas mostram o **modelo-alvo**. Ainda não foram implementados: a categoria dos
-documentos (hoje a tabela se chama `exames`) e o destinatário das solicitações.
+Os diagramas refletem o modelo implementado.
 
 ## Diagrama de classes
 
@@ -223,7 +222,7 @@ erDiagram
     SOLICITACOES {
         int id PK
         int jornada_id FK
-        int destinatario_id FK "pendente: paciente ou parceiro"
+        int destinatario_id FK "paciente ou parceiro atribuído"
         enum tipo "exame | consulta_extra | orientacao_profissional | outro"
         text descricao
         datetime prazo
@@ -237,7 +236,7 @@ erDiagram
         int solicitacao_id FK "NULL"
         int enviado_por_id FK
         int arquivo_id FK
-        enum categoria "pendente; hoje a tabela se chama exames"
+        enum categoria "exame | laudo | plano_alimentar | plano_treino | orientacao | outro"
         varchar titulo
         enum status "enviado | revisado"
         text observacao_revisao

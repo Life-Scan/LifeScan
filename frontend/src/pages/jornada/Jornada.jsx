@@ -6,7 +6,7 @@ import { Alerta, Carregando, ErroCarregamento, estilos as ui } from '../../compo
 import { useAuth } from '../../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../../hooks/useAtualizacaoPeriodica'
 import AbaConsultas from './AbaConsultas'
-import AbaExames from './AbaExames'
+import AbaDocumentos from './AbaDocumentos'
 import AbaFicha from './AbaFicha'
 import AbaLinhaDoTempo from './AbaLinhaDoTempo'
 import AbaParceiros from './AbaParceiros'
@@ -19,36 +19,38 @@ const ABAS = [
   { id: 'ficha', rotulo: 'Ficha' },
   { id: 'consultas', rotulo: 'Consultas' },
   { id: 'solicitacoes', rotulo: 'Solicitações' },
-  { id: 'exames', rotulo: 'Exames' },
+  { id: 'documentos', rotulo: 'Documentos' },
   { id: 'parceiros', rotulo: 'Parceiros' },
 ]
 
-// O parceiro só tem acesso à ficha do paciente e aos próprios envios
+// O parceiro só tem acesso à ficha do paciente, às solicitações destinadas a ele e aos próprios envios
 const ABAS_PARCEIRO = [
   { id: 'ficha', rotulo: 'Ficha do paciente' },
-  { id: 'exames', rotulo: 'Meus envios' },
+  { id: 'solicitacoes', rotulo: 'Solicitações' },
+  { id: 'documentos', rotulo: 'Meus envios' },
 ]
 
 /** Carrega tudo o que o usuário pode ver da jornada; o polling repete essa busca a cada 30 s. */
 async function carregarJornada(id, ehParceiro) {
   if (ehParceiro) {
-    const [jornada, ficha, exames] = await Promise.all([
+    const [jornada, ficha, solicitacoes, documentos] = await Promise.all([
       servicos.obterJornada(id),
       servicos.obterFicha(id),
-      servicos.listarExames(id),
+      servicos.listarSolicitacoes(id),
+      servicos.listarDocumentos(id),
     ])
-    return { jornada, ficha, exames, linhaDoTempo: [], consultas: [], solicitacoes: [], parceiros: [] }
+    return { jornada, ficha, solicitacoes, documentos, linhaDoTempo: [], consultas: [], parceiros: [] }
   }
-  const [jornada, linhaDoTempo, ficha, consultas, solicitacoes, exames, parceiros] = await Promise.all([
+  const [jornada, linhaDoTempo, ficha, consultas, solicitacoes, documentos, parceiros] = await Promise.all([
     servicos.obterJornada(id),
     servicos.obterLinhaDoTempo(id),
     servicos.obterFicha(id),
     servicos.listarConsultas(id),
     servicos.listarSolicitacoes(id),
-    servicos.listarExames(id),
+    servicos.listarDocumentos(id),
     servicos.listarParceirosDaJornada(id),
   ])
-  return { jornada, linhaDoTempo, ficha, consultas, solicitacoes, exames, parceiros }
+  return { jornada, linhaDoTempo, ficha, consultas, solicitacoes, documentos, parceiros }
 }
 
 export default function Jornada() {
@@ -88,13 +90,18 @@ export default function Jornada() {
     )
   }
 
-  const { jornada, linhaDoTempo, ficha, consultas, solicitacoes, exames, parceiros } = dados
+  const { jornada, linhaDoTempo, ficha, consultas, solicitacoes, documentos, parceiros } = dados
   const editavel = jornada.status === 'ativa'
   const contexto = { jornada, usuario, ehMedico, ehParceiro, editavel, atualizar, irParaAba }
 
+  // Médico: tudo o que está pendente na jornada. Demais: só o que cabe a eles.
   const contagens = {
-    solicitacoes: solicitacoes.filter((s) => s.status === 'pendente').length,
-    exames: ehMedico ? exames.filter((e) => e.status === 'enviado' && e.enviado_por.id !== usuario.id).length : 0,
+    solicitacoes: solicitacoes.filter(
+      (s) => s.status === 'pendente' && (ehMedico || s.destinatario.id === usuario.id),
+    ).length,
+    documentos: ehMedico
+      ? documentos.filter((d) => d.status === 'enviado' && d.enviado_por.id !== usuario.id).length
+      : 0,
   }
 
   return (
@@ -137,10 +144,12 @@ export default function Jornada() {
         {abaAtual === 'linha' && <AbaLinhaDoTempo eventos={linhaDoTempo} {...contexto} />}
         {abaAtual === 'ficha' && <AbaFicha ficha={ficha} {...contexto} />}
         {abaAtual === 'consultas' && <AbaConsultas consultas={consultas} {...contexto} />}
-        {abaAtual === 'solicitacoes' && <AbaSolicitacoes solicitacoes={solicitacoes} {...contexto} />}
-        {abaAtual === 'exames' && (
-          <AbaExames
-            exames={exames}
+        {abaAtual === 'solicitacoes' && (
+          <AbaSolicitacoes solicitacoes={solicitacoes} parceiros={parceiros} {...contexto} />
+        )}
+        {abaAtual === 'documentos' && (
+          <AbaDocumentos
+            documentos={documentos}
             solicitacoes={solicitacoes}
             solicitacaoInicial={parametros.get('solicitacao')}
             {...contexto}

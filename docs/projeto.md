@@ -36,16 +36,16 @@ com prazo, documentos e uma linha do tempo.
 | RF11 | Somente o médico abre a jornada de um paciente; cada paciente tem uma única jornada. | Implementado |
 | RF12 | O médico altera o passo atual (`consulta`/`exame`/`retorno`) e encerra ou reabre a jornada. | Implementado |
 | RF13 | O médico registra consultas e retornos com prescrições. | Implementado |
-| RF14 | O médico cria solicitações com prazo. | Implementado (destinatário parceiro: pendente) |
+| RF14 | O médico cria solicitações com prazo, destinadas ao paciente ou a um parceiro atribuído. | Implementado |
 | RF15 | O paciente vê as consultas extras marcadas pelo médico, como lembrete. | Implementado |
-| RF16 | Médico, paciente e parceiro atribuído enviam exames e documentos. | Implementado (categorias: pendente) |
-| RF17 | Documento vinculado a uma solicitação pendente marca a solicitação como atendida. | Implementado |
+| RF16 | Médico, paciente e parceiro atribuído enviam documentos com categoria (exame, laudo, plano alimentar, plano de treino, orientação, outro). | Implementado |
+| RF17 | Documento vinculado a uma solicitação pendente marca a solicitação como atendida; cada um só atende as próprias solicitações (o médico, qualquer uma). | Implementado |
 | RF18 | O médico revisa documentos (status + observação). | Implementado |
 | RF19 | Linha do tempo unificada da jornada, em ordem cronológica e com filtro por tipo. | Implementado |
-| RF20 | Painel de pendências por tipo de usuário. | Implementado (pendências do parceiro: pendente) |
+| RF20 | Painel de pendências por tipo de usuário. | Implementado |
 | RF21 | O médico mantém a ficha do paciente (dados clínicos resumidos). | Implementado |
 | RF22 | O médico atribui parceiros à jornada de um paciente. | Implementado |
-| RF23 | O parceiro vê a ficha dos pacientes atribuídos, as solicitações destinadas a ele e os próprios envios. | Implementado (solicitações destinadas: pendente) |
+| RF23 | O parceiro vê a ficha dos pacientes atribuídos, as solicitações destinadas a ele e os próprios envios. | Implementado |
 
 Removidos em relação à primeira versão: cadastro público, vínculo médico-paciente por busca de
 email e o chat entre médico e paciente.
@@ -61,7 +61,7 @@ email e o chat entre médico e paciente.
 | RNF05 | Backend em FastAPI; frontend em React + Vite. |
 | RNF06 | CORS com origens vindas do `.env`. |
 | RNF07 | Senhas com bcrypt; JWT HS256 com validade de 480 min. |
-| RNF08 | Acesso à jornada: o médico e o paciente dono, com conta ativa; o parceiro atribuído, apenas à ficha e aos próprios envios. |
+| RNF08 | Acesso à jornada: o médico e o paciente dono, com conta ativa; o parceiro atribuído, apenas à ficha, às solicitações destinadas a ele e aos próprios envios. |
 | RNF09 | Senha provisória gerada pelo sistema; no banco fica só o hash; expira em 7 dias (conta nova) ou 60 min (redefinição), configurável. |
 | RNF10 | Envio de email configurável; em desenvolvimento, modo "console" (mostra o email no terminal da API). |
 | RNF11 | "Esqueci minha senha" responde igual para email existente ou não. |
@@ -104,9 +104,10 @@ email e o chat entre médico e paciente.
 - O paciente lê a própria ficha; só o médico edita.
 - O médico atribui parceiros à jornada (`jornada_parceiros`). Remover a atribuição apaga a linha e
   tira o acesso; os documentos que o parceiro enviou permanecem na jornada.
-- **O parceiro atribuído vê** os dados básicos da jornada, a ficha do paciente e os próprios envios
-  (com a revisão do médico). **Não vê** consultas, prescrições, solicitações, linha do tempo, a lista
-  de parceiros nem os documentos de outras pessoas, e só baixa os arquivos que enviou.
+- **O parceiro atribuído vê** os dados básicos da jornada, a ficha do paciente, as solicitações
+  destinadas a ele e os próprios envios (com a revisão do médico). **Não vê** consultas, prescrições,
+  solicitações de outras pessoas, linha do tempo, a lista de parceiros nem os documentos de outras
+  pessoas, e só baixa os arquivos que enviou.
 - Paciente e parceiro podem ser trabalhados pelo médico antes do primeiro acesso deles.
 
 ### Solicitações e documentos
@@ -114,14 +115,24 @@ email e o chat entre médico e paciente.
   O médico marca a solicitação como atendida (`PATCH /requests/{id}/complete`) ou a cancela.
 - Solicitações só podem ser criadas com prazo no futuro. Vencida = `pendente` com prazo no passado (calculado).
 - "Próxima do prazo" = vence em até `DUE_SOON_DAYS` dias (padrão 3).
-- Enviar um exame vinculado a uma solicitação `exame` ou `orientacao_profissional` marca a solicitação como `atendida`.
+- Os envios se chamam **documentos** e têm categoria: `exame`, `laudo`, `plano_alimentar`,
+  `plano_treino`, `orientacao`, `outro` (as rotas são `/documents`).
+- Toda solicitação tem um **destinatário**: o paciente da jornada (padrão) ou um parceiro atribuído.
+  A consulta extra só pode ser destinada ao paciente.
+- Enviar um documento vinculado a uma solicitação `exame` ou `orientacao_profissional` marca a
+  solicitação como `atendida`. Paciente e parceiro só atendem as solicitações destinadas a eles;
+  o médico pode atender qualquer uma (ex.: recebeu o documento em mãos).
+- O paciente vê todas as solicitações da própria jornada, inclusive as destinadas a parceiros, mas o
+  painel dele só conta as que cabem a ele. O painel do médico acompanha todas.
+- Se um parceiro é removido da jornada, as solicitações destinadas a ele continuam visíveis ao médico,
+  que pode cancelá-las.
 - A tabela `arquivos` guarda `jornada_id`, para o download verificar o acesso diretamente.
 - Uploads gravados em blocos no disco; acima do limite retorna 413; extensão não permitida retorna 415.
 
 ### Linha do tempo e painel
-- Linha do tempo: `{tipo, id, data, resumo, dados}`, com `tipo` em `consulta`, `exame`, `solicitacao`.
+- Linha do tempo: `{tipo, id, data, resumo, dados}`, com `tipo` em `consulta`, `documento`, `solicitacao`.
   A data de uma consulta é a data em que ela aconteceu; dos demais eventos, o momento da criação.
-- O painel considera só jornadas ativas. Exames enviados pelo próprio médico não entram como
+- O painel considera só jornadas ativas. Documentos enviados pelo próprio médico não entram como
   "aguardando revisão". No painel do paciente, consultas extras aparecem em uma lista separada.
 
 ### Frontend
@@ -134,5 +145,4 @@ email e o chat entre médico e paciente.
 
 | Fase | Conteúdo |
 |---|---|
-| **8. Documentos** | `exames` vira `documentos` com categoria (exame, laudo, plano alimentar, plano de treino, orientação, outro). Solicitação com destinatário (paciente ou parceiro): o parceiro passa a ver e atender as solicitações destinadas a ele, e elas entram no painel dele. |
 | **9. Endurecimento** | Limite de tentativas de login e de pedidos de senha, envio real de email por SMTP, testes cobrindo os três tipos de usuário. |
