@@ -1,20 +1,44 @@
 # LifeScan
 
-Acompanhamento do tratamento de saúde para além do consultório: médico e paciente
-compartilham uma **jornada contínua** com consultas, solicitações com prazo, exames,
-mensagens e uma linha do tempo unificada.
+Centraliza os dados do tratamento de saúde do paciente para ajudar o trabalho do médico:
+consultas, prescrições, solicitações com prazo, exames e uma linha do tempo unificada.
+O paciente acompanha o que precisa fazer; parceiros (nutricionista, fisioterapeuta…)
+colaboram com documentos da sua área.
 
 - **Backend:** Python + FastAPI, SQLAlchemy 2.0, Alembic, MySQL (`/backend`)
 - **Frontend:** React + Vite + React Router + Axios, estilos com CSS Modules (`/frontend`)
 - **Especificação e decisões:** [`docs/projeto.md`](docs/projeto.md)
+- **Diagramas:** [`docs/diagramas.md`](docs/diagramas.md)
 
 > Todos os comandos abaixo são para o **PowerShell** no Windows.
+
+## Como o acesso funciona
+
+Não existe cadastro público.
+
+1. O **médico** (único no sistema) é criado por um script, na instalação.
+2. O médico cria as contas de **pacientes** e **parceiros**, informando nome e email
+   (e a profissão, no caso do parceiro).
+3. O sistema envia por email os dados de acesso, com uma **senha provisória** válida por 7 dias.
+4. No primeiro login, a pessoa é obrigada a escolher a própria senha.
+
+O sistema não depende de o paciente entrar: assim que a conta existe, o médico já pode abrir
+a jornada e registrar tudo.
+
+> **Email em modo de desenvolvimento:** por enquanto nenhum email é enviado de verdade.
+> Com `EMAIL_MODE=console`, o email (incluindo a senha provisória) aparece no terminal onde
+> o `uvicorn` está rodando.
 
 ## Pré-requisitos
 
 - Python 3.11+ (testado com 3.13)
 - Node.js 20+ (testado com 24)
 - MySQL 8: instalado no Windows **ou** via Docker (`docker-compose.yml`)
+
+> **Windows 11 e "Controle Inteligente de Aplicativos":** se ele estiver ativado, o Windows
+> bloqueia os executáveis e as DLLs do `.venv` ("Uma política de Controle de Aplicativo bloqueou
+> este arquivo"). Não há lista de exceções: é preciso desativá-lo em Segurança do Windows →
+> Controle de aplicativos e navegador, ou desenvolver dentro do WSL2.
 
 ## 1. Banco de dados
 
@@ -49,6 +73,10 @@ pip install -r requirements.txt
 
 Copy-Item .env.example .env   # depois edite DATABASE_URL e JWT_SECRET
 alembic upgrade head
+
+# Cria o médico (a senha é pedida no terminal)
+python -m scripts.criar_medico --nome "Dra. Ana Souza" --email ana@clinica.com
+
 uvicorn app.main:app --reload
 ```
 
@@ -57,6 +85,17 @@ uvicorn app.main:app --reload
 
 > Se o PowerShell bloquear o `Activate.ps1`, rode uma vez:
 > `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+
+> Se o venv já existe e está ativo (o prompt mostra `(.venv)`), não rode `python -m venv` de novo.
+
+### O médico esqueceu a senha?
+
+```powershell
+python -m scripts.criar_medico --email ana@clinica.com --redefinir-senha
+```
+
+Pacientes e parceiros usam "Esqueci minha senha" na tela de login, ou o médico reenvia o
+acesso pela tela de Pacientes/Parceiros.
 
 ### Variáveis do `.env`
 
@@ -70,20 +109,27 @@ uvicorn app.main:app --reload
 | `UPLOAD_DIR` | Pasta dos arquivos enviados (relativa a `backend/`) |
 | `MAX_UPLOAD_MB` | Tamanho máximo de upload (padrão 30) |
 | `DUE_SOON_DAYS` | Dias para uma solicitação ser considerada "próxima do prazo" (padrão 3) |
+| `EMAIL_MODE` | Modo de envio de email. Só `console` por enquanto |
+| `EMAIL_FROM` | Remetente mostrado nos emails |
+| `FRONTEND_URL` | Endereço do frontend, usado nos emails (padrão `http://localhost:5173`) |
+| `ACCESS_PASSWORD_DAYS` | Validade da senha provisória de uma conta nova (padrão 7 dias) |
+| `RESET_PASSWORD_MINUTES` | Validade da senha provisória do "esqueci minha senha" (padrão 60 min) |
 
 ### Dados de exemplo (opcional)
 
-Cria um médico, um paciente, o vínculo e uma jornada com consulta, solicitações
-(uma vencida), um exame aguardando revisão e mensagens:
+Cria um paciente e um parceiro já com senha definida e uma jornada com consulta,
+solicitações (uma vencida) e um exame aguardando revisão. Se ainda não houver médico,
+cria também o médico de exemplo.
 
 ```powershell
 python -m scripts.seed
 ```
 
-| Papel | Email | Senha |
+| Tipo | Email | Senha |
 |---|---|---|
 | Médico | `medico@lifescan.com` | `lifescan123` |
 | Paciente | `paciente@lifescan.com` | `lifescan123` |
+| Parceiro | `parceiro@lifescan.com` | `lifescan123` |
 
 Rodar de novo não duplica nada.
 
@@ -115,8 +161,7 @@ Copy-Item .env.example .env   # ajuste VITE_API_URL se a API não estiver em htt
 npm run dev
 ```
 
-Acesse <http://localhost:5173>. Para testar rápido, rode o `python -m scripts.seed` no
-backend e entre com as contas de exemplo.
+Acesse <http://localhost:5173> e entre com a conta do médico.
 
 | Variável | Descrição |
 |---|---|
@@ -127,32 +172,32 @@ Build de produção: `npm run build` (gera `frontend/dist`).
 
 ### Telas
 
-- **Login e cadastro**, com escolha entre médico e paciente.
-- **Painel de pendências**: o médico vê exames para revisar, solicitações vencidas ou
-  perto do prazo e mensagens sem resposta; o paciente vê o que precisa fazer (vencidas em
-  destaque) e as consultas extras marcadas.
-- **Pacientes** (médico): busca por email, vínculo, ativar/desativar vínculo.
+- **Login**, **Esqueci minha senha** e **Definir/alterar senha** (obrigatória no primeiro acesso).
+- **Painel de pendências**: o médico vê exames para revisar e solicitações vencidas ou perto do
+  prazo; o paciente vê o que precisa fazer (vencidas em destaque) e as consultas extras marcadas.
+- **Pacientes** e **Parceiros** (médico): criar conta, reenviar acesso, desativar/reativar.
 - **Jornadas**: lista (médico) ou a jornada do paciente, e abertura de nova jornada (médico).
 - **Página da jornada**: passo atual (o médico altera clicando), encerrar/reabrir, e abas de
-  linha do tempo (com filtros), consultas e prescrições, solicitações, exames (envio, revisão,
-  visualizar/baixar) e mensagens com anexo.
+  linha do tempo (com filtros), consultas e prescrições, solicitações e exames (envio, revisão,
+  visualizar/baixar).
 
-O painel, a lista de jornadas, a lista de pacientes e a página da jornada se atualizam a cada
-30 segundos; a atualização pausa quando a aba do navegador fica oculta.
+As listas e a página da jornada se atualizam a cada 30 segundos; a atualização pausa quando a
+aba do navegador fica oculta.
 
 ## Endpoints disponíveis
 
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/auth/register` | Cadastro (`nome`, `email`, `senha`, `papel`: `medico`/`paciente`); já devolve o token |
-| POST | `/auth/login` | Login (`email`, `senha`) |
+| POST | `/auth/login` | Login (`email`, `senha`), com a senha definitiva ou a provisória |
 | GET | `/auth/me` | Usuário autenticado |
-| GET | `/patients/search?email=` | Médico busca paciente pelo email exato |
-| POST | `/links` | Médico vincula paciente (`paciente_id`) |
-| GET | `/links` | Médico: seus pacientes. Paciente: seu médico |
-| PATCH | `/links/{id}` | Médico ativa/desativa o vínculo (`ativo`) |
-| POST | `/journeys` | Médico abre a jornada de um paciente vinculado (`paciente_id`, `titulo`, `descricao`) |
-| GET | `/journeys` | Jornadas do usuário (só com vínculo ativo) |
+| POST | `/auth/change-password` | Troca a senha (`senha_atual`, `nova_senha`) |
+| POST | `/auth/forgot-password` | Envia uma senha provisória por email (`email`) |
+| POST | `/users` | Médico cria conta de paciente ou parceiro (`tipo_usuario`, `nome`, `email`, `profissao`) |
+| GET | `/users?tipo=` | Médico lista as contas (`paciente` / `parceiro`) |
+| PATCH | `/users/{id}` | Médico altera `nome`, `profissao` ou `ativo` |
+| POST | `/users/{id}/resend-access` | Médico reenvia os dados de acesso (nova senha provisória) |
+| POST | `/journeys` | Médico abre a jornada de um paciente (`paciente_id`, `titulo`, `descricao`) |
+| GET | `/journeys` | Jornadas do usuário |
 | GET | `/journeys/{id}` | Detalhe da jornada |
 | PATCH | `/journeys/{id}/step` | Médico altera o passo (`passo_atual`: `consulta`/`exame`/`retorno`) |
 | PATCH | `/journeys/{id}/status` | Médico encerra/reabre (`status`: `ativa`/`encerrada`) |
@@ -165,11 +210,9 @@ O painel, a lista de jornadas, a lista de pacientes e a página da jornada se at
 | POST | `/journeys/{id}/exams` | Envio de exame (multipart: `titulo`, `arquivo`, `solicitacao_id` opcional) |
 | GET | `/journeys/{id}/exams` | Exames da jornada |
 | PATCH | `/exams/{id}/review` | Médico revisa o exame (`observacao_revisao`) |
-| POST | `/journeys/{id}/messages` | Mensagem (multipart: `conteudo` e/ou `arquivo`) |
-| GET | `/journeys/{id}/messages` | Mensagens da jornada |
 | GET | `/files/{id}/download?inline=` | Download autenticado do arquivo |
-| GET | `/journeys/{id}/timeline?tipos=` | Linha do tempo unificada `{tipo, id, data, resumo, dados}` (filtro: `consulta,exame,solicitacao,mensagem`) |
-| GET | `/dashboard/pending` | Painel de pendências (conteúdo por papel) |
+| GET | `/journeys/{id}/timeline?tipos=` | Linha do tempo unificada `{tipo, id, data, resumo, dados}` (filtro: `consulta,exame,solicitacao`) |
+| GET | `/dashboard/pending` | Painel de pendências (conteúdo por tipo de usuário) |
 | GET | `/health` | Verificação de saúde da API |
 
 Uploads aceitam `pdf, png, jpg, jpeg, webp, dcm, txt` com até 30 MB (415 para formato

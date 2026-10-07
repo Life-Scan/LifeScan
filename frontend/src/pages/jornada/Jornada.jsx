@@ -8,7 +8,6 @@ import { useAtualizacaoPeriodica } from '../../hooks/useAtualizacaoPeriodica'
 import AbaConsultas from './AbaConsultas'
 import AbaExames from './AbaExames'
 import AbaLinhaDoTempo from './AbaLinhaDoTempo'
-import AbaMensagens from './AbaMensagens'
 import AbaSolicitacoes from './AbaSolicitacoes'
 import CabecalhoJornada from './CabecalhoJornada'
 import estilos from './Jornada.module.css'
@@ -18,20 +17,18 @@ const ABAS = [
   { id: 'consultas', rotulo: 'Consultas' },
   { id: 'solicitacoes', rotulo: 'Solicitações' },
   { id: 'exames', rotulo: 'Exames' },
-  { id: 'mensagens', rotulo: 'Mensagens' },
 ]
 
 /** Carrega tudo da jornada de uma vez; o polling repete essa busca a cada 30 s. */
 async function carregarJornada(id) {
-  const [jornada, linhaDoTempo, consultas, solicitacoes, exames, mensagens] = await Promise.all([
+  const [jornada, linhaDoTempo, consultas, solicitacoes, exames] = await Promise.all([
     servicos.obterJornada(id),
     servicos.obterLinhaDoTempo(id),
     servicos.listarConsultas(id),
     servicos.listarSolicitacoes(id),
     servicos.listarExames(id),
-    servicos.listarMensagens(id),
   ])
-  return { jornada, linhaDoTempo, consultas, solicitacoes, exames, mensagens }
+  return { jornada, linhaDoTempo, consultas, solicitacoes, exames }
 }
 
 export default function Jornada() {
@@ -65,7 +62,7 @@ export default function Jornada() {
     )
   }
 
-  const { jornada, linhaDoTempo, consultas, solicitacoes, exames, mensagens } = dados
+  const { jornada, linhaDoTempo, consultas, solicitacoes, exames } = dados
   const editavel = jornada.status === 'ativa'
   const contexto = { jornada, usuario, ehMedico, editavel, atualizar, irParaAba }
 
@@ -122,7 +119,6 @@ export default function Jornada() {
             {...contexto}
           />
         )}
-        {abaAtual === 'mensagens' && <AbaMensagens mensagens={mensagens} {...contexto} />}
       </div>
     </div>
   )

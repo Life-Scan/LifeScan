@@ -3,8 +3,10 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import estilos from './Layout.module.css'
 
+const ROTULOS_TIPO = { medico: 'Médico(a)', paciente: 'Paciente' }
+
 export default function Layout() {
-  const { usuario, ehMedico, sair } = useAuth()
+  const { usuario, ehMedico, ehPaciente, sair } = useAuth()
   const navegar = useNavigate()
 
   function aoSair() {
@@ -28,20 +30,31 @@ export default function Layout() {
               Painel
             </NavLink>
             {ehMedico && (
-              <NavLink to="/pacientes" className={classeLink}>
-                Pacientes
+              <>
+                <NavLink to="/pacientes" className={classeLink}>
+                  Pacientes
+                </NavLink>
+                <NavLink to="/parceiros" className={classeLink}>
+                  Parceiros
+                </NavLink>
+              </>
+            )}
+            {(ehMedico || ehPaciente) && (
+              <NavLink to="/jornadas" className={classeLink}>
+                {ehMedico ? 'Jornadas' : 'Minha jornada'}
               </NavLink>
             )}
-            <NavLink to="/jornadas" className={classeLink}>
-              {ehMedico ? 'Jornadas' : 'Minha jornada'}
-            </NavLink>
           </nav>
 
           <div className={estilos.usuario}>
             <span className={estilos.nomeUsuario}>
               {usuario.nome}
-              <small>{ehMedico ? 'Médico(a)' : 'Paciente'}</small>
+              {/* Parceiros são identificados pela profissão (ex.: Nutricionista) */}
+              <small>{ROTULOS_TIPO[usuario.tipo_usuario] || usuario.profissao}</small>
             </span>
+            <NavLink to="/trocar-senha" className={estilos.sair}>
+              Alterar senha
+            </NavLink>
             <button type="button" className={estilos.sair} onClick={aoSair}>
               Sair
             </button>

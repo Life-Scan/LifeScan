@@ -4,15 +4,11 @@ import { Anexo, EstadoVazio, estilos as ui } from '../../components/ui'
 import { ROTULOS_TIPO_EVENTO, formatarDataHora } from '../../utils/formatacao'
 import estilos from './Jornada.module.css'
 
-const ICONES = { consulta: '🩺', solicitacao: '📋', exame: '🧪', mensagem: '💬' }
+const ICONES = { consulta: '🩺', solicitacao: '📋', exame: '🧪' }
 const TIPOS = Object.keys(ROTULOS_TIPO_EVENTO)
 
-/** Anexo do evento, quando houver (exame ou mensagem com arquivo). */
-function anexoDoEvento(evento) {
-  if (evento.tipo === 'exame') return evento.dados.arquivo
-  if (evento.tipo === 'mensagem') return evento.dados.arquivo
-  return null
-}
+/** Arquivo do evento, quando houver (só exames têm). */
+const anexoDoEvento = (evento) => (evento.tipo === 'exame' ? evento.dados.arquivo : null)
 
 export default function AbaLinhaDoTempo({ eventos, irParaAba }) {
   const [filtro, setFiltro] = useState([])
@@ -28,7 +24,7 @@ export default function AbaLinhaDoTempo({ eventos, irParaAba }) {
   const alternarTipo = (tipo) =>
     setFiltro((atual) => (atual.includes(tipo) ? atual.filter((t) => t !== tipo) : [...atual, tipo]))
 
-  const abaDoTipo = { consulta: 'consultas', solicitacao: 'solicitacoes', exame: 'exames', mensagem: 'mensagens' }
+  const abaDoTipo = { consulta: 'consultas', solicitacao: 'solicitacoes', exame: 'exames' }
 
   return (
     <div className={estilos.pilha}>

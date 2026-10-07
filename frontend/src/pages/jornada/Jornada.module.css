@@ -331,91 +331,6 @@ button.botaoPasso:hover:not(:disabled) {
   font-size: 0.92rem;
 }
 
-/* Mensagens */
-
-.chat {
-  display: grid;
-  gap: 0.9rem;
-}
-
-.conversa {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  max-height: 55vh;
-  overflow-y: auto;
-  padding: 0.75rem;
-  background: var(--cor-superficie-suave);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio-pequeno);
-}
-
-.balao {
-  max-width: min(75%, 560px);
-  width: fit-content;
-  padding: 0.5rem 0.75rem 0.35rem;
-  border-radius: 12px 12px 12px 4px;
-  background: var(--cor-superficie);
-  border: 1px solid var(--cor-borda);
-}
-
-.balaoMeu {
-  composes: balao;
-  margin-left: auto;
-  border-radius: 12px 12px 4px 12px;
-  background: var(--cor-primaria-clara);
-  border-color: #b8e0d9;
-}
-
-.balao .texto,
-.balaoMeu .texto {
-  margin-top: 0;
-}
-
-.remetente {
-  display: block;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--cor-primaria-escura);
-}
-
-.horaMensagem {
-  display: block;
-  text-align: right;
-  font-size: 0.72rem;
-  color: var(--cor-texto-suave);
-  margin-top: 0.15rem;
-}
-
-.separadorDia {
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--cor-texto-suave);
-  margin: 0.5rem 0 0.25rem;
-}
-
-.envioMensagem {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.linhaEnvio {
-  display: flex;
-  gap: 0.6rem;
-  align-items: flex-end;
-}
-
-.linhaEnvio textarea {
-  min-height: 0;
-  flex: 1;
-}
-
-.botoesEnvio {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
 @media (max-width: 720px) {
   .linhaPrescricao {
     grid-template-columns: 1fr;
@@ -427,17 +342,4 @@ button.botaoPasso:hover:not(:disabled) {
     grid-template-columns: 1fr;
   }
 
-  .balao {
-    max-width: 90%;
-  }
-
-  .linhaEnvio {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .botoesEnvio {
-    flex-direction: row;
-    justify-content: flex-end;
-  }
 }

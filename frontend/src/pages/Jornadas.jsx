@@ -35,8 +35,8 @@ export default function Jornadas() {
         <EstadoVazio>
           {ehMedico ? (
             <>
-              Nenhuma jornada aberta. Vincule um paciente em <Link to="/pacientes">Pacientes</Link> e abra a jornada
-              dele.
+              Nenhuma jornada aberta. Cadastre um paciente em <Link to="/pacientes">Pacientes</Link> e abra a
+              jornada dele.
             </>
           ) : (
             'Seu médico ainda não abriu uma jornada para você.'

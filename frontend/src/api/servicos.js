@@ -5,14 +5,16 @@ const dados = (promessa) => promessa.then((resposta) => resposta.data)
 
 // Autenticação
 export const entrar = (email, senha) => dados(api.post('/auth/login', { email, senha }))
-export const cadastrar = (cadastro) => dados(api.post('/auth/register', cadastro))
 export const obterUsuarioAtual = () => dados(api.get('/auth/me'))
+export const trocarSenha = (senhaAtual, novaSenha) =>
+  dados(api.post('/auth/change-password', { senha_atual: senhaAtual, nova_senha: novaSenha }))
+export const esqueciSenha = (email) => dados(api.post('/auth/forgot-password', { email }))
 
-// Pacientes e vínculos
-export const buscarPaciente = (email) => dados(api.get('/patients/search', { params: { email } }))
-export const listarVinculos = () => dados(api.get('/links'))
-export const criarVinculo = (pacienteId) => dados(api.post('/links', { paciente_id: pacienteId }))
-export const alterarVinculo = (vinculoId, ativo) => dados(api.patch(`/links/${vinculoId}`, { ativo }))
+// Contas de pacientes e parceiros (médico)
+export const listarContas = (tipo) => dados(api.get('/users', { params: tipo ? { tipo } : {} }))
+export const criarConta = (conta) => dados(api.post('/users', conta))
+export const atualizarConta = (id, alteracoes) => dados(api.patch(`/users/${id}`, alteracoes))
+export const reenviarAcesso = (id) => dados(api.post(`/users/${id}/resend-access`))
 
 // Jornadas
 export const listarJornadas = () => dados(api.get('/journeys'))
@@ -44,15 +46,6 @@ export function enviarExame(jornadaId, { titulo, arquivo, solicitacaoId }) {
 }
 export const revisarExame = (id, observacao) =>
   dados(api.patch(`/exams/${id}/review`, { observacao_revisao: observacao }))
-
-// Mensagens
-export const listarMensagens = (jornadaId) => dados(api.get(`/journeys/${jornadaId}/messages`))
-export function enviarMensagem(jornadaId, { conteudo, arquivo }) {
-  const formulario = new FormData()
-  if (conteudo) formulario.append('conteudo', conteudo)
-  if (arquivo) formulario.append('arquivo', arquivo)
-  return dados(api.post(`/journeys/${jornadaId}/messages`, formulario))
-}
 
 // Linha do tempo e painel
 export const obterLinhaDoTempo = (jornadaId, tipos) =>

@@ -38,54 +38,9 @@
   color: var(--cor-texto-suave);
 }
 
-.papeis {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-  border: none;
-  margin: 0;
-  padding: 0;
-}
-
-.papeis legend {
-  font-weight: 500;
-  font-size: 0.9rem;
-  margin-bottom: 0.3rem;
-  padding: 0;
-}
-
-.papel {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.7rem 0.8rem;
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio-pequeno);
-  cursor: pointer;
-  font-weight: 600;
-  margin: 0;
-}
-
-.papel small {
-  font-weight: 400;
+.nota {
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 0.85rem;
   color: var(--cor-texto-suave);
-  font-size: 0.8rem;
-}
-
-.papel input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.papelSelecionado {
-  composes: papel;
-  border-color: var(--cor-primaria);
-  background: var(--cor-primaria-clara);
-  box-shadow: 0 0 0 1px var(--cor-primaria);
-}
-
-.papel:has(input:focus-visible) {
-  outline: 2px solid var(--cor-primaria);
-  outline-offset: 2px;
 }

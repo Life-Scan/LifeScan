@@ -61,5 +61,4 @@ export const ROTULOS_TIPO_EVENTO = {
   consulta: 'Consulta',
   solicitacao: 'Solicitação',
   exame: 'Exame',
-  mensagem: 'Mensagem',
 }

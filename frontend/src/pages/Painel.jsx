@@ -13,24 +13,29 @@ import {
 import estilos from './Paginas.module.css'
 
 export default function Painel() {
-  const { usuario, ehMedico } = useAuth()
+  const { usuario, ehMedico, ehPaciente } = useAuth()
   const { dados, erro, carregando } = useAtualizacaoPeriodica(obterPendencias)
+  const subtitulo = ehMedico
+    ? 'Veja o que precisa da sua atenção.'
+    : ehPaciente
+      ? 'Veja o que você precisa fazer e até quando.'
+      : 'Acompanhe as solicitações destinadas a você.'
 
   return (
     <div className={estilos.pilha}>
       <div className={estilos.cabecalho}>
         <div>
           <h1>Olá, {usuario.nome.split(' ')[0]}!</h1>
-          <p className={estilos.subtitulo}>
-            {ehMedico ? 'Veja o que precisa da sua atenção.' : 'Veja o que você precisa fazer e até quando.'}
-          </p>
+          <p className={estilos.subtitulo}>{subtitulo}</p>
         </div>
         <span className={estilos.atualizacao}>Atualiza automaticamente a cada 30 segundos</span>
       </div>
 
       <ErroCarregamento erro={erro} />
       {carregando && !dados && <Carregando />}
-      {dados && (ehMedico ? <PainelMedico painel={dados} /> : <PainelPaciente painel={dados} />)}
+      {dados?.tipo_usuario === 'medico' && <PainelMedico painel={dados} />}
+      {dados?.tipo_usuario === 'paciente' && <PainelPaciente painel={dados} />}
+      {dados?.tipo_usuario === 'parceiro' && <PainelParceiro painel={dados} />}
     </div>
   )
 }
@@ -91,7 +96,6 @@ function PainelMedico({ painel }) {
     exames_aguardando_revisao: exames,
     solicitacoes_vencidas: vencidas,
     solicitacoes_proximas_do_prazo: proximas,
-    mensagens_nao_respondidas: mensagens,
     dias_prazo_proximo: diasPrazo,
   } = painel
 
@@ -101,7 +105,6 @@ function PainelMedico({ painel }) {
         <Resumo numero={exames.length} rotulo="Exames para revisar" destino="#exames" variante="resumoAlerta" />
         <Resumo numero={vencidas.length} rotulo="Solicitações vencidas" destino="#vencidas" variante="resumoPerigo" />
         <Resumo numero={proximas.length} rotulo={`Vencem em até ${diasPrazo} dias`} destino="#proximas" variante="resumoAlerta" />
-        <Resumo numero={mensagens.length} rotulo="Mensagens sem resposta" destino="#mensagens" variante="resumoAlerta" />
       </div>
 
       <div className={estilos.grade}>
@@ -118,26 +121,6 @@ function PainelMedico({ painel }) {
                   <div className={estilos.meta}>
                     <span>Paciente: {exame.jornada.paciente.nome}</span>
                     <span>Enviado em {formatarData(exame.criado_em)}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Secao>
-
-        <Secao id="mensagens" titulo="Mensagens sem resposta">
-          {mensagens.length === 0 ? (
-            <EstadoVazio>Todas as conversas estão respondidas.</EstadoVazio>
-          ) : (
-            <ul className={ui.lista}>
-              {mensagens.map(({ jornada, ultima_mensagem: mensagem }) => (
-                <li key={jornada.id} className={ui.itemLista}>
-                  <Link to={linkJornada(jornada.id, 'mensagens')} className={estilos.linkItem}>
-                    {jornada.paciente.nome}
-                  </Link>
-                  <p className={estilos.textoItem}>{mensagem.conteudo || `📎 ${mensagem.arquivo?.nome_original}`}</p>
-                  <div className={estilos.meta}>
-                    <span>{formatarDataHora(mensagem.criado_em)}</span>
                   </div>
                 </li>
               ))}
@@ -217,5 +200,25 @@ function PainelPaciente({ painel }) {
         </Secao>
       </div>
     </>
+  )
+}
+
+function PainelParceiro({ painel }) {
+  const pendentes = painel.solicitacoes_pendentes
+  return (
+    <Secao id="pendencias" titulo="Solicitações destinadas a você">
+      {pendentes.length === 0 ? (
+        <EstadoVazio>
+          Nenhuma solicitação no momento. Quando o médico atribuir você ao tratamento de um paciente, as solicitações
+          aparecem aqui.
+        </EstadoVazio>
+      ) : (
+        <ul className={ui.lista}>
+          {pendentes.map((s) => (
+            <ItemSolicitacao key={s.id} solicitacao={s} mostrarPaciente />
+          ))}
+        </ul>
+      )}
+    </Secao>
   )
 }
