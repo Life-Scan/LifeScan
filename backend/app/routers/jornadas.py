@@ -5,11 +5,12 @@ from sqlalchemy.orm import Session
 from app.core.deps import (
     exigir_tipo,
     garantir_jornada_editavel,
-    obter_jornada_com_acesso,
+    obter_jornada_com_acesso_de_parceiro,
     obter_jornada_do_medico,
     obter_usuario_atual,
 )
 from app.db.sessao import obter_sessao
+from app.models.atribuicao import AtribuicaoParceiro
 from app.models.jornada import Jornada
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.jornada import JornadaEntrada, JornadaSaida, PassoEntrada, StatusEntrada
@@ -48,20 +49,21 @@ def listar_jornadas(
     usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
 ) -> list[Jornada]:
-    """Médico: todas as jornadas que conduz. Paciente: a própria jornada."""
+    """Médico: as jornadas que conduz. Paciente: a própria. Parceiro: as que lhe foram atribuídas."""
     consulta = select(Jornada)
     if usuario.tipo_usuario == TipoUsuario.medico:
         consulta = consulta.where(Jornada.medico_id == usuario.id)
     elif usuario.tipo_usuario == TipoUsuario.paciente:
         consulta = consulta.where(Jornada.paciente_id == usuario.id)
     else:
-        # Parceiros passam a ver jornadas quando forem atribuídos a elas (próxima fase)
-        return []
+        consulta = consulta.join(
+            AtribuicaoParceiro, AtribuicaoParceiro.jornada_id == Jornada.id
+        ).where(AtribuicaoParceiro.parceiro_id == usuario.id)
     return list(sessao.scalars(consulta.order_by(Jornada.atualizado_em.desc())).all())
 
 
 @router.get("/{jornada_id}", response_model=JornadaSaida)
-def obter_jornada(jornada: Jornada = Depends(obter_jornada_com_acesso)) -> Jornada:
+def obter_jornada(jornada: Jornada = Depends(obter_jornada_com_acesso_de_parceiro)) -> Jornada:
     return jornada
 
 

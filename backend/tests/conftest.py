@@ -162,6 +162,23 @@ def jornada(cliente, medico, paciente):
     return criar_jornada(cliente, medico, paciente)
 
 
+def atribuir_parceiro(cliente, medico: dict, jornada: dict, parceiro: dict) -> dict:
+    resposta = cliente.post(
+        f"/journeys/{jornada['id']}/partners",
+        json={"parceiro_id": parceiro["usuario"]["id"]},
+        headers=medico["headers"],
+    )
+    assert resposta.status_code == 201, resposta.text
+    return resposta.json()
+
+
+@pytest.fixture
+def parceiro_atribuido(cliente, medico, parceiro, jornada):
+    """Parceiro já atribuído à jornada do paciente."""
+    atribuir_parceiro(cliente, medico, jornada, parceiro)
+    return parceiro
+
+
 def criar_solicitacao(cliente, medico: dict, jornada: dict, tipo: str = "exame", dias: int = 7) -> dict:
     prazo = (datetime.now(timezone.utc) + timedelta(days=dias)).isoformat()
     resposta = cliente.post(

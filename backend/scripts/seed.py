@@ -8,7 +8,7 @@ Se já houver um médico (criado com scripts.criar_medico), ele é reaproveitado
 """
 
 import uuid
-from datetime import timedelta
+from datetime import date, timedelta
 
 from sqlalchemy import select
 
@@ -18,11 +18,14 @@ from app.db.base import agora_utc
 from app.db.sessao import SessaoLocal
 from app.models import (
     Arquivo,
+    AtribuicaoParceiro,
     Consulta,
     Exame,
+    FichaPaciente,
     Jornada,
     PassoJornada,
     Prescricao,
+    Sexo,
     Solicitacao,
     TipoConsulta,
     TipoSolicitacao,
@@ -53,10 +56,55 @@ def _gravar_arquivo_texto(jornada_id: int, usuario_id: int, nome: str, conteudo:
     )
 
 
+def _complementar_ficha_e_parceiro(sessao) -> list[str]:
+    """Garante a ficha do paciente de exemplo e o parceiro atribuído à jornada dele.
+
+    Roda também quando os dados de exemplo já existiam, para bancos criados antes
+    de a ficha e os parceiros existirem.
+    """
+    paciente = sessao.scalar(select(Usuario).where(Usuario.email == EMAIL_PACIENTE))
+    parceiro = sessao.scalar(select(Usuario).where(Usuario.email == EMAIL_PARCEIRO))
+    jornada = sessao.scalar(select(Jornada).where(Jornada.paciente_id == paciente.id))
+    criados = []
+
+    if not sessao.scalar(select(FichaPaciente.id).where(FichaPaciente.paciente_id == paciente.id)):
+        sessao.add(
+            FichaPaciente(
+                paciente_id=paciente.id,
+                data_nascimento=date(1978, 3, 14),
+                sexo=Sexo.masculino,
+                altura_cm=172,
+                peso_kg=84.5,
+                diagnosticos="Hipertensão arterial estágio 1",
+                alergias="Dipirona",
+                medicamentos_em_uso="Losartana 50 mg, 1 comprimido pela manhã",
+                restricoes="Reduzir o sal. Evitar exercícios de alta intensidade até nova avaliação.",
+                objetivos="Manter a pressão abaixo de 13x8 e perder 8 kg em 6 meses.",
+            )
+        )
+        criados.append("ficha do paciente")
+
+    if parceiro and jornada and not sessao.scalar(
+        select(AtribuicaoParceiro.id).where(
+            AtribuicaoParceiro.jornada_id == jornada.id,
+            AtribuicaoParceiro.parceiro_id == parceiro.id,
+        )
+    ):
+        sessao.add(AtribuicaoParceiro(jornada_id=jornada.id, parceiro_id=parceiro.id))
+        criados.append("parceiro atribuído à jornada")
+
+    sessao.commit()
+    return criados
+
+
 def criar_dados_de_exemplo() -> None:
     with SessaoLocal() as sessao:
         if sessao.scalar(select(Usuario.id).where(Usuario.email == EMAIL_PACIENTE)):
-            print("Os dados de exemplo já existem. Nada foi alterado.")
+            criados = _complementar_ficha_e_parceiro(sessao)
+            if criados:
+                print("Dados de exemplo complementados: " + ", ".join(criados) + ".")
+            else:
+                print("Os dados de exemplo já existem. Nada foi alterado.")
             return
 
         agora = agora_utc()
@@ -162,6 +210,7 @@ def criar_dados_de_exemplo() -> None:
         )
 
         sessao.commit()
+        _complementar_ficha_e_parceiro(sessao)
         email_medico = medico.email
 
     print("Dados de exemplo criados:")

@@ -185,7 +185,7 @@ def criar_conta_ativa_existente(cliente) -> dict:
     return entrar(cliente, "carlos@email.com")
 
 
-def test_parceiro_ainda_nao_ve_jornadas(cliente, parceiro, jornada):
+def test_painel_do_parceiro(cliente, parceiro, jornada):
     assert cliente.get("/journeys", headers=parceiro["headers"]).json() == []
     assert cliente.get(f"/journeys/{jornada['id']}", headers=parceiro["headers"]).status_code == 403
     painel = cliente.get("/dashboard/pending", headers=parceiro["headers"]).json()

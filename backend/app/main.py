@@ -6,9 +6,11 @@ from app.core.config import obter_configuracoes
 from app.core.erros import registrar_tratadores_erro
 from app.routers import (
     arquivos,
+    atribuicoes,
     auth,
     consultas,
     exames,
+    ficha,
     jornadas,
     linha_do_tempo,
     painel,
@@ -61,6 +63,8 @@ def criar_app() -> FastAPI:
         auth,
         usuarios,
         jornadas,
+        ficha,
+        atribuicoes,
         consultas,
         solicitacoes,
         exames,

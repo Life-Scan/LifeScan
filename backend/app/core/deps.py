@@ -5,10 +5,12 @@ from collections.abc import Callable
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.seguranca import decodificar_token
 from app.db.sessao import obter_sessao
+from app.models.atribuicao import AtribuicaoParceiro
 from app.models.jornada import Jornada
 from app.models.usuario import TipoUsuario, Usuario
 
@@ -76,8 +78,26 @@ def exigir_tipo(*tipos: TipoUsuario | str) -> Callable[..., Usuario]:
     return verificar
 
 
-def carregar_jornada_com_acesso(sessao: Session, usuario: Usuario, jornada_id: int) -> Jornada:
-    """Carrega a jornada e garante que o usuário é o médico ou o paciente dela.
+def parceiro_atribuido(sessao: Session, jornada_id: int, parceiro_id: int) -> bool:
+    return (
+        sessao.scalar(
+            select(AtribuicaoParceiro.id).where(
+                AtribuicaoParceiro.jornada_id == jornada_id,
+                AtribuicaoParceiro.parceiro_id == parceiro_id,
+            )
+        )
+        is not None
+    )
+
+
+def carregar_jornada_com_acesso(
+    sessao: Session, usuario: Usuario, jornada_id: int, permitir_parceiro: bool = False
+) -> Jornada:
+    """Carrega a jornada e garante que o usuário pode acessá-la.
+
+    O médico e o paciente da jornada sempre podem. O parceiro só entra nas rotas que
+    passam permitir_parceiro=True (ficha e os próprios envios), e apenas se estiver
+    atribuído à jornada: ele não vê consultas, solicitações nem a linha do tempo.
 
     Versão sem Depends, para rotas que chegam à jornada a partir de outro recurso
     (solicitação, exame, arquivo).
@@ -85,9 +105,16 @@ def carregar_jornada_com_acesso(sessao: Session, usuario: Usuario, jornada_id: i
     jornada = sessao.get(Jornada, jornada_id)
     if jornada is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Jornada não encontrada.")
-    if usuario.id not in (jornada.medico_id, jornada.paciente_id):
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Você não tem acesso a esta jornada.")
-    return jornada
+    if usuario.id in (jornada.medico_id, jornada.paciente_id):
+        return jornada
+    if usuario.tipo_usuario == TipoUsuario.parceiro and parceiro_atribuido(sessao, jornada.id, usuario.id):
+        if permitir_parceiro:
+            return jornada
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Parceiros têm acesso apenas à ficha do paciente e aos próprios envios.",
+        )
+    raise HTTPException(status.HTTP_403_FORBIDDEN, "Você não tem acesso a esta jornada.")
 
 
 def obter_jornada_com_acesso(
@@ -95,7 +122,17 @@ def obter_jornada_com_acesso(
     usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
 ) -> Jornada:
+    """Jornada para o médico ou o paciente dela."""
     return carregar_jornada_com_acesso(sessao, usuario, jornada_id)
+
+
+def obter_jornada_com_acesso_de_parceiro(
+    jornada_id: int,
+    usuario: Usuario = Depends(obter_usuario_atual),
+    sessao: Session = Depends(obter_sessao),
+) -> Jornada:
+    """Jornada para o médico, o paciente ou um parceiro atribuído a ela."""
+    return carregar_jornada_com_acesso(sessao, usuario, jornada_id, permitir_parceiro=True)
 
 
 def obter_jornada_do_medico(
