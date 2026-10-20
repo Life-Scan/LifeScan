@@ -1,4 +1,5 @@
 /** Componentes pequenos de interface usados em várias páginas. */
+import { CircleAlert, CircleCheck, Download, Eye, Inbox, Info, Paperclip, TriangleAlert } from 'lucide-react'
 import { useRef, useState } from 'react'
 
 import { mensagemDeErro } from '../api/cliente'
@@ -11,7 +12,7 @@ import {
   validarArquivo,
   visualizarArquivo,
 } from '../utils/arquivos'
-import { formatarTamanho } from '../utils/formatacao'
+import { formatarTamanho, iniciais } from '../utils/formatacao'
 import estilos from './ui.module.css'
 
 export { estilos }
@@ -22,13 +23,27 @@ export function Etiqueta({ variante = 'neutra', children }) {
   return <span className={classe}>{children}</span>
 }
 
+const ICONES_ALERTA = { erro: CircleAlert, sucesso: CircleCheck, info: Info, alerta: TriangleAlert }
+
 /** tipo: erro | sucesso | info | alerta */
 export function Alerta({ tipo = 'info', children }) {
   if (!children) return null
+  const Icone = ICONES_ALERTA[tipo]
   return (
     <div className={`${estilos.alerta} ${estilos[`alerta_${tipo}`]}`} role={tipo === 'erro' ? 'alert' : 'status'}>
-      {children}
+      <Icone size={17} aria-hidden="true" />
+      <div>{children}</div>
     </div>
+  )
+}
+
+/** Círculo com as iniciais do nome. tipo: paciente | parceiro | medico */
+export function Avatar({ nome, tipo = 'paciente', grande = false }) {
+  const classes = [estilos.avatar, estilos[`avatar_${tipo}`], grande ? estilos.avatar_grande : '']
+  return (
+    <span className={classes.filter(Boolean).join(' ')} aria-hidden="true">
+      {iniciais(nome)}
+    </span>
   )
 }
 
@@ -41,8 +56,13 @@ export function Carregando({ texto = 'Carregando…' }) {
   )
 }
 
-export function EstadoVazio({ children }) {
-  return <div className={estilos.vazio}>{children}</div>
+export function EstadoVazio({ icone: Icone = Inbox, children }) {
+  return (
+    <div className={estilos.vazio}>
+      <Icone size={26} strokeWidth={1.5} aria-hidden="true" />
+      <div>{children}</div>
+    </div>
+  )
 }
 
 /** Erro de carregamento vindo do polling, com a mensagem do backend. */
@@ -124,16 +144,18 @@ export function Anexo({ arquivo }) {
 
   return (
     <span className={estilos.anexo}>
-      <span aria-hidden="true">📎</span>
+      <Paperclip size={15} aria-hidden="true" />
       <span className={estilos.anexoNome}>{arquivo.nome_original}</span>
       <span className={estilos.suave}>({formatarTamanho(arquivo.tamanho_bytes)})</span>
       {podeVisualizar(arquivo) && (
         <button type="button" className={estilos.botaoLink} onClick={() => executar(visualizarArquivo)}>
-          visualizar
+          <Eye size={14} aria-hidden="true" />
+          Visualizar
         </button>
       )}
       <button type="button" className={estilos.botaoLink} onClick={() => executar(baixarArquivo)}>
-        baixar
+        <Download size={14} aria-hidden="true" />
+        Baixar
       </button>
       {erro && <span className={estilos.suave}>{erro}</span>}
     </span>

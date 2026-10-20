@@ -26,6 +26,15 @@ class Configuracoes(BaseSettings):
     tamanho_maximo_upload_mb: int = Field(30, validation_alias="MAX_UPLOAD_MB")
     dias_prazo_proximo: int = Field(3, validation_alias="DUE_SOON_DAYS")
 
+    # Email: por enquanto só o modo "console", que mostra o email no terminal da API
+    modo_email: str = Field("console", validation_alias="EMAIL_MODE")
+    remetente_email: str = Field("LifeScan <nao-responda@lifescan.local>", validation_alias="EMAIL_FROM")
+    # Endereço do frontend, usado nos links dos emails
+    url_frontend: str = Field("http://localhost:5173", validation_alias="FRONTEND_URL")
+    # Validade da senha provisória de uma conta nova e da enviada pelo "esqueci minha senha"
+    dias_senha_provisoria: int = Field(7, validation_alias="ACCESS_PASSWORD_DAYS")
+    minutos_redefinicao_senha: int = Field(60, validation_alias="RESET_PASSWORD_MINUTES")
+
     @property
     def origens_cors(self) -> list[str]:
         """Lista de origens do CORS (o .env traz os valores separados por vírgula)."""

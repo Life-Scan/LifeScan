@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
 import { Alerta } from '../components/ui'
@@ -23,8 +23,9 @@ export default function Login() {
     setErro('')
     setEnviando(true)
     try {
-      await entrar(email, senha)
-      navegar(local.state?.de || '/painel', { replace: true })
+      const usuario = await entrar(email, senha)
+      // Quem entrou com a senha provisória precisa definir a própria senha antes de tudo
+      navegar(usuario.deve_trocar_senha ? '/definir-senha' : local.state?.de || '/painel', { replace: true })
     } catch (erroLogin) {
       setErro(mensagemDeErro(erroLogin))
       setEnviando(false)
@@ -102,6 +103,12 @@ export default function Login() {
               {enviando ? 'Entrando…' : 'Entrar na minha conta'}<span aria-hidden="true">→</span>
             </button>
           </form>
+          <p className={estilos.rodape}>
+            <Link to="/esqueci-senha">Esqueci minha senha</Link>
+          </p>
+          <p className={estilos.avisoAcesso}>
+            O acesso é criado pelo seu médico. Se você recebeu um email com uma senha provisória, use-a aqui.
+          </p>
           <p className={estilos.assinatura}>Seu cuidado tem continuidade aqui.</p>
           </div>
         </section>

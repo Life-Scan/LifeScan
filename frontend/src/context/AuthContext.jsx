@@ -19,21 +19,19 @@ export function AuthProvider({ children }) {
       .finally(() => setCarregando(false))
   }, [])
 
-  const iniciarSessao = useCallback(({ token_acesso: token, usuario: dadosUsuario }) => {
+  const entrar = useCallback(async (email, senha) => {
+    const { token_acesso: token, usuario: dadosUsuario } = await servicos.entrar(email, senha)
     localStorage.setItem(CHAVE_TOKEN, token)
     setUsuario(dadosUsuario)
     return dadosUsuario
   }, [])
 
-  const entrar = useCallback(
-    async (email, senha) => iniciarSessao(await servicos.entrar(email, senha)),
-    [iniciarSessao],
-  )
-
-  const cadastrar = useCallback(
-    async (cadastro) => iniciarSessao(await servicos.cadastrar(cadastro)),
-    [iniciarSessao],
-  )
+  /** Define a senha de quem entrou com a provisória e libera o uso do sistema. */
+  const definirSenha = useCallback(async (novaSenha) => {
+    const atualizado = await servicos.definirSenha(novaSenha)
+    setUsuario(atualizado)
+    return atualizado
+  }, [])
 
   const sair = useCallback(() => {
     localStorage.removeItem(CHAVE_TOKEN)
@@ -44,13 +42,14 @@ export function AuthProvider({ children }) {
     () => ({
       usuario,
       carregando,
-      ehMedico: usuario?.papel === 'medico',
-      ehPaciente: usuario?.papel === 'paciente',
+      ehMedico: usuario?.tipo_usuario === 'medico',
+      ehPaciente: usuario?.tipo_usuario === 'paciente',
+      ehParceiro: usuario?.tipo_usuario === 'parceiro',
       entrar,
-      cadastrar,
+      definirSenha,
       sair,
     }),
-    [usuario, carregando, entrar, cadastrar, sair],
+    [usuario, carregando, entrar, definirSenha, sair],
   )
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>

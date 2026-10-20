@@ -8,9 +8,8 @@ from app.schemas.base import DataHoraUTC
 
 class TipoEvento(str, enum.Enum):
     consulta = "consulta"
-    exame = "exame"
+    documento = "documento"
     solicitacao = "solicitacao"
-    mensagem = "mensagem"
 
 
 class EventoLinhaDoTempo(BaseModel):

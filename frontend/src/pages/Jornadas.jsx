@@ -1,29 +1,33 @@
+import { Plus, Route } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { listarJornadas } from '../api/servicos'
-import { Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
+import { Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import { ROTULOS_PASSO, formatarData } from '../utils/formatacao'
 import estilos from './Paginas.module.css'
 
 export default function Jornadas() {
-  const { ehMedico } = useAuth()
+  const { ehMedico, ehParceiro } = useAuth()
   const { dados: jornadas, erro, carregando } = useAtualizacaoPeriodica(listarJornadas)
 
   return (
     <div className={estilos.pilha}>
       <div className={estilos.cabecalho}>
         <div>
-          <h1>{ehMedico ? 'Jornadas' : 'Minha jornada'}</h1>
+          <h1>{ehMedico ? 'Jornadas' : ehParceiro ? 'Pacientes' : 'Minha jornada'}</h1>
           <p className={estilos.subtitulo}>
             {ehMedico
               ? 'Acompanhe o tratamento de cada paciente.'
-              : 'O acompanhamento do seu tratamento com o seu médico.'}
+              : ehParceiro
+                ? 'Pacientes em cujo tratamento o médico incluiu você.'
+                : 'O acompanhamento do seu tratamento com o seu médico.'}
           </p>
         </div>
         {ehMedico && (
           <Link to="/jornadas/nova" className={ui.botao}>
+            <Plus size={16} aria-hidden="true" />
             Nova jornada
           </Link>
         )}
@@ -32,12 +36,14 @@ export default function Jornadas() {
       <ErroCarregamento erro={erro} />
       {carregando && !jornadas && <Carregando />}
       {jornadas?.length === 0 && (
-        <EstadoVazio>
+        <EstadoVazio icone={Route}>
           {ehMedico ? (
             <>
-              Nenhuma jornada aberta. Vincule um paciente em <Link to="/pacientes">Pacientes</Link> e abra a jornada
-              dele.
+              Nenhuma jornada aberta. Cadastre um paciente em <Link to="/usuarios">Pacientes e parceiros</Link> e abra a
+              jornada dele.
             </>
+          ) : ehParceiro ? (
+            'Nenhum paciente atribuído a você no momento.'
           ) : (
             'Seu médico ainda não abriu uma jornada para você.'
           )}
@@ -48,14 +54,18 @@ export default function Jornadas() {
           {jornadas.map((jornada) => (
             <li key={jornada.id} className={ui.itemLista}>
               <div className={ui.cabecalhoItem}>
-                <div>
-                  <Link to={`/jornadas/${jornada.id}`} className={estilos.linkItem}>
-                    {jornada.titulo}
-                  </Link>
-                  <div className={estilos.meta}>
-                    <span>{ehMedico ? `Paciente: ${jornada.paciente.nome}` : `Médico(a): ${jornada.medico.nome}`}</span>
-                    <span>Aberta em {formatarData(jornada.criado_em)}</span>
-                    <span>Atualizada em {formatarData(jornada.atualizado_em)}</span>
+                <div className={ui.pessoa}>
+                  <Avatar nome={jornada.paciente.nome} />
+                  <div>
+                    <Link to={`/jornadas/${jornada.id}`} className={estilos.linkItem}>
+                      {ehParceiro ? jornada.paciente.nome : jornada.titulo}
+                    </Link>
+                    <div className={estilos.meta}>
+                      {ehParceiro && <span>{jornada.titulo}</span>}
+                      <span>{ehMedico ? jornada.paciente.nome : `Médico(a): ${jornada.medico.nome}`}</span>
+                      <span>Aberta em {formatarData(jornada.criado_em)}</span>
+                      <span>Atualizada em {formatarData(jornada.atualizado_em)}</span>
+                    </div>
                   </div>
                 </div>
                 <div className={ui.acoes}>

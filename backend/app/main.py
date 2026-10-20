@@ -6,16 +6,16 @@ from app.core.config import obter_configuracoes
 from app.core.erros import registrar_tratadores_erro
 from app.routers import (
     arquivos,
+    atribuicoes,
     auth,
     consultas,
-    exames,
+    documentos,
+    ficha,
     jornadas,
     linha_do_tempo,
-    mensagens,
-    pacientes,
     painel,
     solicitacoes,
-    vinculos,
+    usuarios,
 )
 
 # Margem para os campos e delimitadores do multipart além do próprio arquivo
@@ -26,8 +26,8 @@ def criar_app() -> FastAPI:
     config = obter_configuracoes()
     app = FastAPI(
         title="LifeScan API",
-        description="Acompanhamento contínuo do tratamento entre médico e paciente.",
-        version="0.1.0",
+        description="Centraliza os dados do tratamento do paciente para o médico, o paciente e os parceiros.",
+        version="0.2.0",
     )
 
     # Registrado antes do CORS para que o CORS fique por fora e a resposta 413
@@ -61,13 +61,13 @@ def criar_app() -> FastAPI:
     registrar_tratadores_erro(app)
     for modulo in (
         auth,
-        pacientes,
-        vinculos,
+        usuarios,
         jornadas,
+        ficha,
+        atribuicoes,
         consultas,
         solicitacoes,
-        exames,
-        mensagens,
+        documentos,
         arquivos,
         linha_do_tempo,
         painel,

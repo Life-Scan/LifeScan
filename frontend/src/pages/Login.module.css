@@ -1,3 +1,17 @@
+.rodape {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.avisoAcesso {
+  margin-top: 12px;
+  color: var(--cor-texto-suave);
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+
 .fundo {
   min-height: 100vh;
   min-height: 100svh;

@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { mensagemDeErro } from '../../api/cliente'
@@ -6,41 +7,66 @@ import { Alerta, Carregando, ErroCarregamento, estilos as ui } from '../../compo
 import { useAuth } from '../../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../../hooks/useAtualizacaoPeriodica'
 import AbaConsultas from './AbaConsultas'
-import AbaExames from './AbaExames'
+import AbaDocumentos from './AbaDocumentos'
+import AbaFicha from './AbaFicha'
 import AbaLinhaDoTempo from './AbaLinhaDoTempo'
-import AbaMensagens from './AbaMensagens'
+import AbaParceiros from './AbaParceiros'
 import AbaSolicitacoes from './AbaSolicitacoes'
 import CabecalhoJornada from './CabecalhoJornada'
 import estilos from './Jornada.module.css'
 
 const ABAS = [
   { id: 'linha', rotulo: 'Linha do tempo' },
+  { id: 'ficha', rotulo: 'Ficha' },
   { id: 'consultas', rotulo: 'Consultas' },
   { id: 'solicitacoes', rotulo: 'Solicitações' },
-  { id: 'exames', rotulo: 'Exames' },
-  { id: 'mensagens', rotulo: 'Mensagens' },
+  { id: 'documentos', rotulo: 'Documentos' },
+  { id: 'parceiros', rotulo: 'Parceiros' },
 ]
 
-/** Carrega tudo da jornada de uma vez; o polling repete essa busca a cada 30 s. */
-async function carregarJornada(id) {
-  const [jornada, linhaDoTempo, consultas, solicitacoes, exames, mensagens] = await Promise.all([
+// O parceiro só tem acesso à ficha do paciente, às solicitações destinadas a ele e aos próprios envios
+const ABAS_PARCEIRO = [
+  { id: 'ficha', rotulo: 'Ficha do paciente' },
+  { id: 'solicitacoes', rotulo: 'Solicitações' },
+  { id: 'documentos', rotulo: 'Meus envios' },
+]
+
+/** Carrega tudo o que o usuário pode ver da jornada; o polling repete essa busca a cada 30 s. */
+async function carregarJornada(id, ehParceiro) {
+  if (ehParceiro) {
+    const [jornada, ficha, solicitacoes, documentos] = await Promise.all([
+      servicos.obterJornada(id),
+      servicos.obterFicha(id),
+      servicos.listarSolicitacoes(id),
+      servicos.listarDocumentos(id),
+    ])
+    return { jornada, ficha, solicitacoes, documentos, linhaDoTempo: [], consultas: [], parceiros: [] }
+  }
+  const [jornada, linhaDoTempo, ficha, consultas, solicitacoes, documentos, parceiros] = await Promise.all([
     servicos.obterJornada(id),
     servicos.obterLinhaDoTempo(id),
+    servicos.obterFicha(id),
     servicos.listarConsultas(id),
     servicos.listarSolicitacoes(id),
-    servicos.listarExames(id),
-    servicos.listarMensagens(id),
+    servicos.listarDocumentos(id),
+    servicos.listarParceirosDaJornada(id),
   ])
-  return { jornada, linhaDoTempo, consultas, solicitacoes, exames, mensagens }
+  return { jornada, linhaDoTempo, ficha, consultas, solicitacoes, documentos, parceiros }
 }
 
 export default function Jornada() {
   const { id } = useParams()
-  const { usuario, ehMedico } = useAuth()
+  const { usuario, ehMedico, ehParceiro } = useAuth()
   const [parametros, setParametros] = useSearchParams()
-  const abaAtual = ABAS.some((aba) => aba.id === parametros.get('aba')) ? parametros.get('aba') : 'linha'
 
-  const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(() => carregarJornada(id), undefined, [id])
+  const abas = ehParceiro ? ABAS_PARCEIRO : ABAS
+  const abaAtual = abas.some((aba) => aba.id === parametros.get('aba')) ? parametros.get('aba') : abas[0].id
+
+  const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(
+    () => carregarJornada(id, ehParceiro),
+    undefined,
+    [id, ehParceiro],
+  )
 
   /** Troca de aba mantendo o histórico do navegador; `extras` vira parâmetro da URL. */
   function irParaAba(aba, extras = {}) {
@@ -59,25 +85,31 @@ export default function Jornada() {
             : mensagemDeErro(erro, 'Não foi possível carregar a jornada.')}
         </Alerta>
         <p>
-          <Link to="/jornadas">Voltar para as jornadas</Link>
+          <Link to="/jornadas">Voltar</Link>
         </p>
       </div>
     )
   }
 
-  const { jornada, linhaDoTempo, consultas, solicitacoes, exames, mensagens } = dados
+  const { jornada, linhaDoTempo, ficha, consultas, solicitacoes, documentos, parceiros } = dados
   const editavel = jornada.status === 'ativa'
-  const contexto = { jornada, usuario, ehMedico, editavel, atualizar, irParaAba }
+  const contexto = { jornada, usuario, ehMedico, ehParceiro, editavel, atualizar, irParaAba }
 
+  // Médico: tudo o que está pendente na jornada. Demais: só o que cabe a eles.
   const contagens = {
-    solicitacoes: solicitacoes.filter((s) => s.status === 'pendente').length,
-    exames: ehMedico ? exames.filter((e) => e.status === 'enviado' && e.enviado_por.id !== usuario.id).length : 0,
+    solicitacoes: solicitacoes.filter(
+      (s) => s.status === 'pendente' && (ehMedico || s.destinatario.id === usuario.id),
+    ).length,
+    documentos: ehMedico
+      ? documentos.filter((d) => d.status === 'enviado' && d.enviado_por.id !== usuario.id).length
+      : 0,
   }
 
   return (
     <div className={estilos.pilha}>
       <Link to="/jornadas" className={estilos.voltar}>
-        ← Jornadas
+        <ArrowLeft size={15} aria-hidden="true" />
+        {ehParceiro ? 'Pacientes' : 'Jornadas'}
       </Link>
 
       <CabecalhoJornada {...contexto} />
@@ -93,7 +125,7 @@ export default function Jornada() {
       )}
 
       <div className={estilos.abas} role="tablist" aria-label="Seções da jornada">
-        {ABAS.map((aba) => (
+        {abas.map((aba) => (
           <button
             key={aba.id}
             type="button"
@@ -112,17 +144,20 @@ export default function Jornada() {
 
       <div role="tabpanel" id={`painel-${abaAtual}`} aria-labelledby={`aba-${abaAtual}`} className={ui.cartao}>
         {abaAtual === 'linha' && <AbaLinhaDoTempo eventos={linhaDoTempo} {...contexto} />}
+        {abaAtual === 'ficha' && <AbaFicha ficha={ficha} {...contexto} />}
         {abaAtual === 'consultas' && <AbaConsultas consultas={consultas} {...contexto} />}
-        {abaAtual === 'solicitacoes' && <AbaSolicitacoes solicitacoes={solicitacoes} {...contexto} />}
-        {abaAtual === 'exames' && (
-          <AbaExames
-            exames={exames}
+        {abaAtual === 'solicitacoes' && (
+          <AbaSolicitacoes solicitacoes={solicitacoes} parceiros={parceiros} {...contexto} />
+        )}
+        {abaAtual === 'documentos' && (
+          <AbaDocumentos
+            documentos={documentos}
             solicitacoes={solicitacoes}
             solicitacaoInicial={parametros.get('solicitacao')}
             {...contexto}
           />
         )}
-        {abaAtual === 'mensagens' && <AbaMensagens mensagens={mensagens} {...contexto} />}
+        {abaAtual === 'parceiros' && <AbaParceiros parceiros={parceiros} {...contexto} />}
       </div>
     </div>
   )

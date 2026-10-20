@@ -1,29 +1,31 @@
 """Importa todos os modelos para que fiquem registrados em Base.metadata (usado pelo Alembic)."""
 
 from app.models.arquivo import Arquivo
+from app.models.atribuicao import AtribuicaoParceiro
 from app.models.consulta import Consulta, Prescricao, TipoConsulta
-from app.models.exame import Exame, StatusExame
+from app.models.documento import CategoriaDocumento, Documento, StatusDocumento
+from app.models.ficha import FichaPaciente, Sexo
 from app.models.jornada import Jornada, PassoJornada, StatusJornada
-from app.models.mensagem import Mensagem
 from app.models.solicitacao import Solicitacao, StatusSolicitacao, TipoSolicitacao
-from app.models.usuario import PapelUsuario, Usuario
-from app.models.vinculo import VinculoMedicoPaciente
+from app.models.usuario import TipoUsuario, Usuario
 
 __all__ = [
     "Arquivo",
+    "AtribuicaoParceiro",
     "Consulta",
-    "Exame",
+    "CategoriaDocumento",
+    "Documento",
+    "FichaPaciente",
     "Jornada",
-    "Mensagem",
-    "PapelUsuario",
     "PassoJornada",
     "Prescricao",
+    "Sexo",
     "Solicitacao",
-    "StatusExame",
+    "StatusDocumento",
     "StatusJornada",
     "StatusSolicitacao",
     "TipoConsulta",
     "TipoSolicitacao",
+    "TipoUsuario",
     "Usuario",
-    "VinculoMedicoPaciente",
 ]

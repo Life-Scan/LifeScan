@@ -55,11 +55,47 @@ export const ROTULOS_STATUS_SOLICITACAO = {
   cancelada: 'Cancelada',
 }
 
-export const ROTULOS_STATUS_EXAME = { enviado: 'Aguardando revisão', revisado: 'Revisado' }
+export const ROTULOS_STATUS_DOCUMENTO = { enviado: 'Aguardando revisão', revisado: 'Revisado' }
+
+export const ROTULOS_CATEGORIA = {
+  exame: 'Exame',
+  laudo: 'Laudo',
+  plano_alimentar: 'Plano alimentar',
+  plano_treino: 'Plano de treino',
+  orientacao: 'Orientação',
+  outro: 'Outro',
+}
 
 export const ROTULOS_TIPO_EVENTO = {
   consulta: 'Consulta',
   solicitacao: 'Solicitação',
-  exame: 'Exame',
-  mensagem: 'Mensagem',
+  documento: 'Documento',
+}
+
+export const ROTULOS_SEXO = { masculino: 'Masculino', feminino: 'Feminino', outro: 'Outro' }
+
+/** Formata uma data sem hora ("1978-03-14") sem deslocar o dia por causa do fuso. */
+export function formatarDataSemHora(iso) {
+  if (!iso) return ''
+  const [ano, mes, dia] = iso.split('-')
+  return `${dia}/${mes}/${ano}`
+}
+
+const TITULOS = ['dr.', 'dra.', 'dr', 'dra', 'sr.', 'sra.', 'sr', 'sra', 'prof.', 'profa.']
+
+/** Partes do nome sem títulos como "Dra." ou "Sr.". */
+function partesDoNome(nome) {
+  const partes = nome.trim().split(/\s+/)
+  const semTitulo = partes.filter((parte) => !TITULOS.includes(parte.toLowerCase()))
+  return semTitulo.length > 0 ? semTitulo : partes
+}
+
+/** Primeiro nome para saudações: "Dra. Ana Souza" -> "Ana". */
+export const primeiroNome = (nome) => partesDoNome(nome)[0]
+
+/** Iniciais para o avatar: "Dra. Ana Souza" -> "AS"; "Carlos" -> "C". */
+export function iniciais(nome) {
+  const partes = partesDoNome(nome)
+  const letras = partes.length > 1 ? [partes[0], partes.at(-1)] : [partes[0]]
+  return letras.map((parte) => parte[0].toUpperCase()).join('')
 }

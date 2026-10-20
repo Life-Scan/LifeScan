@@ -80,7 +80,7 @@ def test_filtro_por_status(cliente, medico, jornada):
     assert len(pendentes) == 1
 
 
-def test_outro_medico_nao_conclui_solicitacao(cliente, medico, outro_medico, jornada):
+def test_parceiro_nao_conclui_solicitacao(cliente, medico, parceiro, jornada):
     solicitacao = criar_solicitacao(cliente, medico, jornada)
-    resposta = cliente.patch(f"/requests/{solicitacao['id']}/complete", headers=outro_medico["headers"])
+    resposta = cliente.patch(f"/requests/{solicitacao['id']}/complete", headers=parceiro["headers"])
     assert resposta.status_code == 403
