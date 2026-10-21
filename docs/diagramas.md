@@ -302,6 +302,8 @@ erDiagram
 O Mermaid não tem um tipo próprio para casos de uso; o fluxograma abaixo segue o mesmo formato.
 O médico fica à esquerda; paciente e parceiro, à direita. O paciente não tem o UC20, e o parceiro
 não tem o UC15 (ele não vê a linha do tempo, as consultas nem os documentos de outras pessoas).
+No UC24, o parceiro só visualiza e baixa os documentos que ele mesmo enviou. O UC23 só vale para
+paciente desativado e sem histórico.
 
 ![Diagrama de casos de uso](diagramas/casos-de-uso.png)
 
@@ -309,18 +311,23 @@ não tem o UC15 (ele não vê a linha do tempo, as consultas nem os documentos d
 flowchart LR
     M["👤 Médico"]
 
-    subgraph LifeScan
-        direction TB
+        subgraph Senha["Primeiro acesso e senha"]
+            direction TB
+            UC02(["UC02 Definir senha no primeiro acesso"])
+            UC03(["UC03 Recuperar senha esquecida"])
+        end
 
-        subgraph Gestao["Gestão do tratamento (só o médico)"]
+        subgraph Gestao["Gestão (só o médico)"]
             direction TB
             UC04(["UC04 Criar conta de paciente ou parceiro"])
             UC05(["UC05 Reenviar acesso"])
             UC06(["UC06 Ativar / desativar conta"])
+            UC22(["UC22 Editar conta (nome, email, profissão)"])
+            UC23(["UC23 Excluir paciente desativado"])
             UC07(["UC07 Abrir acompanhamento"])
-            UC08(["UC08 Alterar passo / encerrar acompanhamento"])
+            UC08(["UC08 Alterar passo / encerrar ou reabrir acompanhamento"])
             UC09(["UC09 Manter anamnese do paciente"])
-            UC10(["UC10 Atribuir parceiro ao acompanhamento"])
+            UC10(["UC10 Atribuir ou remover parceiro"])
             UC11(["UC11 Registrar consulta e prescrições"])
             UC12(["UC12 Criar solicitação com prazo"])
             UC13(["UC13 Concluir / cancelar solicitação"])
@@ -333,29 +340,23 @@ flowchart LR
             UC15(["UC15 Ver acompanhamento e linha do tempo"])
             UC16(["UC16 Ver anamnese do paciente"])
             UC17(["UC17 Enviar documento"])
+            UC24(["UC24 Visualizar e baixar documento"])
             UC18(["UC18 Atender solicitação com um envio"])
             UC19(["UC19 Ver painel de pendências"])
             UC20(["UC20 Ver pacientes atribuídos"])
         end
 
-        subgraph Senha["Primeiro acesso e senha"]
-            direction TB
-            UC02(["UC02 Definir senha no primeiro acesso"])
-            UC03(["UC03 Recuperar senha esquecida"])
-        end
-
         UC21(["Enviar email com a senha provisória"])
-    end
 
     P["👤 Paciente"]
     R["👤 Parceiro"]
-    E["✉️ Serviço de email"]
+    E["✉️ Serviço de email (SMTP)"]
 
-    M --- UC04 & UC05 & UC06 & UC07 & UC08 & UC09 & UC10 & UC11 & UC12 & UC13 & UC14
-    M --- UC01 & UC15 & UC16 & UC17 & UC18 & UC19
+    M --- UC04 & UC05 & UC06 & UC22 & UC23 & UC07 & UC08 & UC09 & UC10 & UC11 & UC12 & UC13 & UC14
+    M --- UC01 & UC15 & UC16 & UC17 & UC24 & UC18 & UC19
 
-    UC01 & UC15 & UC16 & UC17 & UC18 & UC19 --- P
-    UC01 & UC16 & UC17 & UC18 & UC19 & UC20 --- R
+    UC01 & UC15 & UC16 & UC17 & UC24 & UC18 & UC19 --- P
+    UC01 & UC16 & UC17 & UC24 & UC18 & UC19 & UC20 --- R
     UC02 & UC03 --- P
     UC02 & UC03 --- R
 
