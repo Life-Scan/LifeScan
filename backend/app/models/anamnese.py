@@ -2,10 +2,11 @@ import enum
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Date, ForeignKey, Integer, Numeric, Text
+from sqlalchemy import Date, ForeignKey, Integer, Numeric
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, DataHora, agora_utc, coluna_enum
+from app.db.cripta import TextoCriptografado
 
 
 class Sexo(str, enum.Enum):
@@ -29,10 +30,11 @@ class Anamnese(Base):
     sexo: Mapped[Sexo | None] = mapped_column(coluna_enum(Sexo, "sexo"))
     altura_cm: Mapped[int | None] = mapped_column(Integer)
     peso_kg: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
-    diagnosticos: Mapped[str | None] = mapped_column(Text)
-    alergias: Mapped[str | None] = mapped_column(Text)
-    medicamentos_em_uso: Mapped[str | None] = mapped_column(Text)
-    restricoes: Mapped[str | None] = mapped_column(Text)
-    objetivos: Mapped[str | None] = mapped_column(Text)
-    observacoes: Mapped[str | None] = mapped_column(Text)
+    # Textos clínicos criptografados em repouso (LGPD, art. 46): o banco só vê tokens Fernet
+    diagnosticos: Mapped[str | None] = mapped_column(TextoCriptografado)
+    alergias: Mapped[str | None] = mapped_column(TextoCriptografado)
+    medicamentos_em_uso: Mapped[str | None] = mapped_column(TextoCriptografado)
+    restricoes: Mapped[str | None] = mapped_column(TextoCriptografado)
+    objetivos: Mapped[str | None] = mapped_column(TextoCriptografado)
+    observacoes: Mapped[str | None] = mapped_column(TextoCriptografado)
     atualizado_em: Mapped[datetime] = mapped_column(DataHora, default=agora_utc, onupdate=agora_utc)

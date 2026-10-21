@@ -1,5 +1,7 @@
 """Configurações da aplicação, lidas do arquivo .env e de variáveis de ambiente."""
 
+import base64
+import hashlib
 from functools import lru_cache
 from pathlib import Path
 
@@ -43,6 +45,19 @@ class Configuracoes(BaseSettings):
     # Validade da senha provisória de uma conta nova e da enviada pelo "esqueci minha senha"
     dias_senha_provisoria: int = Field(7, validation_alias="ACCESS_PASSWORD_DAYS")
     minutos_redefinicao_senha: int = Field(60, validation_alias="RESET_PASSWORD_MINUTES")
+
+    # Chave de criptografia dos textos clínicos da anamnese (Fernet, formato urlsafe base64).
+    # Na ausência, deriva do segredo JWT — garantido dev/testes; em produção defina
+    # FERNET_KEY com chave própria (`python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`)
+    # para poder rodará-la/rotacioná-la sem trocar o segredo do JWT.
+    chave_fernet_texto: str | None = Field(None, validation_alias="FERNET_KEY")
+
+    @property
+    def chave_fernet(self) -> bytes:
+        if self.chave_fernet_texto:
+            return self.chave_fernet_texto.encode()
+        derivada = hashlib.sha256(self.segredo_jwt.encode("utf-8")).digest()
+        return base64.urlsafe_b64encode(derivada)
 
     @property
     def origens_cors(self) -> list[str]:
