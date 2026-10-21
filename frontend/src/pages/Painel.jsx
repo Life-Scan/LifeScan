@@ -1,8 +1,11 @@
 import { CalendarClock, CircleCheck, ClipboardList, Clock, FileText, TriangleAlert } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { obterPendencias } from '../api/servicos'
-import { Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
+import { consentimentoLgpd, obterPendencias, revogarConsentimentoLgpd } from '../api/servicos'
+import { mensagemDeErro } from '../api/cliente'
+import { useConfirmar } from '../components/Confirmacao'
+import { Alerta, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import {
@@ -219,7 +222,83 @@ function PainelPaciente({ painel }) {
           )}
         </Secao>
       </div>
+
+      <Secao id="meus-dados" titulo="Meus dados (LGPD)">
+        <CardConsentimentoLgpd />
+      </Secao>
     </>
+  )
+}
+
+const MENSAGEM_REVOGACAO =
+  'Você pode revogar a autorização dada para o tratamento dos seus dados de saúde (LGPD, art. 18). ' +
+  'As informações já registradas continuam arquivadas por guarda legal do prontuário, mas o médico ' +
+  'não consegue anotar dados novos até que haja um novo aceite. Deseja revogar?'
+
+function CardConsentimentoLgpd() {
+  const [estado, setEstado] = useState(null)
+  const [erro, setErro] = useState('')
+  const confirmar = useConfirmar()
+
+  // Trilha única: estado do aceite vigente (pacientes têm um só registro vigente, ou revogado)
+  useEffect(() => {
+    consentimentoLgpd().then(setEstado).catch(() => setEstado(null))
+  }, [])
+
+  if (!estado) return <p className={ui.ajuda}>Não foi possível ler a situação do seu consentimento.</p>
+
+  if (estado.concedido_em == null) {
+    return (
+      <p className={ui.ajuda}>
+        Você ainda não aceitou o termo de tratamento de dados. Ele é apresentado quando você define sua senha.
+      </p>
+    )
+  }
+
+  async function aoRevogar() {
+    if (
+      !(await confirmar({
+        titulo: 'Revogar consentimento',
+        mensagem: MENSAGEM_REVOGACAO,
+        rotuloConfirmar: 'Revogar',
+        perigo: true,
+      }))
+    ) {
+      return
+    }
+    setErro('')
+    try {
+      const atualizado = await revogarConsentimentoLgpd()
+      setEstado(atualizado)
+    } catch (erroRevogacao) {
+      setErro(mensagemDeErro(erroRevogacao))
+    }
+  }
+
+  return (
+    <div>
+      <p className={ui.ajuda}>
+        {estado.vigente
+          ? `Consentimento vigente, concedido em ${formatarDataHora(estado.concedido_em)} (termo ${estado.versao_termo}).`
+          : `Consentimento revogado em ${formatarDataHora(estado.revogado_em)}.`}
+      </p>
+      {estado.vigente ? (
+        <>
+          <button type="button" className={ui.botaoSecundario} onClick={aoRevogar}>
+            Revogar consentimento
+          </button>
+          <p className={ui.ajuda}>
+            Revogado, o médico não anota dados novos até haver novo aceite. Para aceitar o termo de novo, use
+            &quot;Esqueci minha senha&quot; e defina uma nova senha.
+          </p>
+        </>
+      ) : (
+        <p className={ui.ajuda}>
+          Para aceitar o termo de novo, use &quot;Esqueci minha senha&quot; e defina uma nova senha.
+        </p>
+      )}
+      {erro && <Alerta tipo="erro">{erro}</Alerta>}
+    </div>
   )
 }
 

@@ -212,7 +212,65 @@ def test_paciente_sem_aceite_do_termo_nao_habilita_a_conta_e_parceiro_nao_precis
     assert feito.status_code == 200
 
 
-# --- Esqueci minha senha
+def test_paciente_ve_e_revoga_o_consentimento_e_isso_bloqueia_novas_gravacoes(
+    cliente, medico, paciente, acompanhamento
+):
+    # Aceite registrado no primeiro acesso
+    estado = cliente.get("/auth/consentimento", headers=paciente["headers"]).json()
+    assert estado["vigente"] is True
+    assert estado["concedido_em"] is not None
+    assert estado["versao_termo"]
+
+    revoga = cliente.post("/auth/consentimento/revogar", headers=paciente["headers"])
+    assert revoga.status_code == 200
+    estado = revoga.json()
+    assert estado["vigente"] is False
+    assert estado["revogado_em"] is not None
+
+    # Revogar de novo não faz nada: não há consentimento ativo
+    assert cliente.post("/auth/consentimento/revogar", headers=paciente["headers"]).status_code == 409
+
+    # Médico não pode mais gravar na anamnese, mas a leitura continua (guarda legal)
+    bloqueado = cliente.put(
+        f"/follow-ups/{acompanhamento['id']}/anamnesis", json={"peso_kg": 90}, headers=medico["headers"]
+    )
+    assert bloqueado.status_code == 403
+    assert "revogou" in bloqueado.json()["detail"]
+    assert cliente.get(f"/follow-ups/{acompanhamento['id']}/anamnesis", headers=paciente["headers"]).status_code == 200
+
+    # Correção de dados básicos também fica bloqueada
+    assert (
+        cliente.patch(
+            f"/follow-ups/{acompanhamento['id']}/anamnesis/dados-basicos",
+            json={"peso_kg": 90},
+            headers=paciente["headers"],
+        ).status_code
+        == 403
+    )
+
+    # Novo aceite (o paciente redefine a senha e aceita o termo de novo) libera a escrita
+    cliente.post("/auth/forgot-password", json={"email": "carlos@email.com"})
+    provisoria = senha_provisoria_enviada("carlos@email.com")
+    primeiro_acesso = entrar(cliente, "carlos@email.com", provisoria)
+    novo_aceite = cliente.post(
+        "/auth/set-password",
+        json={"nova_senha": "senha-recuperada", "aceite_lgpd": True},
+        headers=primeiro_acesso["headers"],
+    )
+    assert novo_aceite.status_code == 200
+    assert cliente.get("/auth/consentimento", headers=paciente["headers"]).json()["vigente"] is True
+
+    liberado = cliente.put(
+        f"/follow-ups/{acompanhamento['id']}/anamnesis", json={"peso_kg": 90}, headers=medico["headers"]
+    )
+    assert liberado.status_code == 200
+
+
+def test_so_o_paciente_revoga_o_consentimento(cliente, medico, parceiro_atribuido):
+    for cabecalhos in (medico["headers"], parceiro_atribuido["headers"]):
+        recusa = cliente.post("/auth/consentimento/revogar", headers=cabecalhos)
+        assert recusa.status_code == 403
+        assert recusa.json()["detail"] == "Ação permitida apenas para: paciente."
 
 
 def test_esqueci_minha_senha_envia_provisoria_e_mantem_a_senha_atual(cliente, paciente):

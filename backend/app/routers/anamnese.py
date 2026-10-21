@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -27,6 +27,7 @@ from app.schemas.anamnese import (
     PortabilidadeAnamneseSaida,
 )
 from app.schemas.usuario import UsuarioResumo
+from app.services.consentimento import tratamento_bloqueado_por_revogacao
 from app.services.registro_acesso import registrar_acesso
 
 router = APIRouter(prefix="/follow-ups/{acompanhamento_id}/anamnesis", tags=["Anamnese do paciente"])
@@ -74,6 +75,19 @@ def _montar_saida(
 
 def _obter_anamnese(sessao: Session, acompanhamento: Acompanhamento) -> Anamnese | None:
     return sessao.scalar(select(Anamnese).where(Anamnese.paciente_id == acompanhamento.paciente_id))
+
+
+def _garantir_consentimento_vigente(sessao: Session, acompanhamento: Acompanhamento) -> None:
+    """LGPD (art. 8º, §5º): consentimento revogado bloqueia novas gravações clínicas.
+
+    Dados já existentes continuam visíveis (guarda legal, CFM 1.821/2007).
+    """
+    if tratamento_bloqueado_por_revogacao(sessao, acompanhamento.paciente_id):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "O paciente revogou o consentimento para novos tratamentos de dados. "
+            "As informações já registradas permanecem visíveis.",
+        )
 
 
 @router.get("", response_model=AnamneseSaida)
@@ -169,6 +183,7 @@ def corrigir_dados_basicos(
     o que vier vazio fica em branco. O conteúdo clínico não é tocado. Continua
     disponível ao médico, que pode corrigir por quem é atendido.
     """
+    _garantir_consentimento_vigente(sessao, acompanhamento)
     anamnese = _obter_anamnese(sessao, acompanhamento)
     if anamnese is None:
         anamnese = Anamnese(paciente_id=acompanhamento.paciente_id)
@@ -192,6 +207,7 @@ def salvar_anamnese(
 
     Continua editável com o acompanhamento encerrado: a anamnese descreve o paciente, não o tratamento.
     """
+    _garantir_consentimento_vigente(sessao, acompanhamento)
     anamnese = _obter_anamnese(sessao, acompanhamento)
     if anamnese is None:
         anamnese = Anamnese(paciente_id=acompanhamento.paciente_id)

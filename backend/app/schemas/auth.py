@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, EmailStr, StringConstraints
+from pydantic import AfterValidator, BaseModel, EmailStr, StringConstraints, computed_field
 
 from app.models.usuario import TipoUsuario
 from app.schemas.base import DataHoraUTC, SchemaSaida
@@ -41,6 +41,23 @@ class EsqueciSenhaEntrada(BaseModel):
 
 class MensagemSaida(BaseModel):
     mensagem: str
+
+
+class ConsentimentoStatusSaida(BaseModel):
+    """Estado do consentimento LGPD do próprio titular; campos nulos = ainda sem aceite."""
+
+    finalidade: str | None = None
+    versao_termo: str | None = None
+    concedido_em: DataHoraUTC | None = None
+    revogado_em: DataHoraUTC | None = None
+
+    @computed_field
+    @property
+    def vigente(self) -> bool | None:
+        """Nulo quando nunca houve aceite; falso com revogação; verdadeiro com aceite ativo."""
+        if self.concedido_em is None:
+            return None
+        return self.revogado_em is None
 
 
 class UsuarioSaida(SchemaSaida):

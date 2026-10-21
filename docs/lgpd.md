@@ -13,6 +13,8 @@ decisões de retenção.
 | Criptografia em repouso dos textos clínicos (Fernet na aplicação; o banco só vê tokens) | 46 | `app/db/cripta.py`, `FERNET_KEY` em `app/core/config.py` |
 | Minimização para parceiros: só idade, sem data de nascimento completa | 6º, III | rota de anamnese (`para_parceiro`) |
 | Portabilidade: exportação em JSON (anamnese + consentimentos + acessos) para titular ou médico | 18, II e V | `GET /follow-ups/{id}/anamnesis/portabilidade` |
+| Correção dos dados básicos pelo próprio titular (nascimento, sexo, altura e peso) | 18, III | `PATCH /follow-ups/{id}/anamnesis/dados-basicos` |
+| Revogação do consentimento pelo titular; revogado, novas gravações clínicas ficam bloqueadas até novo aceite | 8º §5º, 18 IX | `GET/POST /auth/consentimento(/revogar)` |
 
 ## Política de retenção
 
@@ -23,6 +25,10 @@ decisões de retenção.
   definitiva de dados clínicos só ocorre após esse prazo.
 - A conta do paciente pode ser **desativada** a qualquer momento; os dados clínicos
   são preservados durante o prazo de guarda.
+- O consentimento pode ser **revogado** pelo titular no painel dele: o registro
+  permanece (data/hora do aceite e da revogação) e novas gravações clínicas ficam
+  bloqueadas até um novo aceite — que acontece quando o paciente redefine a
+  própria senha e aceita o termo novamente.
 - A trilha de auditoria é pseudônima (id + tipo de usuário) e sobrevive à
   desativação da conta — ela não identifica o titular.
 

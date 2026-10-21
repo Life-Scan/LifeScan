@@ -71,6 +71,9 @@ export const obterLinhaDoTempo = (acompanhamentoId, tipos) =>
   dados(api.get(`/follow-ups/${acompanhamentoId}/timeline`, { params: tipos?.length ? { tipos: tipos.join(',') } : {} }))
 export const obterPendencias = () => dados(api.get('/dashboard/pending'))
 
+export const consentimentoLgpd = () => dados(api.get('/auth/consentimento'))
+export const revogarConsentimentoLgpd = () => dados(api.post('/auth/consentimento/revogar'))
+
 // Arquivos: o download exige o token, então buscamos o conteúdo como blob
 export async function obterArquivo(arquivoId, inline = false) {
   const resposta = await api.get(`/files/${arquivoId}/download`, {
