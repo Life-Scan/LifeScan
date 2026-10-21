@@ -303,6 +303,7 @@ erDiagram
     USUARIOS ||--o{ DOCUMENTOS : "envia"
     ARQUIVOS ||--|| DOCUMENTOS : "conteúdo"
     ACOMPANHAMENTOS ||--o{ ARQUIVOS : "guarda"
+    USUARIOS ||--o{ ARQUIVOS : "envia (arquivo)"
 ```
 
 ## Diagrama de casos de uso
