@@ -1,4 +1,6 @@
 import { ArrowLeft } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import Paginacao from '../../components/Paginacao'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { mensagemDeErro } from '../../api/cliente'
@@ -26,33 +28,10 @@ const ABAS = [
 
 // O parceiro só tem acesso à anamnese do paciente, às solicitações destinadas a ele e aos próprios envios
 const ABAS_PARCEIRO = [
-  { id: 'anamnese', rotulo: 'Anamnese do paciente' },
+  { id: 'anamnese', rotulo: 'Anamnese' },
   { id: 'solicitacoes', rotulo: 'Solicitações' },
   { id: 'documentos', rotulo: 'Meus envios' },
 ]
-
-/** Carrega tudo o que o usuário pode ver do acompanhamento; o polling repete essa busca a cada 30 s. */
-async function carregarAcompanhamento(id, ehParceiro) {
-  if (ehParceiro) {
-    const [acompanhamento, anamnese, solicitacoes, documentos] = await Promise.all([
-      servicos.obterAcompanhamento(id),
-      servicos.obterAnamnese(id),
-      servicos.listarSolicitacoes(id),
-      servicos.listarDocumentos(id),
-    ])
-    return { acompanhamento, anamnese, solicitacoes, documentos, linhaDoTempo: [], consultas: [], parceiros: [] }
-  }
-  const [acompanhamento, linhaDoTempo, anamnese, consultas, solicitacoes, documentos, parceiros] = await Promise.all([
-    servicos.obterAcompanhamento(id),
-    servicos.obterLinhaDoTempo(id),
-    servicos.obterAnamnese(id),
-    servicos.listarConsultas(id),
-    servicos.listarSolicitacoes(id),
-    servicos.listarDocumentos(id),
-    servicos.listarParceirosDoAcompanhamento(id),
-  ])
-  return { acompanhamento, linhaDoTempo, anamnese, consultas, solicitacoes, documentos, parceiros }
-}
 
 export default function Acompanhamento() {
   const { id } = useParams()
@@ -62,10 +41,11 @@ export default function Acompanhamento() {
   const abas = ehParceiro ? ABAS_PARCEIRO : ABAS
   const abaAtual = abas.some((aba) => aba.id === parametros.get('aba')) ? parametros.get('aba') : abas[0].id
 
-  const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(
-    () => carregarAcompanhamento(id, ehParceiro),
-    undefined,
-    [id, ehParceiro],
+  const { dados: acompanhamento, erro, carregando, atualizar } = useAtualizacaoPeriodica(
+    () => servicos.obterAcompanhamento(id), undefined, [id],
+  )
+  const { dados: contagens, atualizar: atualizarResumo } = useAtualizacaoPeriodica(
+    () => servicos.obterResumoAcompanhamento(id), undefined, [id],
   )
 
   /** Troca de aba mantendo o histórico do navegador; `extras` vira parâmetro da URL. */
@@ -73,9 +53,9 @@ export default function Acompanhamento() {
     setParametros({ aba, ...extras })
   }
 
-  if (carregando && !dados) return <Carregando texto="Carregando o acompanhamento…" />
+  if (carregando && !acompanhamento) return <Carregando texto="Carregando o acompanhamento…" />
 
-  if (!dados) {
+  if (!acompanhamento) {
     const status = erro?.response?.status
     return (
       <div className={estilos.pilha}>
@@ -85,25 +65,15 @@ export default function Acompanhamento() {
             : mensagemDeErro(erro, 'Não foi possível carregar o acompanhamento.')}
         </Alerta>
         <p>
+          <button type="button" className={ui.botaoSecundario} onClick={atualizar}>Tentar novamente</button>{' '}
           <Link to="/acompanhamentos">Voltar</Link>
         </p>
       </div>
     )
   }
 
-  const { acompanhamento, linhaDoTempo, anamnese, consultas, solicitacoes, documentos, parceiros } = dados
   const editavel = acompanhamento.status === 'ativo'
-  const contexto = { acompanhamento, usuario, ehMedico, ehParceiro, editavel, atualizar, irParaAba }
-
-  // Médico: tudo o que está pendente no acompanhamento. Demais: só o que cabe a eles.
-  const contagens = {
-    solicitacoes: solicitacoes.filter(
-      (s) => s.status === 'pendente' && (ehMedico || s.destinatario.id === usuario.id),
-    ).length,
-    documentos: ehMedico
-      ? documentos.filter((d) => d.status === 'enviado' && d.enviado_por.id !== usuario.id).length
-      : 0,
-  }
+  const contexto = { acompanhamento, usuario, ehMedico, ehParceiro, editavel, atualizar: async () => { await Promise.all([atualizar(), atualizarResumo()]) }, irParaAba }
 
   return (
     <div className={estilos.pilha}>
@@ -137,28 +107,65 @@ export default function Acompanhamento() {
             onClick={() => irParaAba(aba.id)}
           >
             {aba.rotulo}
-            {contagens[aba.id] > 0 && <span className={estilos.contador}>{contagens[aba.id]}</span>}
+            {contagens?.[aba.id] > 0 && <span className={estilos.contador}>{contagens[aba.id]}</span>}
           </button>
         ))}
       </div>
 
       <div role="tabpanel" id={`painel-${abaAtual}`} aria-labelledby={`aba-${abaAtual}`} className={ui.cartao}>
-        {abaAtual === 'linha' && <AbaLinhaDoTempo eventos={linhaDoTempo} {...contexto} />}
-        {abaAtual === 'anamnese' && <AbaAnamnese anamnese={anamnese} {...contexto} />}
-        {abaAtual === 'consultas' && <AbaConsultas consultas={consultas} {...contexto} />}
-        {abaAtual === 'solicitacoes' && (
-          <AbaSolicitacoes solicitacoes={solicitacoes} parceiros={parceiros} {...contexto} />
-        )}
-        {abaAtual === 'documentos' && (
-          <AbaDocumentos
-            documentos={documentos}
-            solicitacoes={solicitacoes}
-            solicitacaoInicial={parametros.get('solicitacao')}
-            {...contexto}
-          />
-        )}
-        {abaAtual === 'parceiros' && <AbaParceiros parceiros={parceiros} {...contexto} />}
+        <ConteudoAba key={`${id}-${abaAtual}-${usuario.id}`} aba={abaAtual} solicitacaoInicial={parametros.get('solicitacao')} {...contexto} />
       </div>
     </div>
+  )
+}
+
+/** Cada aba busca apenas o que precisa; o histórico completo nunca bloqueia o cabeçalho. */
+function ConteudoAba({ aba, solicitacaoInicial, ...contexto }) {
+  const { acompanhamento, ehMedico, atualizar: atualizarCabecalho } = contexto
+  const [pagina, setPagina] = useState(1)
+  const [tipos, setTipos] = useState([])
+  const [recentes, setRecentes] = useState(false)
+  const [categoria, setCategoria] = useState('')
+  const base = `/follow-ups/${acompanhamento.id}`
+  const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(async () => {
+    const parametros = { pagina }
+    if (aba === 'anamnese') return { anamnese: await servicos.obterAnamnese(acompanhamento.id) }
+    if (aba === 'parceiros') return { parceiros: await servicos.listarParceirosDoAcompanhamento(acompanhamento.id) }
+    if (aba === 'linha') return { lista: await servicos.obterPagina(`${base}/timeline`, { ...parametros, tipos: tipos.length ? tipos.join(',') : undefined, recentes }) }
+    if (aba === 'consultas') return { lista: await servicos.obterPagina(`${base}/consultations`, parametros) }
+    if (aba === 'solicitacoes') {
+      const [lista, parceiros] = await Promise.all([
+        servicos.obterPagina(`${base}/requests`, parametros),
+        ehMedico ? servicos.listarParceirosDoAcompanhamento(acompanhamento.id) : [],
+      ])
+      return { lista, parceiros }
+    }
+    const [lista, solicitacoes] = await Promise.all([
+      servicos.obterPagina(`${base}/documents`, { ...parametros, categoria: categoria || undefined }),
+      servicos.listarSolicitacoes(acompanhamento.id, { status: 'pendente' }),
+    ])
+    return { lista, solicitacoes }
+  }, undefined, [pagina, tipos.join(','), recentes, categoria])
+  useEffect(() => { if (dados?.lista) setPagina(dados.lista.pagina) }, [dados?.lista?.pagina])
+
+  const atualizarTudo = async () => { await Promise.all([atualizar(), atualizarCabecalho()]) }
+  const propriedades = { ...contexto, atualizar: atualizarTudo }
+  function mudarFiltro(acao, valor) { acao(valor); setPagina(1) }
+
+  return (
+    <>
+      <ErroCarregamento erro={erro} />
+      {erro && !dados && <button type="button" className={ui.botaoSecundario} onClick={atualizar}>Tentar novamente</button>}
+      {carregando && !dados && <Carregando texto="Carregando esta seção…" />}
+      {dados && <>
+        {aba === 'anamnese' && <AbaAnamnese anamnese={dados.anamnese} {...propriedades} />}
+        {aba === 'parceiros' && <AbaParceiros parceiros={dados.parceiros} {...propriedades} />}
+        {aba === 'linha' && <AbaLinhaDoTempo eventos={dados.lista.itens} filtro={tipos} setFiltro={(valor) => mudarFiltro(setTipos, valor)} recentesPrimeiro={recentes} setRecentesPrimeiro={(valor) => mudarFiltro(setRecentes, valor)} {...propriedades} />}
+        {aba === 'consultas' && <AbaConsultas consultas={dados.lista.itens} {...propriedades} />}
+        {aba === 'solicitacoes' && <AbaSolicitacoes solicitacoes={dados.lista.itens} parceiros={dados.parceiros} {...propriedades} />}
+        {aba === 'documentos' && <AbaDocumentos documentos={dados.lista.itens} solicitacoes={dados.solicitacoes} solicitacaoInicial={solicitacaoInicial} filtro={categoria} setFiltro={(valor) => mudarFiltro(setCategoria, valor)} {...propriedades} />}
+      </>}
+      <Paginacao dados={dados?.lista} aoMudar={setPagina} carregando={carregando} />
+    </>
   )
 }

@@ -2,14 +2,21 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.deps import exigir_tipo
 from app.db.sessao import obter_sessao
+from app.models.arquivo import Arquivo
+from app.models.atribuicao import AtribuicaoParceiro
+from app.models.documento import Documento
+from app.models.anamnese import Anamnese
 from app.models.acompanhamento import Acompanhamento
+from app.models.solicitacao import Solicitacao
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.auth import MensagemSaida
 from app.schemas.usuario import ContaAtualizacao, ContaEntrada, ContaSaida
+from app.schemas.paginacao import Pagina, Paginacao, paginar
 from app.services.contas import enviar_acesso_da_conta
 from app.services.email import ErroEnvioEmail
 
@@ -61,22 +68,28 @@ def criar_conta(dados: ContaEntrada, sessao: Session = Depends(obter_sessao)) ->
         enviar_acesso_da_conta(usuario)
     except ErroEnvioEmail as err:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Falha ao enviar email por SMTP: {err}") from err
-
     sessao.add(usuario)
     sessao.commit()
     return _montar_saidas(sessao, [usuario])[0]
 
 
-@router.get("", response_model=list[ContaSaida])
+@router.get("", response_model=Pagina[ContaSaida] | list[ContaSaida])
 def listar_contas(
     tipo: TipoUsuario | None = Query(None, description="paciente ou parceiro"),
+    ativo: bool | None = Query(None),
+    paginacao: Paginacao = Depends(),
     sessao: Session = Depends(obter_sessao),
-) -> list[ContaSaida]:
+):
     consulta = select(Usuario).where(Usuario.tipo_usuario != TipoUsuario.medico)
     if tipo is not None:
         consulta = consulta.where(Usuario.tipo_usuario == tipo)
-    usuarios = list(sessao.scalars(consulta.order_by(Usuario.nome, Usuario.id)))
-    return _montar_saidas(sessao, usuarios)
+    if ativo is not None:
+        consulta = consulta.where(Usuario.ativo == ativo)
+    resultado = paginar(sessao, consulta.order_by(Usuario.nome, Usuario.id), paginacao)
+    if isinstance(resultado, dict):
+        resultado["itens"] = _montar_saidas(sessao, resultado["itens"])
+        return resultado
+    return _montar_saidas(sessao, resultado)
 
 
 @router.patch("/{usuario_id}", response_model=ContaSaida)
@@ -87,11 +100,8 @@ def atualizar_conta(
 ) -> ContaSaida:
     """Altera nome, email, profissão (parceiro) ou ativa/desativa a conta."""
     usuario = _obter_conta(sessao, usuario_id)
-    if dados.email is not None and dados.email != usuario.email:
-        existente = sessao.scalar(
-            select(Usuario.id).where(Usuario.email == dados.email, Usuario.id != usuario.id)
-        )
-        if existente:
+    if dados.email is not None:
+        if sessao.scalar(select(Usuario.id).where(Usuario.email == dados.email, Usuario.id != usuario_id)):
             raise HTTPException(status.HTTP_409_CONFLICT, "Já existe uma conta com este email.")
         usuario.email = dados.email
     if dados.nome is not None:
@@ -100,8 +110,43 @@ def atualizar_conta(
         usuario.profissao = dados.profissao
     if dados.ativo is not None:
         usuario.ativo = dados.ativo
-    sessao.commit()
+    try:
+        sessao.commit()
+    except IntegrityError:
+        sessao.rollback()
+        # Outra requisição pode ter usado o email entre a consulta e o commit.
+        if dados.email is not None and sessao.scalar(
+            select(Usuario.id).where(Usuario.email == dados.email, Usuario.id != usuario_id)
+        ):
+            raise HTTPException(status.HTTP_409_CONFLICT, "Já existe uma conta com este email.") from None
+        raise
     return _montar_saidas(sessao, [usuario])[0]
+
+
+@router.delete("/{usuario_id}", response_model=MensagemSaida)
+def excluir_paciente(usuario_id: int, sessao: Session = Depends(obter_sessao)) -> MensagemSaida:
+    """Exclusão definitiva de pacientes desativados sem histórico vinculado."""
+    usuario = _obter_conta(sessao, usuario_id)
+    if usuario.tipo_usuario != TipoUsuario.paciente:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Apenas pacientes podem ser excluídos por esta opção.")
+    if usuario.ativo:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Desative o paciente antes de excluir a conta.")
+
+    vinculos = (
+        Acompanhamento.paciente_id, Acompanhamento.medico_id, Anamnese.paciente_id,
+        Arquivo.enviado_por_id, Documento.enviado_por_id,
+        Solicitacao.destinatario_id, AtribuicaoParceiro.parceiro_id,
+    )
+    mensagem_historico = "Este paciente possui acompanhamento ou histórico vinculado e não pode ser excluído. Reative a conta para reutilizá-la."
+    if any(sessao.scalar(select(coluna).where(coluna == usuario_id).limit(1)) is not None for coluna in vinculos):
+        raise HTTPException(status.HTTP_409_CONFLICT, mensagem_historico)
+    sessao.delete(usuario)
+    try:
+        sessao.commit()
+    except IntegrityError as err:
+        sessao.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, mensagem_historico) from err
+    return MensagemSaida(mensagem="Paciente excluído definitivamente. O email está disponível para um novo cadastro.")
 
 
 @router.post("/{usuario_id}/resend-access", response_model=MensagemSaida)
@@ -114,6 +159,5 @@ def reenviar_acesso(usuario_id: int, sessao: Session = Depends(obter_sessao)) ->
         enviar_acesso_da_conta(usuario)
     except ErroEnvioEmail as err:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Falha ao enviar email por SMTP: {err}") from err
-
     sessao.commit()
     return MensagemSaida(mensagem=f"Dados de acesso enviados para {usuario.email}.")

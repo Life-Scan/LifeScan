@@ -3,6 +3,10 @@ import { api } from './cliente'
 
 const dados = (promessa) => promessa.then((resposta) => resposta.data)
 
+// Listas visíveis usam paginação no servidor; os seletores existentes mantêm sua API.
+export const obterPagina = (caminho, parametros = {}) =>
+  dados(api.get(caminho, { params: { pagina: 1, tamanho: 20, ...parametros } }))
+
 // Autenticação
 export const entrar = (email, senha) => dados(api.post('/auth/login', { email, senha }))
 export const obterUsuarioAtual = () => dados(api.get('/auth/me'))
@@ -13,18 +17,20 @@ export const esqueciSenha = (email) => dados(api.post('/auth/forgot-password', {
 export const listarContas = (tipo) => dados(api.get('/users', { params: tipo ? { tipo } : {} }))
 export const criarConta = (conta) => dados(api.post('/users', conta))
 export const atualizarConta = (id, alteracoes) => dados(api.patch(`/users/${id}`, alteracoes))
+export const excluirPaciente = (id) => dados(api.delete(`/users/${id}`))
 export const reenviarAcesso = (id) => dados(api.post(`/users/${id}/resend-access`))
 
 // Acompanhamentos
 export const listarAcompanhamentos = () => dados(api.get('/follow-ups'))
 export const obterAcompanhamento = (id) => dados(api.get(`/follow-ups/${id}`))
+export const obterResumoAcompanhamento = (id) => dados(api.get(`/follow-ups/${id}/summary`))
 export const criarAcompanhamento = (acompanhamento) => dados(api.post('/follow-ups', acompanhamento))
 export const alterarPasso = (id, passo) => dados(api.patch(`/follow-ups/${id}/step`, { passo_atual: passo }))
 export const alterarStatusAcompanhamento = (id, status) => dados(api.patch(`/follow-ups/${id}/status`, { status }))
 
-// Anamnese do paciente e parceiros do acompanhamento
+// Ficha do paciente e parceiros da acompanhamento
 export const obterAnamnese = (acompanhamentoId) => dados(api.get(`/follow-ups/${acompanhamentoId}/anamnesis`))
-export const salvarAnamnese = (acompanhamentoId, anamnese) => dados(api.put(`/follow-ups/${acompanhamentoId}/anamnesis`, anamnese))
+export const salvarAnamnese = (acompanhamentoId, ficha) => dados(api.put(`/follow-ups/${acompanhamentoId}/anamnesis`, ficha))
 export const listarParceirosDoAcompanhamento = (acompanhamentoId) => dados(api.get(`/follow-ups/${acompanhamentoId}/partners`))
 export const atribuirParceiro = (acompanhamentoId, parceiroId) =>
   dados(api.post(`/follow-ups/${acompanhamentoId}/partners`, { parceiro_id: parceiroId }))
@@ -37,7 +43,7 @@ export const registrarConsulta = (acompanhamentoId, consulta) =>
   dados(api.post(`/follow-ups/${acompanhamentoId}/consultations`, consulta))
 
 // Solicitações
-export const listarSolicitacoes = (acompanhamentoId) => dados(api.get(`/follow-ups/${acompanhamentoId}/requests`))
+export const listarSolicitacoes = (acompanhamentoId, parametros) => dados(api.get(`/follow-ups/${acompanhamentoId}/requests`, { params: parametros }))
 export const criarSolicitacao = (acompanhamentoId, solicitacao) =>
   dados(api.post(`/follow-ups/${acompanhamentoId}/requests`, solicitacao))
 export const concluirSolicitacao = (id) => dados(api.patch(`/requests/${id}/complete`))

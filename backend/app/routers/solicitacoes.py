@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import case, select
 from sqlalchemy.orm import Session
 
 from app.core.deps import (
@@ -17,12 +17,14 @@ from app.models.acompanhamento import Acompanhamento
 from app.models.solicitacao import Solicitacao, StatusSolicitacao, TipoSolicitacao
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.solicitacao import SolicitacaoEntrada, SolicitacaoSaida
+from app.schemas.paginacao import Pagina, Paginacao, paginar
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(tags=["Solicitações"])
 
 
 def _resolver_destinatario(sessao: Session, acompanhamento: Acompanhamento, dados: SolicitacaoEntrada) -> int:
-    """Destinatário válido: o paciente do acompanhamento (padrão) ou um parceiro atribuído a ele."""
+    """Destinatário válido: o paciente do acompanhamento (padrão) ou um parceiro atribuído a ela."""
     if dados.destinatario_id is None or dados.destinatario_id == acompanhamento.paciente_id:
         return acompanhamento.paciente_id
 
@@ -66,20 +68,23 @@ def criar_solicitacao(
     return solicitacao
 
 
-@router.get("/follow-ups/{acompanhamento_id}/requests", response_model=list[SolicitacaoSaida])
+@router.get("/follow-ups/{acompanhamento_id}/requests", response_model=Pagina[SolicitacaoSaida] | list[SolicitacaoSaida])
 def listar_solicitacoes(
     status_filtro: StatusSolicitacao | None = Query(None, alias="status"),
+    paginacao: Paginacao = Depends(),
     acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso_de_parceiro),
     usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
-) -> list[Solicitacao]:
+):
     """Médico e paciente veem todas as solicitações do acompanhamento; o parceiro, só as destinadas a ele."""
-    consulta = select(Solicitacao).where(Solicitacao.acompanhamento_id == acompanhamento.id)
+    consulta = select(Solicitacao).options(selectinload(Solicitacao.destinatario)).where(Solicitacao.acompanhamento_id == acompanhamento.id)
     if usuario.tipo_usuario == TipoUsuario.parceiro:
         consulta = consulta.where(Solicitacao.destinatario_id == usuario.id)
     if status_filtro is not None:
         consulta = consulta.where(Solicitacao.status == status_filtro)
-    return list(sessao.scalars(consulta.order_by(Solicitacao.prazo, Solicitacao.id)).all())
+    if paginacao.pagina is not None:
+        consulta = consulta.order_by(case((Solicitacao.status == StatusSolicitacao.pendente, 0), (Solicitacao.status == StatusSolicitacao.atendida, 1), else_=2))
+    return paginar(sessao, consulta.order_by(Solicitacao.prazo, Solicitacao.id), paginacao)
 
 
 def _obter_solicitacao_pendente_do_medico(

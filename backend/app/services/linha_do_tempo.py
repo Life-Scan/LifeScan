@@ -2,8 +2,8 @@
 
 from collections.abc import Iterable
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import func, literal, select, union_all
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.consulta import Consulta, TipoConsulta
 from app.models.documento import CategoriaDocumento, Documento, StatusDocumento
@@ -13,6 +13,7 @@ from app.schemas.consulta import ConsultaSaida
 from app.schemas.documento import DocumentoSaida
 from app.schemas.linha_do_tempo import EventoLinhaDoTempo, TipoEvento
 from app.schemas.solicitacao import SolicitacaoSaida
+from app.schemas.paginacao import Paginacao, dados_pagina
 
 ROTULOS_SOLICITACAO = {
     TipoSolicitacao.exame: "exame",
@@ -116,24 +117,49 @@ def _eventos_de_documentos(documentos: Iterable[Documento]) -> list[EventoLinhaD
 
 
 def montar_linha_do_tempo(
-    sessao: Session, acompanhamento: Acompanhamento, tipos: set[TipoEvento] | None = None
-) -> list[EventoLinhaDoTempo]:
+    sessao: Session, acompanhamento: Acompanhamento, tipos: set[TipoEvento] | None = None,
+    paginacao: Paginacao | None = None, recentes: bool = False,
+):
     """Reúne consultas, solicitações e documentos em ordem cronológica.
 
     Datas usadas: consulta = data da consulta; demais = momento em que foram criados.
     """
     tipos = tipos or set(TipoEvento)
     eventos: list[EventoLinhaDoTempo] = []
+    ids_por_tipo = None
+    if paginacao is not None and paginacao.pagina is not None:
+        # O banco ordena apenas identificadores e datas; carrega os registros completos
+        # e os relacionamentos somente dos eventos que pertencem à página solicitada.
+        modelos = {TipoEvento.consulta: (Consulta, Consulta.data), TipoEvento.solicitacao: (Solicitacao, Solicitacao.criado_em), TipoEvento.documento: (Documento, Documento.criado_em)}
+        partes = [select(modelo.id.label("id"), data.label("data"), literal(ORDEM_TIPOS[tipo]).label("ordem")).where(modelo.acompanhamento_id == acompanhamento.id) for tipo, (modelo, data) in modelos.items() if tipo in tipos]
+        uniao = union_all(*partes).subquery()
+        total = sessao.scalar(select(func.count()).select_from(uniao))
+        pagina = min(paginacao.pagina, max(1, (total + paginacao.tamanho - 1) // paginacao.tamanho))
+        colunas = [uniao.c.data, uniao.c.ordem, uniao.c.id]
+        ordem = [coluna.desc() if recentes else coluna.asc() for coluna in colunas]
+        registros = sessao.execute(select(uniao).order_by(*ordem).limit(paginacao.tamanho).offset((pagina - 1) * paginacao.tamanho)).all()
+        ids_por_tipo = {tipo: [registro.id for registro in registros if registro.ordem == ORDEM_TIPOS[tipo]] for tipo in tipos}
 
     if TipoEvento.consulta in tipos:
-        consultas = sessao.scalars(select(Consulta).where(Consulta.acompanhamento_id == acompanhamento.id))
+        consulta = select(Consulta).options(selectinload(Consulta.prescricoes)).where(Consulta.acompanhamento_id == acompanhamento.id)
+        if ids_por_tipo is not None:
+            consulta = consulta.where(Consulta.id.in_(ids_por_tipo[TipoEvento.consulta]))
+        consultas = sessao.scalars(consulta)
         eventos += _eventos_de_consultas(consultas)
     if TipoEvento.solicitacao in tipos:
-        solicitacoes = sessao.scalars(select(Solicitacao).where(Solicitacao.acompanhamento_id == acompanhamento.id))
+        consulta = select(Solicitacao).options(selectinload(Solicitacao.destinatario)).where(Solicitacao.acompanhamento_id == acompanhamento.id)
+        if ids_por_tipo is not None:
+            consulta = consulta.where(Solicitacao.id.in_(ids_por_tipo[TipoEvento.solicitacao]))
+        solicitacoes = sessao.scalars(consulta)
         eventos += _eventos_de_solicitacoes(solicitacoes, acompanhamento)
     if TipoEvento.documento in tipos:
-        documentos = sessao.scalars(select(Documento).where(Documento.acompanhamento_id == acompanhamento.id))
+        consulta = select(Documento).options(selectinload(Documento.enviado_por), selectinload(Documento.arquivo)).where(Documento.acompanhamento_id == acompanhamento.id)
+        if ids_por_tipo is not None:
+            consulta = consulta.where(Documento.id.in_(ids_por_tipo[TipoEvento.documento]))
+        documentos = sessao.scalars(consulta)
         eventos += _eventos_de_documentos(documentos)
 
-    eventos.sort(key=lambda evento: (evento.data, ORDEM_TIPOS[evento.tipo], evento.id))
+    eventos.sort(key=lambda evento: (evento.data, ORDEM_TIPOS[evento.tipo], evento.id), reverse=recentes)
+    if ids_por_tipo is not None:
+        return dados_pagina(eventos, pagina, paginacao.tamanho, total)
     return eventos

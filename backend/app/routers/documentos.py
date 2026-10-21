@@ -16,6 +16,8 @@ from app.models.acompanhamento import Acompanhamento
 from app.models.solicitacao import TIPOS_ATENDIDOS_POR_ENVIO, Solicitacao, StatusSolicitacao
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.documento import DocumentoSaida, RevisaoEntrada
+from app.schemas.paginacao import Pagina, Paginacao, paginar
+from sqlalchemy.orm import selectinload
 from app.services.armazenamento import confirmar_ou_remover, salvar_upload
 
 router = APIRouter(tags=["Documentos"])
@@ -93,20 +95,21 @@ def enviar_documento(
     return documento
 
 
-@router.get("/follow-ups/{acompanhamento_id}/documents", response_model=list[DocumentoSaida])
+@router.get("/follow-ups/{acompanhamento_id}/documents", response_model=Pagina[DocumentoSaida] | list[DocumentoSaida])
 def listar_documentos(
     categoria: CategoriaDocumento | None = Query(None),
+    paginacao: Paginacao = Depends(),
     acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso_de_parceiro),
     usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
-) -> list[Documento]:
+):
     """Médico e paciente veem todos os documentos; o parceiro vê apenas os próprios envios."""
-    consulta = select(Documento).where(Documento.acompanhamento_id == acompanhamento.id)
+    consulta = select(Documento).options(selectinload(Documento.enviado_por), selectinload(Documento.arquivo)).where(Documento.acompanhamento_id == acompanhamento.id)
     if usuario.tipo_usuario == TipoUsuario.parceiro:
         consulta = consulta.where(Documento.enviado_por_id == usuario.id)
     if categoria is not None:
         consulta = consulta.where(Documento.categoria == categoria)
-    return list(sessao.scalars(consulta.order_by(Documento.criado_em.desc(), Documento.id.desc())).all())
+    return paginar(sessao, consulta.order_by(Documento.criado_em.desc(), Documento.id.desc()), paginacao)
 
 
 @router.patch("/documents/{documento_id}/review", response_model=DocumentoSaida)

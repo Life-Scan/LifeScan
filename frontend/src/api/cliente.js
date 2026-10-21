@@ -3,7 +3,7 @@ import axios from 'axios'
 export const URL_API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 export const CHAVE_TOKEN = 'lifescan_token'
 
-export const api = axios.create({ baseURL: URL_API })
+export const api = axios.create({ baseURL: URL_API, timeout: 20000 })
 
 // Injeta o token JWT em todas as requisições
 api.interceptors.request.use((config) => {

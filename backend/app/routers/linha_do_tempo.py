@@ -6,6 +6,7 @@ from app.db.sessao import obter_sessao
 from app.models.acompanhamento import Acompanhamento
 from app.schemas.linha_do_tempo import EventoLinhaDoTempo, TipoEvento
 from app.services.linha_do_tempo import montar_linha_do_tempo
+from app.schemas.paginacao import Pagina, Paginacao
 
 router = APIRouter(tags=["Linha do tempo"])
 
@@ -24,14 +25,16 @@ def _interpretar_tipos(texto: str | None) -> set[TipoEvento] | None:
     return {TipoEvento(valor) for valor in valores}
 
 
-@router.get("/follow-ups/{acompanhamento_id}/timeline", response_model=list[EventoLinhaDoTempo])
+@router.get("/follow-ups/{acompanhamento_id}/timeline", response_model=Pagina[EventoLinhaDoTempo] | list[EventoLinhaDoTempo])
 def obter_linha_do_tempo(
+    paginacao: Paginacao = Depends(),
+    recentes: bool = Query(False),
     tipos: str | None = Query(
         None,
         description="Filtro opcional, separado por vírgula: consulta, documento, solicitacao",
     ),
     acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso),
     sessao: Session = Depends(obter_sessao),
-) -> list[EventoLinhaDoTempo]:
-    """Linha do tempo do acompanhamento em ordem cronológica."""
-    return montar_linha_do_tempo(sessao, acompanhamento, _interpretar_tipos(tipos))
+):
+    """Linha do tempo da acompanhamento em ordem cronológica."""
+    return montar_linha_do_tempo(sessao, acompanhamento, _interpretar_tipos(tipos), paginacao, recentes)

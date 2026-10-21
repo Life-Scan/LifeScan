@@ -148,6 +148,8 @@ email e o chat entre médico e paciente.
   janela própria (`useConfirmar`), não o `window.confirm` do navegador.
 - A linha do tempo é montada a partir de `dados` de cada evento, com etiquetas de status.
 - O hook de polling se chama `useAtualizacaoPeriodica(buscar, 30000)`.
+- A jornada carrega o cabeçalho independentemente e busca apenas a aba selecionada; o polling atualiza somente o conteúdo aberto.
+- As listas principais usam paginação no servidor, com 20 registros por página. Filtros de histórico e categoria são aplicados antes de limitar os resultados. Detalhes em [paginacao.md](paginacao.md).
 - Downloads usam o token: o arquivo é baixado como blob e aberto ou salvo pelo navegador.
 - A aba ativa do acompanhamento fica na URL (`/acompanhamentos/3?aba=documentos`).
 

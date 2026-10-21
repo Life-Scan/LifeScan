@@ -24,6 +24,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<SomenteVisitante><Login /></SomenteVisitante>} />
+      <Route path="/cadastro" element={<Navigate to="/login" replace />} />
       <Route path="/esqueci-senha" element={<SomenteVisitante><EsqueciSenha /></SomenteVisitante>} />
 
       <Route element={<RotaProtegida />}>

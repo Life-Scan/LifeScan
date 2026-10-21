@@ -28,9 +28,8 @@ Não existe uma opção de "alterar senha" dentro do sistema: quem quiser trocar
 O sistema não depende de o paciente entrar: assim que a conta existe, o médico já pode abrir
 o acompanhamento e registrar tudo.
 
-> **Email em modo de desenvolvimento:** por enquanto nenhum email é enviado de verdade.
-> Com `EMAIL_MODE=console`, o email (incluindo a senha provisória) aparece no terminal onde
-> o `uvicorn` está rodando.
+> **Email:** com `EMAIL_MODE=console`, o email aparece apenas no terminal da API.
+> Para envio real, configure `EMAIL_MODE=smtp` e as variáveis SMTP no `.env`.
 
 ## Pré-requisitos
 
@@ -210,6 +209,9 @@ Build de produção: `npm run build` (gera `frontend/dist`).
 As listas e a página do acompanhamento se atualizam a cada 30 segundos; a atualização pausa quando a
 aba do navegador fica oculta.
 
+As listas principais exibem 20 registros por página. A jornada carrega o cabeçalho primeiro e
+busca o conteúdo somente da aba aberta. Veja [paginação e carregamento](docs/paginacao.md).
+
 ## Endpoints disponíveis
 
 | Método | Rota | Descrição |
@@ -220,7 +222,7 @@ aba do navegador fica oculta.
 | POST | `/auth/forgot-password` | Envia uma senha provisória por email (`email`) |
 | POST | `/users` | Médico cria conta de paciente ou parceiro (`tipo_usuario`, `nome`, `email`, `profissao`) |
 | GET | `/users?tipo=` | Médico lista as contas (`paciente` / `parceiro`) |
-| PATCH | `/users/{id}` | Médico altera `nome`, `profissao` ou `ativo` |
+| PATCH | `/users/{id}` | Médico altera `nome`, `email`, `profissao` ou `ativo` |
 | POST | `/users/{id}/resend-access` | Médico reenvia os dados de acesso (nova senha provisória) |
 | POST | `/follow-ups` | Médico abre o acompanhamento de um paciente (`paciente_id`, `titulo`, `descricao`) |
 | GET | `/follow-ups` | Acompanhamentos do usuário (o parceiro vê os que lhe foram atribuídos) |

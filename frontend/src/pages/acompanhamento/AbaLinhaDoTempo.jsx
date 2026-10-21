@@ -1,5 +1,4 @@
 import { ArrowUpDown, ClipboardList, FileText, History, Stethoscope } from 'lucide-react'
-import { useMemo, useState } from 'react'
 
 import { Anexo, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
 import { ROTULOS_CATEGORIA, ROTULOS_TIPO_CONSULTA, formatarDataHora } from '../../utils/formatacao'
@@ -57,16 +56,8 @@ function descreverEvento(evento, pacienteId) {
   }
 }
 
-export default function AbaLinhaDoTempo({ eventos, acompanhamento, irParaAba }) {
-  const [filtro, setFiltro] = useState([])
-  const [recentesPrimeiro, setRecentesPrimeiro] = useState(false)
-
-  const visiveis = useMemo(() => {
-    // O backend já devolve em ordem cronológica; o filtro é aplicado aqui para
-    // não precisar de outra requisição a cada clique
-    const filtrados = filtro.length ? eventos.filter((e) => filtro.includes(e.tipo)) : eventos
-    return recentesPrimeiro ? [...filtrados].reverse() : filtrados
-  }, [eventos, filtro, recentesPrimeiro])
+export default function AbaLinhaDoTempo({ eventos, acompanhamento, irParaAba, filtro, setFiltro, recentesPrimeiro, setRecentesPrimeiro }) {
+  const visiveis = eventos
 
   const alternarTipo = (tipo) =>
     setFiltro((atual) => (atual.includes(tipo) ? atual.filter((t) => t !== tipo) : [...atual, tipo]))
@@ -104,7 +95,7 @@ export default function AbaLinhaDoTempo({ eventos, acompanhamento, irParaAba }) 
 
       {visiveis.length === 0 ? (
         <EstadoVazio icone={History}>
-          {eventos.length === 0 ? 'Nada registrado neste acompanhamento ainda.' : 'Nenhum evento deste tipo.'}
+          {eventos.length === 0 ? 'Nada registrado nesta acompanhamento ainda.' : 'Nenhum evento deste tipo.'}
         </EstadoVazio>
       ) : (
         <ol className={estilos.linhaDoTempo}>

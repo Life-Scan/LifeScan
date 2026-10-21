@@ -1,7 +1,9 @@
 import { Plus, Route } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 
-import { listarAcompanhamentos } from '../api/servicos'
+import { obterPagina } from '../api/servicos'
+import Paginacao from '../components/Paginacao'
 import { Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
@@ -10,7 +12,10 @@ import estilos from './Paginas.module.css'
 
 export default function Acompanhamentos() {
   const { ehMedico, ehParceiro } = useAuth()
-  const { dados: acompanhamentos, erro, carregando } = useAtualizacaoPeriodica(listarAcompanhamentos)
+  const [pagina, setPagina] = useState(1)
+  const { dados, erro, carregando } = useAtualizacaoPeriodica(() => obterPagina('/follow-ups', { pagina }), undefined, [pagina])
+  const acompanhamentos = dados?.itens
+  useEffect(() => { if (dados) setPagina(dados.pagina) }, [dados?.pagina])
 
   return (
     <div className={estilos.pilha}>
@@ -70,13 +75,14 @@ export default function Acompanhamentos() {
                 </div>
                 <div className={ui.acoes}>
                   <Etiqueta variante="primaria">Passo: {ROTULOS_PASSO[acompanhamento.passo_atual]}</Etiqueta>
-                  {acompanhamento.status === 'encerrado' && <Etiqueta>Encerrado</Etiqueta>}
+                  {acompanhamento.status === 'encerrada' && <Etiqueta>Encerrada</Etiqueta>}
                 </div>
               </div>
             </li>
           ))}
         </ul>
       )}
+      <Paginacao dados={dados} aoMudar={setPagina} carregando={carregando} />
     </div>
   )
 }

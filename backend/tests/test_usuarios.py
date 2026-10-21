@@ -1,7 +1,44 @@
 """Contas de pacientes e parceiros criadas pelo médico."""
 
+import pytest
+
 from app.services.email import caixa_de_saida
 from tests.conftest import SENHA, criar_conta, criar_conta_ativa, entrar, senha_provisoria_enviada
+
+
+def test_excluir_paciente_desativado_libera_email(cliente, medico, paciente):
+    usuario_id = paciente['usuario']['id']
+    url = f'/users/{usuario_id}'
+    assert cliente.patch(url, json={'ativo': False}, headers=medico['headers']).status_code == 200
+    assert cliente.delete(url, headers=medico['headers']).status_code == 200
+    contas = cliente.get('/users', headers=medico['headers']).json()
+    assert all(conta['id'] != usuario_id for conta in contas)
+    assert cliente.get('/auth/me', headers=paciente['headers']).status_code == 401
+    assert criar_conta(cliente, medico, 'paciente', 'Novo paciente', paciente['usuario']['email']).status_code == 201
+
+
+def test_exclusao_exige_medico_e_paciente_desativado(cliente, medico, paciente, parceiro):
+    url = f"/users/{paciente['usuario']['id']}"
+    assert cliente.delete(url).status_code == 401
+    for acesso in (paciente, parceiro):
+        assert cliente.delete(url, headers=acesso['headers']).status_code == 403
+    assert cliente.delete(url, headers=medico['headers']).status_code == 409
+    assert cliente.delete(f"/users/{medico['usuario']['id']}", headers=medico['headers']).status_code == 404
+    parceiro_url = f"/users/{parceiro['usuario']['id']}"
+    cliente.patch(parceiro_url, json={'ativo': False}, headers=medico['headers'])
+    assert cliente.delete(parceiro_url, headers=medico['headers']).status_code == 409
+    assert cliente.delete('/users/999999', headers=medico['headers']).status_code == 404
+
+
+def test_exclusao_preserva_acompanhamento_e_conta(cliente, medico, paciente, acompanhamento):
+    url = f"/users/{paciente['usuario']['id']}"
+    cliente.patch(url, json={'ativo': False}, headers=medico['headers'])
+    resposta = cliente.delete(url, headers=medico['headers'])
+    assert resposta.status_code == 409
+    assert 'histórico' in resposta.json()['detail']
+    assert cliente.get(f"/follow-ups/{acompanhamento['id']}", headers=medico['headers']).status_code == 200
+    assert cliente.patch(url, json={'ativo': True}, headers=medico['headers']).status_code == 200
+    assert entrar(cliente, paciente['usuario']['email'])['usuario']['id'] == paciente['usuario']['id']
 
 
 def test_nao_existe_cadastro_publico(cliente):
@@ -99,24 +136,74 @@ def test_medico_atualiza_nome_e_profissao(cliente, medico, parceiro):
     assert resposta.json()["profissao"] == "Nutricionista esportiva"
 
 
-def test_medico_atualiza_email(cliente, medico, paciente):
+def test_corrigir_paciente_preserva_conta_acompanhamento_e_senha(cliente, medico, paciente, acompanhamento):
+    usuario_id = paciente["usuario"]["id"]
     resposta = cliente.patch(
-        f"/users/{paciente['usuario']['id']}",
-        json={"email": "carlos.novo@email.com"},
+        f"/users/{usuario_id}",
+        json={"nome": "  Carlos Corrigido  ", "email": " Carlos.Novo@Email.com "},
         headers=medico["headers"],
     )
-    assert resposta.status_code == 200
-    assert resposta.json()["email"] == "carlos.novo@email.com"
+    assert resposta.status_code == 200, resposta.text
+    conta = resposta.json()
+    assert conta["id"] == usuario_id
+    assert conta["nome"] == "Carlos Corrigido"
+    assert conta["email"] == "carlos.novo@email.com"
+    assert conta["acompanhamento_id"] == acompanhamento["id"]
+    assert conta["ativo"] is True
+    assert cliente.post("/auth/login", json={"email": "carlos@email.com", "senha": SENHA}).status_code == 401
+    assert entrar(cliente, "carlos.novo@email.com")["usuario"]["id"] == usuario_id
+    assert cliente.get(f"/follow-ups/{acompanhamento['id']}", headers=paciente["headers"]).status_code == 200
 
 
-def test_medico_atualiza_email_duplicado(cliente, medico, paciente, parceiro):
+@pytest.mark.parametrize("email", [" MARIA@EMAIL.COM ", "ana@clinica.com"])
+def test_edicao_recusa_email_de_outra_conta_sem_alterar_nome(cliente, medico, paciente, outro_paciente, email):
     resposta = cliente.patch(
         f"/users/{paciente['usuario']['id']}",
-        json={"email": parceiro["usuario"]["email"]},
+        json={"nome": "Não deve salvar", "email": email},
         headers=medico["headers"],
     )
     assert resposta.status_code == 409
-    assert "Já existe uma conta com este email" in resposta.json()["detail"]
+    assert resposta.json()["detail"] == "Já existe uma conta com este email."
+    atual = cliente.get("/auth/me", headers=paciente["headers"]).json()
+    assert atual["nome"] == "Carlos Lima"
+    assert atual["email"] == "carlos@email.com"
+
+
+def test_edicao_aceita_email_da_propria_conta(cliente, medico, paciente):
+    resposta = cliente.patch(
+        f"/users/{paciente['usuario']['id']}",
+        json={"nome": "Carlos Corrigido", "email": "CARLOS@EMAIL.COM"},
+        headers=medico["headers"],
+    )
+    assert resposta.status_code == 200
+    assert resposta.json()["nome"] == "Carlos Corrigido"
+
+
+@pytest.mark.parametrize("dados", [{"email": "email-invalido"}, {"email": ""}, {"nome": " "}])
+def test_edicao_valida_nome_e_email(cliente, medico, paciente, dados):
+    resposta = cliente.patch(f"/users/{paciente['usuario']['id']}", json=dados, headers=medico["headers"])
+    assert resposta.status_code == 422
+
+
+def test_so_medico_pode_corrigir_dados(cliente, paciente, parceiro):
+    url = f"/users/{paciente['usuario']['id']}"
+    for usuario in (paciente, parceiro):
+        assert cliente.patch(url, json={"email": "novo@email.com"}, headers=usuario["headers"]).status_code == 403
+    assert cliente.patch(url, json={"email": "novo@email.com"}).status_code == 401
+
+
+def test_corrigir_email_e_reenviar_acesso_para_novo_endereco(cliente, medico):
+    conta = criar_conta(cliente, medico, "paciente", "Paciente Teste", "errado@email.com").json()
+    total_emails = len(caixa_de_saida)
+    resposta = cliente.patch(
+        f"/users/{conta['id']}", json={"email": "correto@email.com"}, headers=medico["headers"]
+    )
+    assert resposta.status_code == 200
+    assert len(caixa_de_saida) == total_emails
+    assert cliente.post(f"/users/{conta['id']}/resend-access", headers=medico["headers"]).status_code == 200
+    assert caixa_de_saida[-1].destinatario == "correto@email.com"
+    senha = senha_provisoria_enviada("correto@email.com")
+    assert entrar(cliente, "correto@email.com", senha)["usuario"]["id"] == conta["id"]
 
 
 def test_conta_desativada_perde_o_acesso_e_pode_ser_reativada(cliente, medico, paciente):
@@ -159,7 +246,7 @@ def test_nao_reenvia_acesso_para_conta_desativada(cliente, medico, paciente):
     assert cliente.post(f"{url}/resend-access", headers=medico["headers"]).status_code == 409
 
 
-def test_medico_trabalha_no_acompanhamento_antes_do_primeiro_acesso_do_paciente(cliente, medico):
+def test_medico_trabalha_na_acompanhamento_antes_do_primeiro_acesso_do_paciente(cliente, medico):
     """O sistema não depende de o paciente entrar: o médico já centraliza os dados."""
     conta = criar_conta(cliente, medico, "paciente", "Carlos Lima", "carlos@email.com").json()
     assert conta["primeiro_acesso_pendente"] is True
@@ -211,3 +298,24 @@ def test_painel_do_parceiro(cliente, parceiro, acompanhamento):
 def test_conta_ativa_helper(cliente, medico):
     usuario = criar_conta_ativa(cliente, medico, "paciente", "Maria Alves", "maria@email.com")
     assert usuario["usuario"]["deve_trocar_senha"] is False
+
+
+def test_medico_atualiza_email(cliente, medico, paciente):
+    resposta = cliente.patch(
+        f"/users/{paciente['usuario']['id']}",
+        json={"email": "carlos.novo@email.com"},
+        headers=medico["headers"],
+    )
+    assert resposta.status_code == 200
+    assert resposta.json()["email"] == "carlos.novo@email.com"
+
+
+
+def test_medico_atualiza_email_duplicado(cliente, medico, paciente, parceiro):
+    resposta = cliente.patch(
+        f"/users/{paciente['usuario']['id']}",
+        json={"email": parceiro["usuario"]["email"]},
+        headers=medico["headers"],
+    )
+    assert resposta.status_code == 409
+    assert "Já existe uma conta com este email" in resposta.json()["detail"]
