@@ -1,7 +1,9 @@
 import { Plus, Route } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 
-import { listarJornadas } from '../api/servicos'
+import { obterPagina } from '../api/servicos'
+import Paginacao from '../components/Paginacao'
 import { Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
@@ -10,7 +12,10 @@ import estilos from './Paginas.module.css'
 
 export default function Jornadas() {
   const { ehMedico, ehParceiro } = useAuth()
-  const { dados: jornadas, erro, carregando } = useAtualizacaoPeriodica(listarJornadas)
+  const [pagina, setPagina] = useState(1)
+  const { dados, erro, carregando } = useAtualizacaoPeriodica(() => obterPagina('/journeys', { pagina }), undefined, [pagina])
+  const jornadas = dados?.itens
+  useEffect(() => { if (dados) setPagina(dados.pagina) }, [dados?.pagina])
 
   return (
     <div className={estilos.pilha}>
@@ -77,6 +82,7 @@ export default function Jornadas() {
           ))}
         </ul>
       )}
+      <Paginacao dados={dados} aoMudar={setPagina} carregando={carregando} />
     </div>
   )
 }

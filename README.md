@@ -195,6 +195,9 @@ Build de produção: `npm run build` (gera `frontend/dist`).
 As listas e a página da jornada se atualizam a cada 30 segundos; a atualização pausa quando a
 aba do navegador fica oculta.
 
+As listas principais exibem 20 registros por página. A jornada carrega o cabeçalho primeiro e
+busca o conteúdo somente da aba aberta. Veja [paginação e carregamento](docs/paginacao.md).
+
 ## Endpoints disponíveis
 
 | Método | Rota | Descrição |

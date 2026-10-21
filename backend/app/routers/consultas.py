@@ -7,6 +7,8 @@ from app.db.sessao import obter_sessao
 from app.models.consulta import Consulta, Prescricao
 from app.models.jornada import Jornada
 from app.schemas.consulta import ConsultaEntrada, ConsultaSaida
+from app.schemas.paginacao import Pagina, Paginacao, paginar
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/journeys/{jornada_id}/consultations", tags=["Consultas"])
 
@@ -31,14 +33,15 @@ def registrar_consulta(
     return consulta
 
 
-@router.get("", response_model=list[ConsultaSaida])
+@router.get("", response_model=Pagina[ConsultaSaida] | list[ConsultaSaida])
 def listar_consultas(
+    paginacao: Paginacao = Depends(),
     jornada: Jornada = Depends(obter_jornada_com_acesso),
     sessao: Session = Depends(obter_sessao),
-) -> list[Consulta]:
+):
     consulta = (
-        select(Consulta)
+        select(Consulta).options(selectinload(Consulta.prescricoes))
         .where(Consulta.jornada_id == jornada.id)
         .order_by(Consulta.data.desc(), Consulta.id.desc())
     )
-    return list(sessao.scalars(consulta).all())
+    return paginar(sessao, consulta, paginacao)

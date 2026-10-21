@@ -3,6 +3,10 @@ import { api } from './cliente'
 
 const dados = (promessa) => promessa.then((resposta) => resposta.data)
 
+// Listas visíveis usam paginação no servidor; os seletores existentes mantêm sua API.
+export const obterPagina = (caminho, parametros = {}) =>
+  dados(api.get(caminho, { params: { pagina: 1, tamanho: 20, ...parametros } }))
+
 // Autenticação
 export const entrar = (email, senha) => dados(api.post('/auth/login', { email, senha }))
 export const obterUsuarioAtual = () => dados(api.get('/auth/me'))
@@ -18,6 +22,7 @@ export const reenviarAcesso = (id) => dados(api.post(`/users/${id}/resend-access
 // Jornadas
 export const listarJornadas = () => dados(api.get('/journeys'))
 export const obterJornada = (id) => dados(api.get(`/journeys/${id}`))
+export const obterResumoJornada = (id) => dados(api.get(`/journeys/${id}/summary`))
 export const criarJornada = (jornada) => dados(api.post('/journeys', jornada))
 export const alterarPasso = (id, passo) => dados(api.patch(`/journeys/${id}/step`, { passo_atual: passo }))
 export const alterarStatusJornada = (id, status) => dados(api.patch(`/journeys/${id}/status`, { status }))
@@ -37,7 +42,7 @@ export const registrarConsulta = (jornadaId, consulta) =>
   dados(api.post(`/journeys/${jornadaId}/consultations`, consulta))
 
 // Solicitações
-export const listarSolicitacoes = (jornadaId) => dados(api.get(`/journeys/${jornadaId}/requests`))
+export const listarSolicitacoes = (jornadaId, parametros) => dados(api.get(`/journeys/${jornadaId}/requests`, { params: parametros }))
 export const criarSolicitacao = (jornadaId, solicitacao) =>
   dados(api.post(`/journeys/${jornadaId}/requests`, solicitacao))
 export const concluirSolicitacao = (id) => dados(api.patch(`/requests/${id}/complete`))

@@ -1,9 +1,10 @@
 import { MailCheck, Pencil, Route, Trash2, UserCheck, UserPlus, Users } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
-import { atualizarConta, criarConta, listarContas, reenviarAcesso } from '../api/servicos'
+import { atualizarConta, criarConta, obterPagina, reenviarAcesso } from '../api/servicos'
+import Paginacao from '../components/Paginacao'
 import { useConfirmar } from '../components/Confirmacao'
 import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
@@ -17,10 +18,8 @@ const TIPOS = [
 
 /** Pacientes e parceiros em uma única tela: o médico cria as contas e as administra. */
 export default function Usuarios() {
-  const { dados: contas, erro, carregando, atualizar } = useAtualizacaoPeriodica(() => listarContas())
-
-  const pacientes = contas?.filter((conta) => conta.tipo_usuario === 'paciente')
-  const parceiros = contas?.filter((conta) => conta.tipo_usuario === 'parceiro')
+  const [versao, setVersao] = useState(0)
+  const atualizar = () => setVersao((atual) => atual + 1)
 
   return (
     <div className={estilos.pilha}>
@@ -35,30 +34,35 @@ export default function Usuarios() {
 
       <FormularioConta aoCriar={atualizar} />
 
-      <ErroCarregamento erro={erro} />
-      {carregando && !contas && <Carregando />}
-
-      {contas && (
-        <>
-          <SecaoContas tipo="paciente" contas={pacientes} aoAlterar={atualizar} />
-          <SecaoContas tipo="parceiro" contas={parceiros} aoAlterar={atualizar} />
-        </>
-      )}
+      <SecaoContas tipo="paciente" versao={versao} />
+      <SecaoContas tipo="parceiro" versao={versao} />
     </div>
   )
 }
 
-function SecaoContas({ tipo, contas, aoAlterar }) {
+function SecaoContas({ tipo, versao }) {
   const [aba, setAba] = useState('ativos')
+  const [pagina, setPagina] = useState(1)
+  const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(async () => {
+    const [atual, outra] = await Promise.all([
+      obterPagina('/users', { tipo, ativo: aba === 'ativos', pagina }),
+      obterPagina('/users', { tipo, ativo: aba !== 'ativos', tamanho: 1 }),
+    ])
+    return { ...atual, ativos: aba === 'ativos' ? atual.total : outra.total, desativados: aba === 'desativados' ? atual.total : outra.total }
+  }, undefined, [tipo, aba, pagina, versao])
+  useEffect(() => { if (dados) setPagina(dados.pagina) }, [dados?.pagina])
   const titulo = tipo === 'paciente' ? 'Pacientes' : 'Parceiros'
   const plural = titulo.toLowerCase()
-  const ativos = contas.filter((conta) => conta.ativo)
-  const desativados = contas.filter((conta) => !conta.ativo)
   const abas = [
-    { id: 'ativos', titulo, contas: ativos, vazio: `Nenhum ${tipo} ativo. Crie uma conta ou reative um ${tipo} na aba ${titulo} desativados.` },
-    { id: 'desativados', titulo: `${titulo} desativados`, contas: desativados, vazio: `Nenhum ${tipo} desativado.` },
+    { id: 'ativos', titulo, vazio: `Nenhum ${tipo} ativo. Crie uma conta ou reative um ${tipo} na aba ${titulo} desativados.` },
+    { id: 'desativados', titulo: `${titulo} desativados`, vazio: `Nenhum ${tipo} desativado.` },
   ]
   const selecionada = abas.find((item) => item.id === aba)
+
+  function mudarAba(valor) {
+    setAba(valor)
+    setPagina(1)
+  }
 
   function navegarAbas(evento, indice) {
     let destino
@@ -67,7 +71,7 @@ function SecaoContas({ tipo, contas, aoAlterar }) {
     else if (evento.key === 'End') destino = 1
     else return
     evento.preventDefault()
-    setAba(abas[destino].id)
+    mudarAba(abas[destino].id)
     document.getElementById(`aba-${plural}-${abas[destino].id}`).focus()
   }
 
@@ -84,15 +88,18 @@ function SecaoContas({ tipo, contas, aoAlterar }) {
             aria-selected={aba === item.id}
             tabIndex={aba === item.id ? 0 : -1}
             className={estilos.abaPacientes}
-            onClick={() => setAba(item.id)}
+            onClick={() => mudarAba(item.id)}
             onKeyDown={(evento) => navegarAbas(evento, indice)}
           >
-            {item.titulo} <span className={estilos.contagem}>{item.contas.length}</span>
+            {item.titulo} {dados && <span className={estilos.contagem}>{dados[item.id]}</span>}
           </button>
         ))}
       </div>
       <div role="tabpanel" id={`painel-${plural}`} aria-labelledby={`aba-${plural}-${aba}`} tabIndex={0}>
-        <ListaContas contas={selecionada.contas} vazio={selecionada.vazio} aoAlterar={aoAlterar} />
+        <ErroCarregamento erro={erro} />
+        {carregando && !dados && <Carregando />}
+        {dados && <ListaContas contas={dados.itens} vazio={selecionada.vazio} aoAlterar={atualizar} />}
+        <Paginacao dados={dados} aoMudar={setPagina} carregando={carregando} />
       </div>
     </section>
   )

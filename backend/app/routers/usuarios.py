@@ -11,6 +11,7 @@ from app.models.jornada import Jornada
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.auth import MensagemSaida
 from app.schemas.usuario import ContaAtualizacao, ContaEntrada, ContaSaida
+from app.schemas.paginacao import Pagina, Paginacao, paginar
 from app.services.contas import enviar_acesso_da_conta
 
 router = APIRouter(
@@ -63,16 +64,23 @@ def criar_conta(dados: ContaEntrada, sessao: Session = Depends(obter_sessao)) ->
     return _montar_saidas(sessao, [usuario])[0]
 
 
-@router.get("", response_model=list[ContaSaida])
+@router.get("", response_model=Pagina[ContaSaida] | list[ContaSaida])
 def listar_contas(
     tipo: TipoUsuario | None = Query(None, description="paciente ou parceiro"),
+    ativo: bool | None = Query(None),
+    paginacao: Paginacao = Depends(),
     sessao: Session = Depends(obter_sessao),
-) -> list[ContaSaida]:
+):
     consulta = select(Usuario).where(Usuario.tipo_usuario != TipoUsuario.medico)
     if tipo is not None:
         consulta = consulta.where(Usuario.tipo_usuario == tipo)
-    usuarios = list(sessao.scalars(consulta.order_by(Usuario.nome, Usuario.id)))
-    return _montar_saidas(sessao, usuarios)
+    if ativo is not None:
+        consulta = consulta.where(Usuario.ativo == ativo)
+    resultado = paginar(sessao, consulta.order_by(Usuario.nome, Usuario.id), paginacao)
+    if isinstance(resultado, dict):
+        resultado["itens"] = _montar_saidas(sessao, resultado["itens"])
+        return resultado
+    return _montar_saidas(sessao, resultado)
 
 
 @router.patch("/{usuario_id}", response_model=ContaSaida)
