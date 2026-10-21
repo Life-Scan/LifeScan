@@ -147,13 +147,45 @@
   accent-color: var(--cor-primaria);
 }
 
-.abasPacientes {
+.cabecalhoContas {
   display: flex;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 0.5rem;
   margin-bottom: 1rem;
   padding-bottom: 0.65rem;
   border-bottom: 1px solid var(--cor-borda);
+}
+
+.cabecalhoContas:has(+ [hidden]) {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.abasPacientes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.recolherContas {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-pequeno);
+  background: var(--cor-superficie);
+  color: var(--cor-primaria);
+  cursor: pointer;
+}
+
+.recolherContas:hover {
+  background: var(--cor-primaria-clara);
 }
 
 .abaPacientes {

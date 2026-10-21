@@ -6,6 +6,41 @@ from app.services.email import caixa_de_saida
 from tests.conftest import SENHA, criar_conta, criar_conta_ativa, entrar, senha_provisoria_enviada
 
 
+def test_excluir_paciente_desativado_libera_email(cliente, medico, paciente):
+    usuario_id = paciente['usuario']['id']
+    url = f'/users/{usuario_id}'
+    assert cliente.patch(url, json={'ativo': False}, headers=medico['headers']).status_code == 200
+    assert cliente.delete(url, headers=medico['headers']).status_code == 200
+    contas = cliente.get('/users', headers=medico['headers']).json()
+    assert all(conta['id'] != usuario_id for conta in contas)
+    assert cliente.get('/auth/me', headers=paciente['headers']).status_code == 401
+    assert criar_conta(cliente, medico, 'paciente', 'Novo paciente', paciente['usuario']['email']).status_code == 201
+
+
+def test_exclusao_exige_medico_e_paciente_desativado(cliente, medico, paciente, parceiro):
+    url = f"/users/{paciente['usuario']['id']}"
+    assert cliente.delete(url).status_code == 401
+    for acesso in (paciente, parceiro):
+        assert cliente.delete(url, headers=acesso['headers']).status_code == 403
+    assert cliente.delete(url, headers=medico['headers']).status_code == 409
+    assert cliente.delete(f"/users/{medico['usuario']['id']}", headers=medico['headers']).status_code == 404
+    parceiro_url = f"/users/{parceiro['usuario']['id']}"
+    cliente.patch(parceiro_url, json={'ativo': False}, headers=medico['headers'])
+    assert cliente.delete(parceiro_url, headers=medico['headers']).status_code == 409
+    assert cliente.delete('/users/999999', headers=medico['headers']).status_code == 404
+
+
+def test_exclusao_preserva_jornada_e_conta(cliente, medico, paciente, jornada):
+    url = f"/users/{paciente['usuario']['id']}"
+    cliente.patch(url, json={'ativo': False}, headers=medico['headers'])
+    resposta = cliente.delete(url, headers=medico['headers'])
+    assert resposta.status_code == 409
+    assert 'histórico' in resposta.json()['detail']
+    assert cliente.get(f"/journeys/{jornada['id']}", headers=medico['headers']).status_code == 200
+    assert cliente.patch(url, json={'ativo': True}, headers=medico['headers']).status_code == 200
+    assert entrar(cliente, paciente['usuario']['email'])['usuario']['id'] == paciente['usuario']['id']
+
+
 def test_nao_existe_cadastro_publico(cliente):
     resposta = cliente.post(
         "/auth/register",

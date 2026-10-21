@@ -7,7 +7,12 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import exigir_tipo
 from app.db.sessao import obter_sessao
+from app.models.arquivo import Arquivo
+from app.models.atribuicao import AtribuicaoParceiro
+from app.models.documento import Documento
+from app.models.ficha import FichaPaciente
 from app.models.jornada import Jornada
+from app.models.solicitacao import Solicitacao
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.auth import MensagemSaida
 from app.schemas.usuario import ContaAtualizacao, ContaEntrada, ContaSaida
@@ -116,6 +121,32 @@ def atualizar_conta(
             raise HTTPException(status.HTTP_409_CONFLICT, "Já existe uma conta com este email.") from None
         raise
     return _montar_saidas(sessao, [usuario])[0]
+
+
+@router.delete("/{usuario_id}", response_model=MensagemSaida)
+def excluir_paciente(usuario_id: int, sessao: Session = Depends(obter_sessao)) -> MensagemSaida:
+    """Exclusão definitiva de pacientes desativados sem histórico vinculado."""
+    usuario = _obter_conta(sessao, usuario_id)
+    if usuario.tipo_usuario != TipoUsuario.paciente:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Apenas pacientes podem ser excluídos por esta opção.")
+    if usuario.ativo:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Desative o paciente antes de excluir a conta.")
+
+    vinculos = (
+        Jornada.paciente_id, Jornada.medico_id, FichaPaciente.paciente_id,
+        Arquivo.enviado_por_id, Documento.enviado_por_id,
+        Solicitacao.destinatario_id, AtribuicaoParceiro.parceiro_id,
+    )
+    mensagem_historico = "Este paciente possui jornada ou histórico vinculado e não pode ser excluído. Reative a conta para reutilizá-la."
+    if any(sessao.scalar(select(coluna).where(coluna == usuario_id).limit(1)) is not None for coluna in vinculos):
+        raise HTTPException(status.HTTP_409_CONFLICT, mensagem_historico)
+    sessao.delete(usuario)
+    try:
+        sessao.commit()
+    except IntegrityError as err:
+        sessao.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, mensagem_historico) from err
+    return MensagemSaida(mensagem="Paciente excluído definitivamente. O email está disponível para um novo cadastro.")
 
 
 @router.post("/{usuario_id}/resend-access", response_model=MensagemSaida)

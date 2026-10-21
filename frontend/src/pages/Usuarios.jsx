@@ -1,9 +1,9 @@
-import { MailCheck, Pencil, Route, UserCheck, UserPlus, Users, UserX } from 'lucide-react'
+import { ChevronDown, ChevronUp, MailCheck, Pencil, Route, Trash2, UserCheck, UserPlus, Users, UserX } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
-import { atualizarConta, criarConta, obterPagina, reenviarAcesso } from '../api/servicos'
+import { atualizarConta, criarConta, excluirPaciente, obterPagina, reenviarAcesso } from '../api/servicos'
 import Paginacao from '../components/Paginacao'
 import { useConfirmar } from '../components/Confirmacao'
 import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
@@ -42,6 +42,7 @@ export default function Usuarios() {
 
 function SecaoContas({ tipo, versao }) {
   const [aba, setAba] = useState('ativos')
+  const [recolhida, setRecolhida] = useState(false)
   const [pagina, setPagina] = useState(1)
   const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(async () => {
     const [atual, outra] = await Promise.all([
@@ -62,6 +63,7 @@ function SecaoContas({ tipo, versao }) {
   function mudarAba(valor) {
     setAba(valor)
     setPagina(1)
+    setRecolhida(false)
   }
 
   function navegarAbas(evento, indice) {
@@ -77,25 +79,38 @@ function SecaoContas({ tipo, versao }) {
 
   return (
     <section className={ui.cartao} aria-label={titulo}>
-      <div className={estilos.abasPacientes} role="tablist" aria-label={`Situação dos ${plural}`}>
-        {abas.map((item, indice) => (
-          <button
-            key={item.id}
-            type="button"
-            role="tab"
-            id={`aba-${plural}-${item.id}`}
-            aria-controls={`painel-${plural}`}
-            aria-selected={aba === item.id}
-            tabIndex={aba === item.id ? 0 : -1}
-            className={estilos.abaPacientes}
-            onClick={() => mudarAba(item.id)}
-            onKeyDown={(evento) => navegarAbas(evento, indice)}
-          >
-            {item.titulo} {dados && <span className={estilos.contagem}>{dados[item.id]}</span>}
-          </button>
-        ))}
+      <div className={estilos.cabecalhoContas}>
+        <div className={estilos.abasPacientes} role="tablist" aria-label={`Situação dos ${plural}`}>
+          {abas.map((item, indice) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              id={`aba-${plural}-${item.id}`}
+              aria-controls={`painel-${plural}`}
+              aria-selected={aba === item.id}
+              tabIndex={aba === item.id ? 0 : -1}
+              className={estilos.abaPacientes}
+              onClick={() => mudarAba(item.id)}
+              onKeyDown={(evento) => navegarAbas(evento, indice)}
+            >
+              {item.titulo} {dados && <span className={estilos.contagem}>{dados[item.id]}</span>}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className={estilos.recolherContas}
+          aria-label={`${recolhida ? 'Expandir' : 'Recolher'} lista de ${plural}`}
+          title={`${recolhida ? 'Expandir' : 'Recolher'} lista de ${plural}`}
+          aria-expanded={!recolhida}
+          aria-controls={`painel-${plural}`}
+          onClick={() => setRecolhida((atual) => !atual)}
+        >
+          {recolhida ? <ChevronDown size={20} aria-hidden="true" /> : <ChevronUp size={20} aria-hidden="true" />}
+        </button>
       </div>
-      <div role="tabpanel" id={`painel-${plural}`} aria-labelledby={`aba-${plural}-${aba}`} tabIndex={0}>
+      <div role="tabpanel" id={`painel-${plural}`} aria-labelledby={`aba-${plural}-${aba}`} tabIndex={0} hidden={recolhida}>
         <ErroCarregamento erro={erro} />
         {carregando && !dados && <Carregando />}
         {dados && <ListaContas contas={dados.itens} vazio={selecionada.vazio} aoAlterar={atualizar} />}
@@ -267,6 +282,16 @@ function ItemConta({ conta, aoAlterar }) {
     if (confirmado) executar(() => reenviarAcesso(conta.id))
   }
 
+  async function excluir() {
+    const confirmado = await confirmar({
+      titulo: `Excluir definitivamente ${conta.nome}?`,
+      mensagem: `A conta ${conta.email} será apagada e o email poderá ser usado em um novo cadastro. Essa ação não pode ser desfeita. Pacientes com jornada ou histórico vinculado não podem ser excluídos.`,
+      rotuloConfirmar: 'Excluir paciente',
+      perigo: true,
+    })
+    if (confirmado) executar(() => excluirPaciente(conta.id))
+  }
+
   async function salvarEdicao(dados, reenviarAposSalvar) {
     const atualizada = await atualizarConta(conta.id, dados)
     let avisoEnvio = ''
@@ -345,6 +370,12 @@ function ItemConta({ conta, aoAlterar }) {
             {conta.ativo ? <UserX size={14} aria-hidden="true" /> : <UserCheck size={14} aria-hidden="true" />}
             {conta.ativo ? 'Desativar' : 'Reativar'}
           </button>
+          {ehPaciente && !conta.ativo && (
+            <button type="button" className={`${ui.botaoPerigo} ${ui.botaoPequeno}`} onClick={excluir} disabled={ocupado}>
+              <Trash2 size={14} aria-hidden="true" />
+              Excluir
+            </button>
+          )}
         </div>
       </div>
       <Alerta tipo="erro">{erro}</Alerta>

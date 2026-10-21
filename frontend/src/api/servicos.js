@@ -17,6 +17,7 @@ export const esqueciSenha = (email) => dados(api.post('/auth/forgot-password', {
 export const listarContas = (tipo) => dados(api.get('/users', { params: tipo ? { tipo } : {} }))
 export const criarConta = (conta) => dados(api.post('/users', conta))
 export const atualizarConta = (id, alteracoes) => dados(api.patch(`/users/${id}`, alteracoes))
+export const excluirPaciente = (id) => dados(api.delete(`/users/${id}`))
 export const reenviarAcesso = (id) => dados(api.post(`/users/${id}/resend-access`))
 
 // Jornadas
