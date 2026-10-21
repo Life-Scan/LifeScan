@@ -177,6 +177,34 @@ def test_paciente_corrigir_dados_basicos_nao_toca_o_conteudo_clinico(cliente, me
     )
 
 
+def test_leituras_repetidas_de_paira_nao_enchem_a_trilha(cliente, medico, paciente, acompanhamento):
+    # Auto-atualização: muitas leituras em janela curta viram um registro só
+    for _ in range(3):
+        cliente.get(_url(acompanhamento), headers=paciente["headers"])
+    trilha = cliente.get(f"{_url(acompanhamento)}/acessos", headers=paciente["headers"]).json()
+    leituras_do_paciente = [r for r in trilha if r["tipo_usuario"] == "paciente" and r["acao"] == "leitura"]
+    assert len(leituras_do_paciente) == 1
+
+    # Escritas não são deduplicadas: cada gravação entra
+    cliente.patch(
+        f"{_url(acompanhamento)}/dados-basicos",
+        json={"data_nascimento": "1978-03-14", "sexo": "masculino", "altura_cm": 172, "peso_kg": 84.5},
+        headers=paciente["headers"],
+    )
+    cliente.patch(
+        f"{_url(acompanhamento)}/dados-basicos",
+        json={"data_nascimento": "1978-03-14", "sexo": "masculino", "altura_cm": 172, "peso_kg": 85},
+        headers=paciente["headers"],
+    )
+    trilha = cliente.get(f"{_url(acompanhamento)}/acessos", headers=paciente["headers"]).json()
+    assert len([r for r in trilha if r["acao"] == "escrita"]) == 2
+
+    # Escrita "renova" a janela? Não: leitura do paciente segue deduplicada por usuário+ação
+    cliente.get(_url(acompanhamento), headers=paciente["headers"])
+    trilha = cliente.get(f"{_url(acompanhamento)}/acessos", headers=paciente["headers"]).json()
+    assert len([r for r in trilha if r["tipo_usuario"] == "paciente" and r["acao"] == "leitura"]) == 1
+
+
 def test_medico_vê_a_trilha_mas_parceiro_nao(cliente, medico, parceiro_atribuido, acompanhamento):
     cliente.get(_url(acompanhamento), headers=medico["headers"])
     assert cliente.get(f"{_url(acompanhamento)}/acessos", headers=medico["headers"]).status_code == 200
