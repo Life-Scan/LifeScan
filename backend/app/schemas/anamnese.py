@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, Field, StringConstraints
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
 
 from app.models.anamnese import Sexo
 from app.models.usuario import TipoUsuario
@@ -33,6 +33,21 @@ class AnamneseEntrada(BaseModel):
     restricoes: Texto = None
     objetivos: Texto = None
     observacoes: Texto = None
+
+
+class DadosBasicosAnamneseEntrada(BaseModel):
+    """Correção parcial dos dados básicos pelo próprio titular (LGPD, art. 18, III).
+
+    Nascimento, sexo, altura e peso podem ser atualizados pelo paciente; o conteúdo
+    clínico continua sob responsabilidade do médico. Campos extras são recusados.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    data_nascimento: Annotated[date | None, AfterValidator(_validar_nascimento)] = None
+    sexo: Sexo | None = None
+    altura_cm: int | None = Field(None, ge=30, le=260)
+    peso_kg: Decimal | None = Field(None, ge=1, le=500, max_digits=5, decimal_places=2)
 
 
 class AnamneseSaida(BaseModel):

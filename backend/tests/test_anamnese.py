@@ -133,6 +133,50 @@ def test_leitura_e_escrita_ficam_na_trilha_de_acesso(cliente, medico, paciente, 
     ]
 
 
+def test_paciente_corrigir_dados_basicos_nao_toca_o_conteudo_clinico(cliente, medico, paciente, parceiro_atribuido, acompanhamento):
+    cliente.put(_url(acompanhamento), json=ANAMNESE, headers=medico["headers"])
+
+    correcao = cliente.patch(
+        f"{_url(acompanhamento)}/dados-basicos",
+        json={"data_nascimento": "1978-04-02", "sexo": "masculino", "altura_cm": 175, "peso_kg": 82},
+        headers=paciente["headers"],
+    )
+    assert correcao.status_code == 200, correcao.text
+    corrigida = correcao.json()
+    assert corrigida["data_nascimento"] == "1978-04-02"
+    assert corrigida["altura_cm"] == 175
+    assert corrigida["peso_kg"] == 82
+    # O conteúdo clínico continua intacto
+    assert corrigida["diagnosticos"] == "Hipertensão estágio 1"
+    assert corrigida["alergias"] == "Dipirona"
+
+    # O médico também pode corrigir os dados básicos por quem é atendido
+    pelo_medico = cliente.patch(
+        f"{_url(acompanhamento)}/dados-basicos",
+        json={"data_nascimento": "1978-04-02", "sexo": "masculino", "altura_cm": 175, "peso_kg": 80},
+        headers=medico["headers"],
+    )
+    assert pelo_medico.status_code == 200
+
+    # Campo clínico não é aceito na correção de dados básicos (evita "sumir" com conteúdo)
+    estranho = cliente.patch(
+        f"{_url(acompanhamento)}/dados-basicos",
+        json={"diagnosticos": "Autodiagnóstico"},
+        headers=paciente["headers"],
+    )
+    assert estranho.status_code == 422
+
+    # E o parceiro não corrige nada
+    assert (
+        cliente.patch(
+            f"{_url(acompanhamento)}/dados-basicos",
+            json={"peso_kg": 999},
+            headers=parceiro_atribuido["headers"],
+        ).status_code
+        == 403
+    )
+
+
 def test_medico_vê_a_trilha_mas_parceiro_nao(cliente, medico, parceiro_atribuido, acompanhamento):
     cliente.get(_url(acompanhamento), headers=medico["headers"])
     assert cliente.get(f"{_url(acompanhamento)}/acessos", headers=medico["headers"]).status_code == 200

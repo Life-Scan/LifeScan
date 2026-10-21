@@ -31,6 +31,7 @@ export const alterarStatusAcompanhamento = (id, status) => dados(api.patch(`/fol
 // Ficha do paciente e parceiros da acompanhamento
 export const obterAnamnese = (acompanhamentoId) => dados(api.get(`/follow-ups/${acompanhamentoId}/anamnesis`))
 export const salvarAnamnese = (acompanhamentoId, anamnese) => dados(api.put(`/follow-ups/${acompanhamentoId}/anamnesis`, anamnese))
+export const corrigirDadosBasicosAnamnese = (acompanhamentoId, dados) => dados(api.patch(`/follow-ups/${acompanhamentoId}/anamnesis/dados-basicos`, dados))
 export const acessosAnamnese = (acompanhamentoId) => dados(api.get(`/follow-ups/${acompanhamentoId}/anamnesis/acessos`))
 export const exportarAnamnese = (acompanhamentoId) =>
   api.get(`/follow-ups/${acompanhamentoId}/anamnesis/portabilidade`, { responseType: 'blob' }).then((r) => r.data)

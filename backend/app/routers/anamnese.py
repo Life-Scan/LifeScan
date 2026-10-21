@@ -23,6 +23,7 @@ from app.schemas.anamnese import (
     AnamneseEntrada,
     AnamneseSaida,
     ConsentimentoSaida,
+    DadosBasicosAnamneseEntrada,
     PortabilidadeAnamneseSaida,
 )
 from app.schemas.usuario import UsuarioResumo
@@ -39,6 +40,8 @@ CAMPOS_DE_TEXTO = (
     "observacoes",
 )
 CAMPOS = ("data_nascimento", "sexo", "altura_cm", "peso_kg", *CAMPOS_DE_TEXTO)
+# O que o titular pode corrigir (nascimento, sexo, altura e peso)
+CAMPOS_BASICOS = ("data_nascimento", "sexo", "altura_cm", "peso_kg")
 
 
 def _calcular_idade(nascimento: date | None) -> int | None:
@@ -151,6 +154,31 @@ def exportar_anamnese(
         media_type="application/json",
         headers={"Content-Disposition": f'attachment; filename="anamnese-{acompanhamento.id}.json"'},
     )
+
+
+@router.patch("/dados-basicos", response_model=AnamneseSaida)
+def corrigir_dados_basicos(
+    dados: DadosBasicosAnamneseEntrada,
+    acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso),
+    usuario: Usuario = Depends(obter_usuario_atual),
+    sessao: Session = Depends(obter_sessao),
+) -> AnamneseSaida:
+    """Correção dos dados básicos pelo próprio paciente (LGPD, art. 18, III).
+
+    Grava o bloco inteiro (nascimento, sexo, altura e peso) a partir do formulário:
+    o que vier vazio fica em branco. O conteúdo clínico não é tocado. Continua
+    disponível ao médico, que pode corrigir por quem é atendido.
+    """
+    anamnese = _obter_anamnese(sessao, acompanhamento)
+    if anamnese is None:
+        anamnese = Anamnese(paciente_id=acompanhamento.paciente_id)
+        sessao.add(anamnese)
+
+    for campo in CAMPOS_BASICOS:
+        setattr(anamnese, campo, getattr(dados, campo))
+    registrar_acesso(sessao, usuario, acompanhamento, "escrita")
+    sessao.commit()
+    return _montar_saida(acompanhamento, anamnese)
 
 
 @router.put("", response_model=AnamneseSaida)
