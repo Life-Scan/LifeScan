@@ -2,17 +2,17 @@ import { Check, Lock, LockOpen } from 'lucide-react'
 import { useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
-import { alterarPasso, alterarStatusJornada } from '../../api/servicos'
+import { alterarPasso, alterarStatusAcompanhamento } from '../../api/servicos'
 import { useConfirmar } from '../../components/Confirmacao'
 import { Alerta, Avatar, Etiqueta, estilos as ui } from '../../components/ui'
 import { PASSOS, ROTULOS_PASSO, formatarData } from '../../utils/formatacao'
-import estilos from './Jornada.module.css'
+import estilos from './Acompanhamento.module.css'
 
-export default function CabecalhoJornada({ jornada, ehMedico, editavel, atualizar }) {
+export default function CabecalhoAcompanhamento({ acompanhamento, ehMedico, editavel, atualizar }) {
   const confirmar = useConfirmar()
   const [erro, setErro] = useState('')
   const [ocupado, setOcupado] = useState(false)
-  const ativa = jornada.status === 'ativa'
+  const ativo = acompanhamento.status === 'ativo'
 
   async function executar(acao) {
     setErro('')
@@ -28,62 +28,62 @@ export default function CabecalhoJornada({ jornada, ehMedico, editavel, atualiza
   }
 
   function mudarPasso(passo) {
-    if (passo === jornada.passo_atual) return
-    executar(() => alterarPasso(jornada.id, passo))
+    if (passo === acompanhamento.passo_atual) return
+    executar(() => alterarPasso(acompanhamento.id, passo))
   }
 
   async function alternarStatus() {
     const confirmado = await confirmar(
-      ativa
+      ativo
         ? {
-            titulo: 'Encerrar esta jornada?',
-            mensagem: 'Ela fica disponível apenas para consulta, sem novos registros, até ser reaberta.',
-            rotuloConfirmar: 'Encerrar jornada',
+            titulo: 'Encerrar este acompanhamento?',
+            mensagem: 'Ele fica disponível apenas para consulta, sem novos registros, até ser reaberto.',
+            rotuloConfirmar: 'Encerrar acompanhamento',
             perigo: true,
           }
         : {
-            titulo: 'Reabrir esta jornada?',
+            titulo: 'Reabrir este acompanhamento?',
             mensagem: 'Voltará a ser possível registrar consultas, solicitações e documentos.',
-            rotuloConfirmar: 'Reabrir jornada',
+            rotuloConfirmar: 'Reabrir acompanhamento',
           },
     )
-    if (confirmado) executar(() => alterarStatusJornada(jornada.id, ativa ? 'encerrada' : 'ativa'))
+    if (confirmado) executar(() => alterarStatusAcompanhamento(acompanhamento.id, ativo ? 'encerrado' : 'ativo'))
   }
 
   const podeMudarPasso = ehMedico && editavel
-  const indiceAtual = PASSOS.indexOf(jornada.passo_atual)
+  const indiceAtual = PASSOS.indexOf(acompanhamento.passo_atual)
 
   return (
     <header className={`${ui.cartao} ${estilos.cabecalho}`}>
       <div className={estilos.cabecalhoTopo}>
         <div className={estilos.identificacao}>
-          <Avatar nome={jornada.paciente.nome} grande />
+          <Avatar nome={acompanhamento.paciente.nome} grande />
           <div>
             <div className={estilos.tituloLinha}>
-              <h1>{jornada.titulo}</h1>
-              <Etiqueta variante={ativa ? 'sucesso' : 'neutra'}>{ativa ? 'Ativa' : 'Encerrada'}</Etiqueta>
+              <h1>{acompanhamento.titulo}</h1>
+              <Etiqueta variante={ativo ? 'sucesso' : 'neutra'}>{ativo ? 'Ativo' : 'Encerrado'}</Etiqueta>
             </div>
             <div className={estilos.pessoas}>
               <span>
-                Paciente: <strong>{jornada.paciente.nome}</strong>
+                Paciente: <strong>{acompanhamento.paciente.nome}</strong>
               </span>
               <span>
-                Médico(a): <strong>{jornada.medico.nome}</strong>
+                Médico(a): <strong>{acompanhamento.medico.nome}</strong>
               </span>
-              <span>Aberta em {formatarData(jornada.criado_em)}</span>
+              <span>Aberto em {formatarData(acompanhamento.criado_em)}</span>
             </div>
-            {jornada.descricao && <p className={estilos.descricao}>{jornada.descricao}</p>}
+            {acompanhamento.descricao && <p className={estilos.descricao}>{acompanhamento.descricao}</p>}
           </div>
         </div>
         {ehMedico && (
           <button
             type="button"
-            className={`${ativa ? ui.botaoPerigo : ui.botaoSecundario} ${ui.botaoPequeno}`}
+            className={`${ativo ? ui.botaoPerigo : ui.botaoSecundario} ${ui.botaoPequeno}`}
             onClick={alternarStatus}
             disabled={ocupado}
           >
-            {ativa ? <Lock size={14} aria-hidden="true" /> : <LockOpen size={14} aria-hidden="true" />}
-            {ativa ? 'Encerrar jornada' : 'Reabrir jornada'}
+            {ativo ? <Lock size={14} aria-hidden="true" /> : <LockOpen size={14} aria-hidden="true" />}
+            {ativo ? 'Encerrar acompanhamento' : 'Reabrir acompanhamento'}
           </button>
         )}
       </div>

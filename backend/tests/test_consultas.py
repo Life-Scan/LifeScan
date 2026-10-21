@@ -11,9 +11,9 @@ def _dados_consulta(**extras) -> dict:
     }
 
 
-def test_medico_registra_consulta_com_prescricoes(cliente, medico, jornada):
+def test_medico_registra_consulta_com_prescricoes(cliente, medico, acompanhamento):
     resposta = cliente.post(
-        f"/journeys/{jornada['id']}/consultations", json=_dados_consulta(), headers=medico["headers"]
+        f"/follow-ups/{acompanhamento['id']}/consultations", json=_dados_consulta(), headers=medico["headers"]
     )
     assert resposta.status_code == 201, resposta.text
     consulta = resposta.json()
@@ -24,9 +24,9 @@ def test_medico_registra_consulta_com_prescricoes(cliente, medico, jornada):
     assert consulta["prescricoes"][1]["dosagem"] is None
 
 
-def test_medico_registra_retorno(cliente, medico, jornada):
+def test_medico_registra_retorno(cliente, medico, acompanhamento):
     resposta = cliente.post(
-        f"/journeys/{jornada['id']}/consultations",
+        f"/follow-ups/{acompanhamento['id']}/consultations",
         json=_dados_consulta(tipo="retorno", prescricoes=[]),
         headers=medico["headers"],
     )
@@ -34,17 +34,17 @@ def test_medico_registra_retorno(cliente, medico, jornada):
     assert resposta.json()["tipo"] == "retorno"
 
 
-def test_tipo_de_consulta_invalido_retorna_422(cliente, medico, jornada):
+def test_tipo_de_consulta_invalido_retorna_422(cliente, medico, acompanhamento):
     resposta = cliente.post(
-        f"/journeys/{jornada['id']}/consultations",
+        f"/follow-ups/{acompanhamento['id']}/consultations",
         json=_dados_consulta(tipo="cirurgia"),
         headers=medico["headers"],
     )
     assert resposta.status_code == 422
 
 
-def test_paciente_nao_registra_consulta_mas_ve_a_lista(cliente, medico, paciente, jornada):
-    url = f"/journeys/{jornada['id']}/consultations"
+def test_paciente_nao_registra_consulta_mas_ve_a_lista(cliente, medico, paciente, acompanhamento):
+    url = f"/follow-ups/{acompanhamento['id']}/consultations"
     assert cliente.post(url, json=_dados_consulta(), headers=paciente["headers"]).status_code == 403
 
     cliente.post(url, json=_dados_consulta(), headers=medico["headers"])
@@ -53,22 +53,22 @@ def test_paciente_nao_registra_consulta_mas_ve_a_lista(cliente, medico, paciente
     assert len(lista.json()) == 1
 
 
-def test_consultas_listadas_da_mais_recente_para_a_mais_antiga(cliente, medico, jornada):
-    url = f"/journeys/{jornada['id']}/consultations"
+def test_consultas_listadas_da_mais_recente_para_a_mais_antiga(cliente, medico, acompanhamento):
+    url = f"/follow-ups/{acompanhamento['id']}/consultations"
     for data in ("2026-08-01T10:00:00Z", "2026-09-01T10:00:00Z", "2026-07-01T10:00:00Z"):
         cliente.post(url, json=_dados_consulta(data=data), headers=medico["headers"])
     datas = [c["data"][:10] for c in cliente.get(url, headers=medico["headers"]).json()]
     assert datas == ["2026-09-01", "2026-08-01", "2026-07-01"]
 
 
-def test_nao_registra_consulta_em_jornada_encerrada(cliente, medico, jornada):
-    cliente.patch(f"/journeys/{jornada['id']}/status", json={"status": "encerrada"}, headers=medico["headers"])
+def test_nao_registra_consulta_em_acompanhamento_encerrado(cliente, medico, acompanhamento):
+    cliente.patch(f"/follow-ups/{acompanhamento['id']}/status", json={"status": "encerrado"}, headers=medico["headers"])
     resposta = cliente.post(
-        f"/journeys/{jornada['id']}/consultations", json=_dados_consulta(), headers=medico["headers"]
+        f"/follow-ups/{acompanhamento['id']}/consultations", json=_dados_consulta(), headers=medico["headers"]
     )
     assert resposta.status_code == 409
 
 
-def test_terceiros_nao_veem_consultas(cliente, outro_paciente, jornada):
-    resposta = cliente.get(f"/journeys/{jornada['id']}/consultations", headers=outro_paciente["headers"])
+def test_terceiros_nao_veem_consultas(cliente, outro_paciente, acompanhamento):
+    resposta = cliente.get(f"/follow-ups/{acompanhamento['id']}/consultations", headers=outro_paciente["headers"])
     assert resposta.status_code == 403

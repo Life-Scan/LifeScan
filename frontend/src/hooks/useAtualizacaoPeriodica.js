@@ -6,7 +6,7 @@ export const INTERVALO_PADRAO_MS = 30_000
  * Busca dados e repete a busca periodicamente (polling), RNF04/RNF08.
  *
  * - Pausa quando a aba fica oculta e atualiza assim que ela volta a ficar visível.
- * - `dependencias` reinicia a busca quando mudam (ex.: id da jornada).
+ * - `dependencias` reinicia a busca quando mudam (ex.: id do acompanhamento).
  * - Respostas atrasadas de buscas anteriores são descartadas.
  *
  * Devolve { dados, erro, carregando, atualizar }. `atualizar()` força uma busca

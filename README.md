@@ -26,7 +26,7 @@ Não existe uma opção de "alterar senha" dentro do sistema: quem quiser trocar
 "Esqueci minha senha" na tela de login.
 
 O sistema não depende de o paciente entrar: assim que a conta existe, o médico já pode abrir
-a jornada e registrar tudo.
+o acompanhamento e registrar tudo.
 
 > **Email em modo de desenvolvimento:** por enquanto nenhum email é enviado de verdade.
 > Com `EMAIL_MODE=console`, o email (incluindo a senha provisória) aparece no terminal onde
@@ -120,7 +120,7 @@ acesso pela tela **Pacientes e parceiros**.
 
 ### Dados de exemplo (opcional)
 
-Cria um paciente e um parceiro já com senha definida e uma jornada com ficha preenchida,
+Cria um paciente e um parceiro já com senha definida e um acompanhamento com anamnese preenchida,
 parceiro atribuído, consulta, solicitações (uma vencida e uma destinada ao parceiro) e um
 documento aguardando revisão. Se ainda não houver médico,
 cria também o médico de exemplo.
@@ -184,15 +184,15 @@ Build de produção: `npm run build` (gera `frontend/dist`).
 - **Pacientes e parceiros** (médico): uma tela só. No formulário, o médico escolhe se está
   cadastrando um paciente ou um parceiro; abaixo, uma seção lista os pacientes e outra os
   parceiros, com reenviar acesso e desativar/reativar.
-- **Jornadas**: lista (médico), a jornada do paciente, ou os pacientes atribuídos (parceiro);
-  abertura de nova jornada (médico).
-- **Página da jornada**: passo atual (o médico altera clicando), encerrar/reabrir, e abas de
-  linha do tempo (com filtros), ficha do paciente, consultas e prescrições, solicitações (para o
+- **Acompanhamentos**: lista (médico), o acompanhamento do paciente, ou os pacientes atribuídos (parceiro);
+  abertura de novo acompanhamento (médico).
+- **Página do acompanhamento**: passo atual (o médico altera clicando), encerrar/reabrir, e abas de
+  linha do tempo (com filtros), anamnese do paciente, consultas e prescrições, solicitações (para o
   paciente ou para um parceiro), documentos por categoria (envio, revisão, visualizar/baixar) e
   parceiros atribuídos.
-- **Visão do parceiro**: só a ficha do paciente, as solicitações destinadas a ele e os próprios envios.
+- **Visão do parceiro**: só a anamnese do paciente, as solicitações destinadas a ele e os próprios envios.
 
-As listas e a página da jornada se atualizam a cada 30 segundos; a atualização pausa quando a
+As listas e a página do acompanhamento se atualizam a cada 30 segundos; a atualização pausa quando a
 aba do navegador fica oculta.
 
 ## Endpoints disponíveis
@@ -207,27 +207,27 @@ aba do navegador fica oculta.
 | GET | `/users?tipo=` | Médico lista as contas (`paciente` / `parceiro`) |
 | PATCH | `/users/{id}` | Médico altera `nome`, `profissao` ou `ativo` |
 | POST | `/users/{id}/resend-access` | Médico reenvia os dados de acesso (nova senha provisória) |
-| POST | `/journeys` | Médico abre a jornada de um paciente (`paciente_id`, `titulo`, `descricao`) |
-| GET | `/journeys` | Jornadas do usuário (o parceiro vê as que lhe foram atribuídas) |
-| GET | `/journeys/{id}` | Detalhe da jornada |
-| PATCH | `/journeys/{id}/step` | Médico altera o passo (`passo_atual`: `consulta`/`exame`/`retorno`) |
-| PATCH | `/journeys/{id}/status` | Médico encerra/reabre (`status`: `ativa`/`encerrada`) |
-| GET | `/journeys/{id}/patient-record` | Ficha do paciente (médico, paciente e parceiros atribuídos) |
-| PUT | `/journeys/{id}/patient-record` | Médico cria ou substitui a ficha |
-| GET | `/journeys/{id}/partners` | Parceiros atribuídos à jornada |
-| POST | `/journeys/{id}/partners` | Médico atribui um parceiro (`parceiro_id`) |
-| DELETE | `/journeys/{id}/partners/{parceiro_id}` | Médico remove o parceiro da jornada |
-| POST | `/journeys/{id}/consultations` | Médico registra consulta/retorno com prescrições aninhadas |
-| GET | `/journeys/{id}/consultations` | Consultas da jornada |
-| POST | `/journeys/{id}/requests` | Médico cria solicitação com prazo (`tipo`, `descricao`, `prazo`, `destinatario_id` opcional: paciente ou parceiro atribuído) |
-| GET | `/journeys/{id}/requests?status=` | Solicitações da jornada (o parceiro vê só as destinadas a ele) |
+| POST | `/follow-ups` | Médico abre o acompanhamento de um paciente (`paciente_id`, `titulo`, `descricao`) |
+| GET | `/follow-ups` | Acompanhamentos do usuário (o parceiro vê os que lhe foram atribuídos) |
+| GET | `/follow-ups/{id}` | Detalhe do acompanhamento |
+| PATCH | `/follow-ups/{id}/step` | Médico altera o passo (`passo_atual`: `consulta`/`exame`/`retorno`) |
+| PATCH | `/follow-ups/{id}/status` | Médico encerra/reabre (`status`: `ativo`/`encerrado`) |
+| GET | `/follow-ups/{id}/anamnesis` | Anamnese do paciente (médico, paciente e parceiros atribuídos) |
+| PUT | `/follow-ups/{id}/anamnesis` | Médico cria ou substitui a anamnese |
+| GET | `/follow-ups/{id}/partners` | Parceiros atribuídos ao acompanhamento |
+| POST | `/follow-ups/{id}/partners` | Médico atribui um parceiro (`parceiro_id`) |
+| DELETE | `/follow-ups/{id}/partners/{parceiro_id}` | Médico remove o parceiro do acompanhamento |
+| POST | `/follow-ups/{id}/consultations` | Médico registra consulta/retorno com prescrições aninhadas |
+| GET | `/follow-ups/{id}/consultations` | Consultas do acompanhamento |
+| POST | `/follow-ups/{id}/requests` | Médico cria solicitação com prazo (`tipo`, `descricao`, `prazo`, `destinatario_id` opcional: paciente ou parceiro atribuído) |
+| GET | `/follow-ups/{id}/requests?status=` | Solicitações do acompanhamento (o parceiro vê só as destinadas a ele) |
 | PATCH | `/requests/{id}/complete` | Médico marca a solicitação como atendida |
 | PATCH | `/requests/{id}/cancel` | Médico cancela a solicitação |
-| POST | `/journeys/{id}/documents` | Envio de documento (multipart: `titulo`, `categoria`, `arquivo`, `solicitacao_id` opcional) |
-| GET | `/journeys/{id}/documents?categoria=` | Documentos da jornada (o parceiro vê só os próprios envios) |
+| POST | `/follow-ups/{id}/documents` | Envio de documento (multipart: `titulo`, `categoria`, `arquivo`, `solicitacao_id` opcional) |
+| GET | `/follow-ups/{id}/documents?categoria=` | Documentos do acompanhamento (o parceiro vê só os próprios envios) |
 | PATCH | `/documents/{id}/review` | Médico revisa o documento (`observacao_revisao`) |
 | GET | `/files/{id}/download?inline=` | Download autenticado do arquivo |
-| GET | `/journeys/{id}/timeline?tipos=` | Linha do tempo unificada `{tipo, id, data, resumo, dados}` (filtro: `consulta,documento,solicitacao`) |
+| GET | `/follow-ups/{id}/timeline?tipos=` | Linha do tempo unificada `{tipo, id, data, resumo, dados}` (filtro: `consulta,documento,solicitacao`) |
 | GET | `/dashboard/pending` | Painel de pendências (conteúdo por tipo de usuário) |
 | GET | `/health` | Verificação de saúde da API |
 

@@ -8,8 +8,8 @@ def _arquivos_em_disco(config) -> list:
     return list(pasta.iterdir()) if pasta.exists() else []
 
 
-def test_paciente_envia_exame(cliente, paciente, jornada, config_teste):
-    resposta = enviar_documento(cliente, paciente, jornada)
+def test_paciente_envia_exame(cliente, paciente, acompanhamento, config_teste):
+    resposta = enviar_documento(cliente, paciente, acompanhamento)
     assert resposta.status_code == 201, resposta.text
     exame = resposta.json()
     assert exame["status"] == "enviado"
@@ -25,82 +25,82 @@ def test_paciente_envia_exame(cliente, paciente, jornada, config_teste):
     assert gravados[0].suffix == ".pdf"
 
 
-def test_medico_tambem_envia_arquivo(cliente, medico, jornada):
-    resposta = enviar_documento(cliente, medico, jornada, nome="laudo.png", conteudo=b"\x89PNG...")
+def test_medico_tambem_envia_arquivo(cliente, medico, acompanhamento):
+    resposta = enviar_documento(cliente, medico, acompanhamento, nome="laudo.png", conteudo=b"\x89PNG...")
     assert resposta.status_code == 201
     assert resposta.json()["arquivo"]["tipo_mime"] == "image/png"
 
 
 @pytest.mark.parametrize("nome", ["exame.pdf", "FOTO.JPG", "imagem.jpeg", "scan.webp", "tomografia.dcm", "notas.txt"])
-def test_extensoes_permitidas(cliente, paciente, jornada, nome):
-    assert enviar_documento(cliente, paciente, jornada, nome=nome).status_code == 201
+def test_extensoes_permitidas(cliente, paciente, acompanhamento, nome):
+    assert enviar_documento(cliente, paciente, acompanhamento, nome=nome).status_code == 201
 
 
 @pytest.mark.parametrize("nome", ["virus.exe", "planilha.xlsx", "script.pdf.js", "sem_extensao", "documento.docx"])
-def test_extensoes_proibidas_retornam_415(cliente, paciente, jornada, config_teste, nome):
-    resposta = enviar_documento(cliente, paciente, jornada, nome=nome)
+def test_extensoes_proibidas_retornam_415(cliente, paciente, acompanhamento, config_teste, nome):
+    resposta = enviar_documento(cliente, paciente, acompanhamento, nome=nome)
     assert resposta.status_code == 415
     assert "Formato de arquivo não permitido" in resposta.json()["detail"]
     assert _arquivos_em_disco(config_teste) == []
 
 
-def test_arquivo_acima_do_limite_retorna_413(cliente, paciente, jornada, config_teste, monkeypatch):
+def test_arquivo_acima_do_limite_retorna_413(cliente, paciente, acompanhamento, config_teste, monkeypatch):
     monkeypatch.setattr(config_teste, "tamanho_maximo_upload_mb", 1)
     grande = b"a" * (1024 * 1024 + 1)
-    resposta = enviar_documento(cliente, paciente, jornada, conteudo=grande)
+    resposta = enviar_documento(cliente, paciente, acompanhamento, conteudo=grande)
     assert resposta.status_code == 413
     assert resposta.json()["detail"] == "Arquivo muito grande. O tamanho máximo é 1 MB."
     # Nada fica em disco
     assert _arquivos_em_disco(config_teste) == []
 
 
-def test_arquivo_exatamente_no_limite_e_aceito(cliente, paciente, jornada, config_teste, monkeypatch):
+def test_arquivo_exatamente_no_limite_e_aceito(cliente, paciente, acompanhamento, config_teste, monkeypatch):
     monkeypatch.setattr(config_teste, "tamanho_maximo_upload_mb", 1)
-    resposta = enviar_documento(cliente, paciente, jornada, conteudo=b"a" * (1024 * 1024))
+    resposta = enviar_documento(cliente, paciente, acompanhamento, conteudo=b"a" * (1024 * 1024))
     assert resposta.status_code == 201
 
 
-def test_requisicao_muito_grande_e_recusada_antes_de_ler_o_corpo(cliente, paciente, jornada, config_teste, monkeypatch):
+def test_requisicao_muito_grande_e_recusada_antes_de_ler_o_corpo(cliente, paciente, acompanhamento, config_teste, monkeypatch):
     monkeypatch.setattr(config_teste, "tamanho_maximo_upload_mb", 1)
-    resposta = enviar_documento(cliente, paciente, jornada, conteudo=b"a" * (3 * 1024 * 1024))
+    resposta = enviar_documento(cliente, paciente, acompanhamento, conteudo=b"a" * (3 * 1024 * 1024))
     assert resposta.status_code == 413
 
 
-def test_arquivo_vazio_retorna_422(cliente, paciente, jornada):
-    resposta = enviar_documento(cliente, paciente, jornada, conteudo=b"")
+def test_arquivo_vazio_retorna_422(cliente, paciente, acompanhamento):
+    resposta = enviar_documento(cliente, paciente, acompanhamento, conteudo=b"")
     assert resposta.status_code == 422
 
 
-def test_envio_vinculado_marca_solicitacao_como_atendida(cliente, medico, paciente, jornada):
+def test_envio_vinculado_marca_solicitacao_como_atendida(cliente, medico, paciente, acompanhamento):
     for tipo in ("exame", "orientacao_profissional"):
-        solicitacao = criar_solicitacao(cliente, medico, jornada, tipo=tipo)
-        resposta = enviar_documento(cliente, paciente, jornada, solicitacao_id=solicitacao["id"])
+        solicitacao = criar_solicitacao(cliente, medico, acompanhamento, tipo=tipo)
+        resposta = enviar_documento(cliente, paciente, acompanhamento, solicitacao_id=solicitacao["id"])
         assert resposta.status_code == 201
         assert resposta.json()["solicitacao_id"] == solicitacao["id"]
 
-    solicitacoes = cliente.get(f"/journeys/{jornada['id']}/requests", headers=paciente["headers"]).json()
+    solicitacoes = cliente.get(f"/follow-ups/{acompanhamento['id']}/requests", headers=paciente["headers"]).json()
     assert {s["status"] for s in solicitacoes} == {"atendida"}
 
 
-def test_nao_vincula_envio_a_consulta_extra(cliente, medico, paciente, jornada):
-    consulta_extra = criar_solicitacao(cliente, medico, jornada, tipo="consulta_extra")
-    resposta = enviar_documento(cliente, paciente, jornada, solicitacao_id=consulta_extra["id"])
+def test_nao_vincula_envio_a_consulta_extra(cliente, medico, paciente, acompanhamento):
+    consulta_extra = criar_solicitacao(cliente, medico, acompanhamento, tipo="consulta_extra")
+    resposta = enviar_documento(cliente, paciente, acompanhamento, solicitacao_id=consulta_extra["id"])
     assert resposta.status_code == 422
 
 
-def test_nao_vincula_envio_a_solicitacao_ja_atendida(cliente, medico, paciente, jornada):
-    solicitacao = criar_solicitacao(cliente, medico, jornada)
-    enviar_documento(cliente, paciente, jornada, solicitacao_id=solicitacao["id"])
-    resposta = enviar_documento(cliente, paciente, jornada, solicitacao_id=solicitacao["id"])
+def test_nao_vincula_envio_a_solicitacao_ja_atendida(cliente, medico, paciente, acompanhamento):
+    solicitacao = criar_solicitacao(cliente, medico, acompanhamento)
+    enviar_documento(cliente, paciente, acompanhamento, solicitacao_id=solicitacao["id"])
+    resposta = enviar_documento(cliente, paciente, acompanhamento, solicitacao_id=solicitacao["id"])
     assert resposta.status_code == 409
 
 
-def test_terceiros_nao_enviam_exame(cliente, outro_paciente, jornada):
-    assert enviar_documento(cliente, outro_paciente, jornada).status_code == 403
+def test_terceiros_nao_enviam_exame(cliente, outro_paciente, acompanhamento):
+    assert enviar_documento(cliente, outro_paciente, acompanhamento).status_code == 403
 
 
-def test_medico_revisa_exame(cliente, medico, paciente, jornada):
-    exame = enviar_documento(cliente, paciente, jornada).json()
+def test_medico_revisa_exame(cliente, medico, paciente, acompanhamento):
+    exame = enviar_documento(cliente, paciente, acompanhamento).json()
     resposta = cliente.patch(
         f"/documents/{exame['id']}/review",
         json={"observacao_revisao": "Hemoglobina normal."},
@@ -113,20 +113,20 @@ def test_medico_revisa_exame(cliente, medico, paciente, jornada):
     assert revisado["revisado_em"] is not None
 
 
-def test_paciente_nao_revisa_exame(cliente, paciente, jornada):
-    exame = enviar_documento(cliente, paciente, jornada).json()
+def test_paciente_nao_revisa_exame(cliente, paciente, acompanhamento):
+    exame = enviar_documento(cliente, paciente, acompanhamento).json()
     resposta = cliente.patch(f"/documents/{exame['id']}/review", json={}, headers=paciente["headers"])
     assert resposta.status_code == 403
 
 
-def test_parceiro_nao_revisa_exame(cliente, parceiro, paciente, jornada):
-    exame = enviar_documento(cliente, paciente, jornada).json()
+def test_parceiro_nao_revisa_exame(cliente, parceiro, paciente, acompanhamento):
+    exame = enviar_documento(cliente, paciente, acompanhamento).json()
     resposta = cliente.patch(f"/documents/{exame['id']}/review", json={}, headers=parceiro["headers"])
     assert resposta.status_code == 403
 
 
-def test_download_do_arquivo(cliente, medico, paciente, jornada):
-    exame = enviar_documento(cliente, paciente, jornada).json()
+def test_download_do_arquivo(cliente, medico, paciente, acompanhamento):
+    exame = enviar_documento(cliente, paciente, acompanhamento).json()
     url = f"/files/{exame['arquivo']['id']}/download"
 
     resposta = cliente.get(url, headers=medico["headers"])
@@ -140,16 +140,16 @@ def test_download_do_arquivo(cliente, medico, paciente, jornada):
     assert inline.headers["content-disposition"].startswith("inline")
 
 
-def test_download_exige_acesso_a_jornada(cliente, outro_paciente, paciente, jornada):
-    exame = enviar_documento(cliente, paciente, jornada).json()
+def test_download_exige_acesso_o_acompanhamento(cliente, outro_paciente, paciente, acompanhamento):
+    exame = enviar_documento(cliente, paciente, acompanhamento).json()
     url = f"/files/{exame['arquivo']['id']}/download"
     assert cliente.get(url).status_code == 401
     assert cliente.get(url, headers=outro_paciente["headers"]).status_code == 403
     assert cliente.get("/files/999/download", headers=paciente["headers"]).status_code == 404
 
 
-def test_pasta_de_uploads_nao_e_publica(cliente, paciente, jornada, config_teste):
-    enviar_documento(cliente, paciente, jornada)
+def test_pasta_de_uploads_nao_e_publica(cliente, paciente, acompanhamento, config_teste):
+    enviar_documento(cliente, paciente, acompanhamento)
     nome = next(config_teste.pasta_uploads.iterdir()).name
     for url in (f"/uploads/{nome}", f"/static/{nome}", f"/{nome}"):
         assert cliente.get(url).status_code == 404
@@ -168,6 +168,6 @@ def test_limite_tambem_e_verificado_durante_a_gravacao(config_teste, monkeypatch
     assert upload.size is None
 
     with pytest.raises(HTTPException) as erro:
-        salvar_upload(upload, jornada_id=1, usuario_id=1)
+        salvar_upload(upload, acompanhamento_id=1, usuario_id=1)
     assert erro.value.status_code == 413
     assert _arquivos_em_disco(config_teste) == []

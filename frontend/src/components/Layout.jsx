@@ -37,9 +37,9 @@ export default function Layout() {
               Pacientes e parceiros
             </NavLink>
           )}
-          <NavLink to="/jornadas" className={classeLink}>
+          <NavLink to="/acompanhamentos" className={classeLink}>
             <Route size={18} aria-hidden="true" />
-            {ehMedico ? 'Jornadas' : ehParceiro ? 'Pacientes' : 'Minha jornada'}
+            {ehMedico ? 'Acompanhamentos' : ehParceiro ? 'Pacientes' : 'Meu acompanhamento'}
           </NavLink>
         </nav>
 

@@ -8,53 +8,53 @@ import { useAuth } from '../../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../../hooks/useAtualizacaoPeriodica'
 import AbaConsultas from './AbaConsultas'
 import AbaDocumentos from './AbaDocumentos'
-import AbaFicha from './AbaFicha'
+import AbaAnamnese from './AbaAnamnese'
 import AbaLinhaDoTempo from './AbaLinhaDoTempo'
 import AbaParceiros from './AbaParceiros'
 import AbaSolicitacoes from './AbaSolicitacoes'
-import CabecalhoJornada from './CabecalhoJornada'
-import estilos from './Jornada.module.css'
+import CabecalhoAcompanhamento from './CabecalhoAcompanhamento'
+import estilos from './Acompanhamento.module.css'
 
 const ABAS = [
   { id: 'linha', rotulo: 'Linha do tempo' },
-  { id: 'ficha', rotulo: 'Ficha' },
+  { id: 'anamnese', rotulo: 'Anamnese' },
   { id: 'consultas', rotulo: 'Consultas' },
   { id: 'solicitacoes', rotulo: 'Solicitações' },
   { id: 'documentos', rotulo: 'Documentos' },
   { id: 'parceiros', rotulo: 'Parceiros' },
 ]
 
-// O parceiro só tem acesso à ficha do paciente, às solicitações destinadas a ele e aos próprios envios
+// O parceiro só tem acesso à anamnese do paciente, às solicitações destinadas a ele e aos próprios envios
 const ABAS_PARCEIRO = [
-  { id: 'ficha', rotulo: 'Ficha do paciente' },
+  { id: 'anamnese', rotulo: 'Anamnese do paciente' },
   { id: 'solicitacoes', rotulo: 'Solicitações' },
   { id: 'documentos', rotulo: 'Meus envios' },
 ]
 
-/** Carrega tudo o que o usuário pode ver da jornada; o polling repete essa busca a cada 30 s. */
-async function carregarJornada(id, ehParceiro) {
+/** Carrega tudo o que o usuário pode ver do acompanhamento; o polling repete essa busca a cada 30 s. */
+async function carregarAcompanhamento(id, ehParceiro) {
   if (ehParceiro) {
-    const [jornada, ficha, solicitacoes, documentos] = await Promise.all([
-      servicos.obterJornada(id),
-      servicos.obterFicha(id),
+    const [acompanhamento, anamnese, solicitacoes, documentos] = await Promise.all([
+      servicos.obterAcompanhamento(id),
+      servicos.obterAnamnese(id),
       servicos.listarSolicitacoes(id),
       servicos.listarDocumentos(id),
     ])
-    return { jornada, ficha, solicitacoes, documentos, linhaDoTempo: [], consultas: [], parceiros: [] }
+    return { acompanhamento, anamnese, solicitacoes, documentos, linhaDoTempo: [], consultas: [], parceiros: [] }
   }
-  const [jornada, linhaDoTempo, ficha, consultas, solicitacoes, documentos, parceiros] = await Promise.all([
-    servicos.obterJornada(id),
+  const [acompanhamento, linhaDoTempo, anamnese, consultas, solicitacoes, documentos, parceiros] = await Promise.all([
+    servicos.obterAcompanhamento(id),
     servicos.obterLinhaDoTempo(id),
-    servicos.obterFicha(id),
+    servicos.obterAnamnese(id),
     servicos.listarConsultas(id),
     servicos.listarSolicitacoes(id),
     servicos.listarDocumentos(id),
-    servicos.listarParceirosDaJornada(id),
+    servicos.listarParceirosDoAcompanhamento(id),
   ])
-  return { jornada, linhaDoTempo, ficha, consultas, solicitacoes, documentos, parceiros }
+  return { acompanhamento, linhaDoTempo, anamnese, consultas, solicitacoes, documentos, parceiros }
 }
 
-export default function Jornada() {
+export default function Acompanhamento() {
   const { id } = useParams()
   const { usuario, ehMedico, ehParceiro } = useAuth()
   const [parametros, setParametros] = useSearchParams()
@@ -63,7 +63,7 @@ export default function Jornada() {
   const abaAtual = abas.some((aba) => aba.id === parametros.get('aba')) ? parametros.get('aba') : abas[0].id
 
   const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(
-    () => carregarJornada(id, ehParceiro),
+    () => carregarAcompanhamento(id, ehParceiro),
     undefined,
     [id, ehParceiro],
   )
@@ -73,7 +73,7 @@ export default function Jornada() {
     setParametros({ aba, ...extras })
   }
 
-  if (carregando && !dados) return <Carregando texto="Carregando a jornada…" />
+  if (carregando && !dados) return <Carregando texto="Carregando o acompanhamento…" />
 
   if (!dados) {
     const status = erro?.response?.status
@@ -82,20 +82,20 @@ export default function Jornada() {
         <Alerta tipo="erro">
           {status === 404 || status === 403
             ? mensagemDeErro(erro)
-            : mensagemDeErro(erro, 'Não foi possível carregar a jornada.')}
+            : mensagemDeErro(erro, 'Não foi possível carregar o acompanhamento.')}
         </Alerta>
         <p>
-          <Link to="/jornadas">Voltar</Link>
+          <Link to="/acompanhamentos">Voltar</Link>
         </p>
       </div>
     )
   }
 
-  const { jornada, linhaDoTempo, ficha, consultas, solicitacoes, documentos, parceiros } = dados
-  const editavel = jornada.status === 'ativa'
-  const contexto = { jornada, usuario, ehMedico, ehParceiro, editavel, atualizar, irParaAba }
+  const { acompanhamento, linhaDoTempo, anamnese, consultas, solicitacoes, documentos, parceiros } = dados
+  const editavel = acompanhamento.status === 'ativo'
+  const contexto = { acompanhamento, usuario, ehMedico, ehParceiro, editavel, atualizar, irParaAba }
 
-  // Médico: tudo o que está pendente na jornada. Demais: só o que cabe a eles.
+  // Médico: tudo o que está pendente no acompanhamento. Demais: só o que cabe a eles.
   const contagens = {
     solicitacoes: solicitacoes.filter(
       (s) => s.status === 'pendente' && (ehMedico || s.destinatario.id === usuario.id),
@@ -107,24 +107,24 @@ export default function Jornada() {
 
   return (
     <div className={estilos.pilha}>
-      <Link to="/jornadas" className={estilos.voltar}>
+      <Link to="/acompanhamentos" className={estilos.voltar}>
         <ArrowLeft size={15} aria-hidden="true" />
-        {ehParceiro ? 'Pacientes' : 'Jornadas'}
+        {ehParceiro ? 'Pacientes' : 'Acompanhamentos'}
       </Link>
 
-      <CabecalhoJornada {...contexto} />
+      <CabecalhoAcompanhamento {...contexto} />
 
       {/* Erro de uma atualização periódica: mantém os dados já carregados na tela */}
       <ErroCarregamento erro={erro} />
 
       {!editavel && (
         <Alerta tipo="alerta">
-          Esta jornada está encerrada e fica disponível apenas para consulta.
-          {ehMedico && ' Reabra a jornada para registrar novas informações.'}
+          Este acompanhamento está encerrado e fica disponível apenas para consulta.
+          {ehMedico && ' Reabra o acompanhamento para registrar novas informações.'}
         </Alerta>
       )}
 
-      <div className={estilos.abas} role="tablist" aria-label="Seções da jornada">
+      <div className={estilos.abas} role="tablist" aria-label="Seções do acompanhamento">
         {abas.map((aba) => (
           <button
             key={aba.id}
@@ -144,7 +144,7 @@ export default function Jornada() {
 
       <div role="tabpanel" id={`painel-${abaAtual}`} aria-labelledby={`aba-${abaAtual}`} className={ui.cartao}>
         {abaAtual === 'linha' && <AbaLinhaDoTempo eventos={linhaDoTempo} {...contexto} />}
-        {abaAtual === 'ficha' && <AbaFicha ficha={ficha} {...contexto} />}
+        {abaAtual === 'anamnese' && <AbaAnamnese anamnese={anamnese} {...contexto} />}
         {abaAtual === 'consultas' && <AbaConsultas consultas={consultas} {...contexto} />}
         {abaAtual === 'solicitacoes' && (
           <AbaSolicitacoes solicitacoes={solicitacoes} parceiros={parceiros} {...contexto} />

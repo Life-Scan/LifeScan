@@ -43,8 +43,8 @@ export default function Painel() {
   )
 }
 
-function linkJornada(jornadaId, aba) {
-  return `/jornadas/${jornadaId}?aba=${aba}`
+function linkAcompanhamento(acompanhamentoId, aba) {
+  return `/acompanhamentos/${acompanhamentoId}?aba=${aba}`
 }
 
 /** Cartão de resumo: número grande com ícone. tom: perigo | alerta | info (aplicado só se houver itens). */
@@ -89,14 +89,14 @@ function ItemSolicitacao({ solicitacao, mostrarPaciente, mostrarDestinatario }) 
   return (
     <li className={solicitacao.vencida ? ui.itemListaDestaque : ui.itemLista}>
       <div className={ui.cabecalhoItem}>
-        <Link to={linkJornada(solicitacao.jornada.id, 'solicitacoes')} className={estilos.linkItem}>
+        <Link to={linkAcompanhamento(solicitacao.acompanhamento.id, 'solicitacoes')} className={estilos.linkItem}>
           {ROTULOS_TIPO_SOLICITACAO[solicitacao.tipo]}
         </Link>
         <PrazoSolicitacao solicitacao={solicitacao} />
       </div>
       <p className={estilos.textoItem}>{solicitacao.descricao}</p>
       <div className={estilos.meta}>
-        {mostrarPaciente && <span>{solicitacao.jornada.paciente.nome}</span>}
+        {mostrarPaciente && <span>{solicitacao.acompanhamento.paciente.nome}</span>}
         <span>Prazo: {formatarDataHora(solicitacao.prazo)}</span>
         {mostrarDestinatario && solicitacao.destinatario.tipo_usuario === 'parceiro' && (
           <span>
@@ -144,14 +144,14 @@ function PainelMedico({ painel }) {
               {documentos.map((documento) => (
                 <li key={documento.id} className={ui.itemLista}>
                   <div className={ui.cabecalhoItem}>
-                    <Link to={linkJornada(documento.jornada.id, 'documentos')} className={estilos.linkItem}>
+                    <Link to={linkAcompanhamento(documento.acompanhamento.id, 'documentos')} className={estilos.linkItem}>
                       {documento.titulo}
                     </Link>
                     <Etiqueta variante="info">{ROTULOS_CATEGORIA[documento.categoria]}</Etiqueta>
                   </div>
                   <div className={estilos.meta}>
-                    <span>{documento.jornada.paciente.nome}</span>
-                    {documento.enviado_por.id !== documento.jornada.paciente.id && (
+                    <span>{documento.acompanhamento.paciente.nome}</span>
+                    {documento.enviado_por.id !== documento.acompanhamento.paciente.id && (
                       <span>Enviado por {documento.enviado_por.nome}</span>
                     )}
                     <span>{formatarData(documento.criado_em)}</span>
@@ -239,7 +239,7 @@ function PainelParceiro({ painel }) {
           solicitacoes={pendentes}
           vazio={
             <>
-              Nenhuma solicitação pendente. Em <Link to="/jornadas">Pacientes</Link> você consulta a ficha de quem
+              Nenhuma solicitação pendente. Em <Link to="/acompanhamentos">Pacientes</Link> você consulta a anamnese de quem
               foi atribuído a você e envia documentos.
             </>
           }

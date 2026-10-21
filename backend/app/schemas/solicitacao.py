@@ -11,7 +11,7 @@ class SolicitacaoEntrada(BaseModel):
     tipo: TipoSolicitacao
     descricao: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3)]
     prazo: DataHoraEntrada
-    # Se omitido, a solicitação vai para o paciente da jornada
+    # Se omitido, a solicitação vai para o paciente do acompanhamento
     destinatario_id: int | None = None
 
 
@@ -24,7 +24,7 @@ class DestinatarioResumo(SchemaSaida):
 
 class SolicitacaoSaida(SchemaSaida):
     id: int
-    jornada_id: int
+    acompanhamento_id: int
     tipo: TipoSolicitacao
     descricao: str
     prazo: DataHoraUTC

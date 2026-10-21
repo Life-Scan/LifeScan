@@ -1,6 +1,6 @@
 """Painel de pendências por tipo de usuário.
 
-Considera apenas jornadas ativas (não encerradas).
+Considera apenas acompanhamentos ativos (não encerrados).
 """
 
 from datetime import timedelta
@@ -12,13 +12,13 @@ from app.core.config import obter_configuracoes
 from app.db.base import agora_utc
 from app.models.atribuicao import AtribuicaoParceiro
 from app.models.documento import Documento, StatusDocumento
-from app.models.jornada import Jornada, StatusJornada
+from app.models.acompanhamento import Acompanhamento, StatusAcompanhamento
 from app.models.solicitacao import Solicitacao, StatusSolicitacao, TipoSolicitacao
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.documento import DocumentoSaida
 from app.schemas.painel import (
     DocumentoPendente,
-    JornadaResumo,
+    AcompanhamentoResumo,
     PainelMedico,
     PainelPaciente,
     PainelParceiro,
@@ -27,25 +27,25 @@ from app.schemas.painel import (
 from app.schemas.solicitacao import SolicitacaoSaida
 
 
-def _jornadas_em_andamento(sessao: Session, usuario: Usuario) -> dict[int, Jornada]:
-    consulta = select(Jornada).where(Jornada.status == StatusJornada.ativa)
+def _acompanhamentos_em_andamento(sessao: Session, usuario: Usuario) -> dict[int, Acompanhamento]:
+    consulta = select(Acompanhamento).where(Acompanhamento.status == StatusAcompanhamento.ativo)
     if usuario.tipo_usuario == TipoUsuario.medico:
-        consulta = consulta.where(Jornada.medico_id == usuario.id)
+        consulta = consulta.where(Acompanhamento.medico_id == usuario.id)
     elif usuario.tipo_usuario == TipoUsuario.paciente:
-        consulta = consulta.where(Jornada.paciente_id == usuario.id)
+        consulta = consulta.where(Acompanhamento.paciente_id == usuario.id)
     else:
         consulta = consulta.join(
-            AtribuicaoParceiro, AtribuicaoParceiro.jornada_id == Jornada.id
+            AtribuicaoParceiro, AtribuicaoParceiro.acompanhamento_id == Acompanhamento.id
         ).where(AtribuicaoParceiro.parceiro_id == usuario.id)
-    return {jornada.id: jornada for jornada in sessao.scalars(consulta)}
+    return {acompanhamento.id: acompanhamento for acompanhamento in sessao.scalars(consulta)}
 
 
 def _solicitacoes_pendentes(
-    sessao: Session, jornadas: dict[int, Jornada], destinatario_id: int | None = None
+    sessao: Session, acompanhamentos: dict[int, Acompanhamento], destinatario_id: int | None = None
 ) -> list[Solicitacao]:
-    """Pendentes das jornadas, por prazo. Com destinatario_id, só as destinadas a essa pessoa."""
+    """Pendentes dos acompanhamentos, por prazo. Com destinatario_id, só as destinadas a essa pessoa."""
     consulta = select(Solicitacao).where(
-        Solicitacao.jornada_id.in_(jornadas),
+        Solicitacao.acompanhamento_id.in_(acompanhamentos),
         Solicitacao.status == StatusSolicitacao.pendente,
     )
     if destinatario_id is not None:
@@ -53,23 +53,23 @@ def _solicitacoes_pendentes(
     return list(sessao.scalars(consulta.order_by(Solicitacao.prazo, Solicitacao.id)))
 
 
-def _item_solicitacao(solicitacao: Solicitacao, jornadas: dict[int, Jornada]) -> SolicitacaoPendente:
+def _item_solicitacao(solicitacao: Solicitacao, acompanhamentos: dict[int, Acompanhamento]) -> SolicitacaoPendente:
     return SolicitacaoPendente(
         **SolicitacaoSaida.model_validate(solicitacao).model_dump(),
-        jornada=JornadaResumo.model_validate(jornadas[solicitacao.jornada_id]),
+        acompanhamento=AcompanhamentoResumo.model_validate(acompanhamentos[solicitacao.acompanhamento_id]),
     )
 
 
 def montar_painel_medico(sessao: Session, medico: Usuario) -> PainelMedico:
     config = obter_configuracoes()
-    jornadas = _jornadas_em_andamento(sessao, medico)
+    acompanhamentos = _acompanhamentos_em_andamento(sessao, medico)
     agora = agora_utc()
     limite_proximo = agora + timedelta(days=config.dias_prazo_proximo)
 
     documentos = sessao.scalars(
         select(Documento)
         .where(
-            Documento.jornada_id.in_(jornadas),
+            Documento.acompanhamento_id.in_(acompanhamentos),
             Documento.status == StatusDocumento.enviado,
             # Arquivos que o próprio médico enviou não precisam da revisão dele
             Documento.enviado_por_id != medico.id,
@@ -78,7 +78,7 @@ def montar_painel_medico(sessao: Session, medico: Usuario) -> PainelMedico:
     )
 
     # O médico acompanha todas as solicitações, sejam para o paciente ou para parceiros
-    pendentes = _solicitacoes_pendentes(sessao, jornadas)
+    pendentes = _solicitacoes_pendentes(sessao, acompanhamentos)
     vencidas = [s for s in pendentes if s.prazo < agora]
     proximas = [s for s in pendentes if agora <= s.prazo <= limite_proximo]
 
@@ -87,32 +87,32 @@ def montar_painel_medico(sessao: Session, medico: Usuario) -> PainelMedico:
         documentos_aguardando_revisao=[
             DocumentoPendente(
                 **DocumentoSaida.model_validate(documento).model_dump(),
-                jornada=JornadaResumo.model_validate(jornadas[documento.jornada_id]),
+                acompanhamento=AcompanhamentoResumo.model_validate(acompanhamentos[documento.acompanhamento_id]),
             )
             for documento in documentos
         ],
-        solicitacoes_vencidas=[_item_solicitacao(s, jornadas) for s in vencidas],
-        solicitacoes_proximas_do_prazo=[_item_solicitacao(s, jornadas) for s in proximas],
+        solicitacoes_vencidas=[_item_solicitacao(s, acompanhamentos) for s in vencidas],
+        solicitacoes_proximas_do_prazo=[_item_solicitacao(s, acompanhamentos) for s in proximas],
     )
 
 
 def montar_painel_paciente(sessao: Session, paciente: Usuario) -> PainelPaciente:
-    jornadas = _jornadas_em_andamento(sessao, paciente)
+    acompanhamentos = _acompanhamentos_em_andamento(sessao, paciente)
     # Só o que cabe ao paciente: as solicitações destinadas a parceiros não são pendências dele
-    pendentes = _solicitacoes_pendentes(sessao, jornadas, destinatario_id=paciente.id)
+    pendentes = _solicitacoes_pendentes(sessao, acompanhamentos, destinatario_id=paciente.id)
     # Ordenadas por prazo, as vencidas naturalmente aparecem primeiro
     return PainelPaciente(
         solicitacoes_pendentes=[
-            _item_solicitacao(s, jornadas) for s in pendentes if s.tipo != TipoSolicitacao.consulta_extra
+            _item_solicitacao(s, acompanhamentos) for s in pendentes if s.tipo != TipoSolicitacao.consulta_extra
         ],
         consultas_extras=[
-            _item_solicitacao(s, jornadas) for s in pendentes if s.tipo == TipoSolicitacao.consulta_extra
+            _item_solicitacao(s, acompanhamentos) for s in pendentes if s.tipo == TipoSolicitacao.consulta_extra
         ],
     )
 
 
 def montar_painel_parceiro(sessao: Session, parceiro: Usuario) -> PainelParceiro:
-    """Solicitações destinadas ao parceiro nas jornadas a que ele está atribuído."""
-    jornadas = _jornadas_em_andamento(sessao, parceiro)
-    pendentes = _solicitacoes_pendentes(sessao, jornadas, destinatario_id=parceiro.id)
-    return PainelParceiro(solicitacoes_pendentes=[_item_solicitacao(s, jornadas) for s in pendentes])
+    """Solicitações destinadas ao parceiro nos acompanhamentos a que ele está atribuído."""
+    acompanhamentos = _acompanhamentos_em_andamento(sessao, parceiro)
+    pendentes = _solicitacoes_pendentes(sessao, acompanhamentos, destinatario_id=parceiro.id)
+    return PainelParceiro(solicitacoes_pendentes=[_item_solicitacao(s, acompanhamentos) for s in pendentes])

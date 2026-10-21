@@ -3,9 +3,9 @@ from datetime import datetime, timedelta, timezone
 from tests.conftest import criar_solicitacao, enviar_documento
 
 
-def _registrar_consulta(cliente, medico, jornada, data: datetime, tipo: str = "consulta") -> dict:
+def _registrar_consulta(cliente, medico, acompanhamento, data: datetime, tipo: str = "consulta") -> dict:
     resposta = cliente.post(
-        f"/journeys/{jornada['id']}/consultations",
+        f"/follow-ups/{acompanhamento['id']}/consultations",
         json={
             "tipo": tipo,
             "data": data.isoformat(),
@@ -17,21 +17,21 @@ def _registrar_consulta(cliente, medico, jornada, data: datetime, tipo: str = "c
     return resposta.json()
 
 
-def _montar_jornada_com_historico(cliente, medico, paciente, jornada):
+def _montar_acompanhamento_com_historico(cliente, medico, paciente, acompanhamento):
     agora = datetime.now(timezone.utc)
     # Consulta realizada no passado, antes de tudo que foi criado agora
-    _registrar_consulta(cliente, medico, jornada, agora - timedelta(days=10))
-    solicitacao = criar_solicitacao(cliente, medico, jornada, tipo="exame")
-    enviar_documento(cliente, paciente, jornada, solicitacao_id=solicitacao["id"])
-    criar_solicitacao(cliente, medico, jornada, tipo="consulta_extra")
+    _registrar_consulta(cliente, medico, acompanhamento, agora - timedelta(days=10))
+    solicitacao = criar_solicitacao(cliente, medico, acompanhamento, tipo="exame")
+    enviar_documento(cliente, paciente, acompanhamento, solicitacao_id=solicitacao["id"])
+    criar_solicitacao(cliente, medico, acompanhamento, tipo="consulta_extra")
     # Retorno marcado para o futuro fica no fim
-    _registrar_consulta(cliente, medico, jornada, agora + timedelta(days=5), tipo="retorno")
+    _registrar_consulta(cliente, medico, acompanhamento, agora + timedelta(days=5), tipo="retorno")
 
 
-def test_linha_do_tempo_em_ordem_cronologica(cliente, medico, paciente, jornada):
-    _montar_jornada_com_historico(cliente, medico, paciente, jornada)
+def test_linha_do_tempo_em_ordem_cronologica(cliente, medico, paciente, acompanhamento):
+    _montar_acompanhamento_com_historico(cliente, medico, paciente, acompanhamento)
 
-    resposta = cliente.get(f"/journeys/{jornada['id']}/timeline", headers=paciente["headers"])
+    resposta = cliente.get(f"/follow-ups/{acompanhamento['id']}/timeline", headers=paciente["headers"])
     assert resposta.status_code == 200
     eventos = resposta.json()
 
@@ -43,9 +43,9 @@ def test_linha_do_tempo_em_ordem_cronologica(cliente, medico, paciente, jornada)
         assert evento["data"].endswith("Z")
 
 
-def test_resumos_e_dados_de_cada_evento(cliente, medico, paciente, jornada):
-    _montar_jornada_com_historico(cliente, medico, paciente, jornada)
-    eventos = cliente.get(f"/journeys/{jornada['id']}/timeline", headers=medico["headers"]).json()
+def test_resumos_e_dados_de_cada_evento(cliente, medico, paciente, acompanhamento):
+    _montar_acompanhamento_com_historico(cliente, medico, paciente, acompanhamento)
+    eventos = cliente.get(f"/follow-ups/{acompanhamento['id']}/timeline", headers=medico["headers"]).json()
 
     assert eventos[0]["resumo"] == "Consulta realizada (1 prescrição)"
     # O exame atendeu a solicitação, e o resumo reflete o status atual
@@ -57,9 +57,9 @@ def test_resumos_e_dados_de_cada_evento(cliente, medico, paciente, jornada):
     assert eventos[4]["resumo"] == "Retorno realizado (1 prescrição)"
 
 
-def test_filtro_por_tipo(cliente, medico, paciente, jornada):
-    _montar_jornada_com_historico(cliente, medico, paciente, jornada)
-    url = f"/journeys/{jornada['id']}/timeline"
+def test_filtro_por_tipo(cliente, medico, paciente, acompanhamento):
+    _montar_acompanhamento_com_historico(cliente, medico, paciente, acompanhamento)
+    url = f"/follow-ups/{acompanhamento['id']}/timeline"
 
     so_documentos = cliente.get(url, params={"tipos": "documento"}, headers=medico["headers"]).json()
     assert [e["tipo"] for e in so_documentos] == ["documento"]
@@ -68,27 +68,27 @@ def test_filtro_por_tipo(cliente, medico, paciente, jornada):
     assert [e["tipo"] for e in varios] == ["consulta", "documento", "consulta"]
 
 
-def test_filtro_com_tipo_invalido_retorna_422(cliente, medico, jornada):
+def test_filtro_com_tipo_invalido_retorna_422(cliente, medico, acompanhamento):
     # "mensagem" deixou de existir junto com o chat, e "exame" virou "documento"
     for tipos in ("documento,receita", "mensagem", "exame"):
         resposta = cliente.get(
-            f"/journeys/{jornada['id']}/timeline", params={"tipos": tipos}, headers=medico["headers"]
+            f"/follow-ups/{acompanhamento['id']}/timeline", params={"tipos": tipos}, headers=medico["headers"]
         )
         assert resposta.status_code == 422
         assert "Tipo inválido" in resposta.json()["detail"]
 
 
-def test_linha_do_tempo_vazia(cliente, medico, jornada):
-    resposta = cliente.get(f"/journeys/{jornada['id']}/timeline", headers=medico["headers"])
+def test_linha_do_tempo_vazia(cliente, medico, acompanhamento):
+    resposta = cliente.get(f"/follow-ups/{acompanhamento['id']}/timeline", headers=medico["headers"])
     assert resposta.json() == []
 
 
-def test_linha_do_tempo_exige_acesso(cliente, outro_paciente, parceiro, jornada):
-    url = f"/journeys/{jornada['id']}/timeline"
+def test_linha_do_tempo_exige_acesso(cliente, outro_paciente, parceiro, acompanhamento):
+    url = f"/follow-ups/{acompanhamento['id']}/timeline"
     assert cliente.get(url).status_code == 401
     assert cliente.get(url, headers=outro_paciente["headers"]).status_code == 403
     assert cliente.get(url, headers=parceiro["headers"]).status_code == 403
 
 
-def test_chat_foi_removido(cliente, medico, jornada):
-    assert cliente.get(f"/journeys/{jornada['id']}/messages", headers=medico["headers"]).status_code == 404
+def test_chat_foi_removido(cliente, medico, acompanhamento):
+    assert cliente.get(f"/follow-ups/{acompanhamento['id']}/messages", headers=medico["headers"]).status_code == 404

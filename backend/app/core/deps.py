@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.seguranca import decodificar_token
 from app.db.sessao import obter_sessao
 from app.models.atribuicao import AtribuicaoParceiro
-from app.models.jornada import Jornada
+from app.models.acompanhamento import Acompanhamento
 from app.models.usuario import TipoUsuario, Usuario
 
 esquema_bearer = HTTPBearer(auto_error=False)
@@ -78,11 +78,11 @@ def exigir_tipo(*tipos: TipoUsuario | str) -> Callable[..., Usuario]:
     return verificar
 
 
-def parceiro_atribuido(sessao: Session, jornada_id: int, parceiro_id: int) -> bool:
+def parceiro_atribuido(sessao: Session, acompanhamento_id: int, parceiro_id: int) -> bool:
     return (
         sessao.scalar(
             select(AtribuicaoParceiro.id).where(
-                AtribuicaoParceiro.jornada_id == jornada_id,
+                AtribuicaoParceiro.acompanhamento_id == acompanhamento_id,
                 AtribuicaoParceiro.parceiro_id == parceiro_id,
             )
         )
@@ -90,63 +90,63 @@ def parceiro_atribuido(sessao: Session, jornada_id: int, parceiro_id: int) -> bo
     )
 
 
-def carregar_jornada_com_acesso(
-    sessao: Session, usuario: Usuario, jornada_id: int, permitir_parceiro: bool = False
-) -> Jornada:
-    """Carrega a jornada e garante que o usuário pode acessá-la.
+def carregar_acompanhamento_com_acesso(
+    sessao: Session, usuario: Usuario, acompanhamento_id: int, permitir_parceiro: bool = False
+) -> Acompanhamento:
+    """Carrega o acompanhamento e garante que o usuário pode acessá-lo.
 
-    O médico e o paciente da jornada sempre podem. O parceiro só entra nas rotas que
-    passam permitir_parceiro=True (ficha e os próprios envios), e apenas se estiver
-    atribuído à jornada: ele não vê consultas, solicitações nem a linha do tempo.
+    O médico e o paciente do acompanhamento sempre podem. O parceiro só entra nas rotas que
+    passam permitir_parceiro=True (anamnese e os próprios envios), e apenas se estiver
+    atribuído ao acompanhamento: ele não vê consultas, solicitações nem a linha do tempo.
 
-    Versão sem Depends, para rotas que chegam à jornada a partir de outro recurso
+    Versão sem Depends, para rotas que chegam ao acompanhamento a partir de outro recurso
     (solicitação, documento, arquivo).
     """
-    jornada = sessao.get(Jornada, jornada_id)
-    if jornada is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Jornada não encontrada.")
-    if usuario.id in (jornada.medico_id, jornada.paciente_id):
-        return jornada
-    if usuario.tipo_usuario == TipoUsuario.parceiro and parceiro_atribuido(sessao, jornada.id, usuario.id):
+    acompanhamento = sessao.get(Acompanhamento, acompanhamento_id)
+    if acompanhamento is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Acompanhamento não encontrado.")
+    if usuario.id in (acompanhamento.medico_id, acompanhamento.paciente_id):
+        return acompanhamento
+    if usuario.tipo_usuario == TipoUsuario.parceiro and parceiro_atribuido(sessao, acompanhamento.id, usuario.id):
         if permitir_parceiro:
-            return jornada
+            return acompanhamento
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
-            "Parceiros têm acesso apenas à ficha do paciente e aos próprios envios.",
+            "Parceiros têm acesso apenas à anamnese do paciente e aos próprios envios.",
         )
-    raise HTTPException(status.HTTP_403_FORBIDDEN, "Você não tem acesso a esta jornada.")
+    raise HTTPException(status.HTTP_403_FORBIDDEN, "Você não tem acesso a este acompanhamento.")
 
 
-def obter_jornada_com_acesso(
-    jornada_id: int,
+def obter_acompanhamento_com_acesso(
+    acompanhamento_id: int,
     usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
-) -> Jornada:
-    """Jornada para o médico ou o paciente dela."""
-    return carregar_jornada_com_acesso(sessao, usuario, jornada_id)
+) -> Acompanhamento:
+    """Acompanhamento para o médico ou o paciente dele."""
+    return carregar_acompanhamento_com_acesso(sessao, usuario, acompanhamento_id)
 
 
-def obter_jornada_com_acesso_de_parceiro(
-    jornada_id: int,
+def obter_acompanhamento_com_acesso_de_parceiro(
+    acompanhamento_id: int,
     usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
-) -> Jornada:
-    """Jornada para o médico, o paciente ou um parceiro atribuído a ela."""
-    return carregar_jornada_com_acesso(sessao, usuario, jornada_id, permitir_parceiro=True)
+) -> Acompanhamento:
+    """Acompanhamento para o médico, o paciente ou um parceiro atribuído a ele."""
+    return carregar_acompanhamento_com_acesso(sessao, usuario, acompanhamento_id, permitir_parceiro=True)
 
 
-def obter_jornada_do_medico(
-    jornada: Jornada = Depends(obter_jornada_com_acesso),
+def obter_acompanhamento_do_medico(
+    acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso),
     usuario: Usuario = Depends(exigir_tipo(TipoUsuario.medico)),
-) -> Jornada:
-    """Como obter_jornada_com_acesso, mas só para o médico da jornada."""
-    return jornada
+) -> Acompanhamento:
+    """Como obter_acompanhamento_com_acesso, mas só para o médico do acompanhamento."""
+    return acompanhamento
 
 
-def garantir_jornada_editavel(jornada: Jornada) -> None:
-    """Jornadas encerradas ficam somente leitura."""
-    if jornada.encerrada:
+def garantir_acompanhamento_editavel(acompanhamento: Acompanhamento) -> None:
+    """Acompanhamentos encerrados ficam somente leitura."""
+    if acompanhamento.encerrado:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            "Esta jornada está encerrada e não pode ser alterada.",
+            "Este acompanhamento está encerrado e não pode ser alterado.",
         )

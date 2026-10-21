@@ -12,8 +12,8 @@ class Arquivo(Base):
     __tablename__ = "arquivos"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # A jornada é guardada aqui para o download verificar o acesso diretamente
-    jornada_id: Mapped[int] = mapped_column(ForeignKey("jornadas.id"), index=True)
+    # O acompanhamento é guardado aqui para o download verificar o acesso diretamente
+    acompanhamento_id: Mapped[int] = mapped_column(ForeignKey("acompanhamentos.id"), index=True)
     nome_original: Mapped[str] = mapped_column(String(255))
     nome_armazenado: Mapped[str] = mapped_column(String(64), unique=True)
     tipo_mime: Mapped[str] = mapped_column(String(100))

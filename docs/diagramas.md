@@ -41,30 +41,30 @@ classDiagram
         +criarConta(tipo, nome, email, profissao)
         +reenviarAcesso(usuario)
         +ativarOuDesativar(usuario)
-        +abrirJornada(paciente)
-        +alterarPasso(jornada, passo)
-        +encerrarOuReabrir(jornada)
-        +manterFicha(paciente)
-        +atribuirParceiro(jornada, parceiro)
-        +registrarConsulta(jornada, dados)
-        +criarSolicitacao(jornada, destinatario)
+        +abrirAcompanhamento(paciente)
+        +alterarPasso(acompanhamento, passo)
+        +encerrarOuReabrir(acompanhamento)
+        +manterAnamnese(paciente)
+        +atribuirParceiro(acompanhamento, parceiro)
+        +registrarConsulta(acompanhamento, dados)
+        +criarSolicitacao(acompanhamento, destinatario)
         +concluirOuCancelar(solicitacao)
         +revisarDocumento(documento, observacao)
     }
     class Paciente {
-        +verJornada()
-        +verFicha()
+        +verAcompanhamento()
+        +verAnamnese()
         +verPendencias()
-        +enviarDocumento(jornada, arquivo)
+        +enviarDocumento(acompanhamento, arquivo)
     }
     class Parceiro {
         +listarPacientesAtribuidos()
-        +verFicha(paciente)
+        +verAnamnese(paciente)
         +verSolicitacoesParaMim()
-        +enviarDocumento(jornada, arquivo)
+        +enviarDocumento(acompanhamento, arquivo)
     }
 
-    class FichaPaciente {
+    class Anamnese {
         +int id
         +date data_nascimento
         +Sexo sexo
@@ -79,12 +79,12 @@ classDiagram
         +datetime atualizado_em
         +idade() int
     }
-    class Jornada {
+    class Acompanhamento {
         +int id
         +str titulo
         +str descricao
-        +PassoJornada passo_atual
-        +StatusJornada status
+        +PassoAcompanhamento passo_atual
+        +StatusAcompanhamento status
         +datetime criado_em
         +datetime atualizado_em
     }
@@ -140,12 +140,12 @@ classDiagram
     }
     <<enumeration>> TipoUsuario
 
-    class PassoJornada {
+    class PassoAcompanhamento {
         consulta
         exame
         retorno
     }
-    <<enumeration>> PassoJornada
+    <<enumeration>> PassoAcompanhamento
 
     class TipoSolicitacao {
         exame
@@ -170,15 +170,15 @@ classDiagram
     Usuario <|-- Parceiro
 
     Medico "1" --> "0..*" Usuario : cria a conta
-    Paciente "1" --> "0..1" FichaPaciente : tem
-    Medico "1" --> "0..*" Jornada : conduz
-    Paciente "1" --> "0..1" Jornada : acompanhado em
-    Jornada "1" *-- "0..*" AtribuicaoParceiro
+    Paciente "1" --> "0..1" Anamnese : tem
+    Medico "1" --> "0..*" Acompanhamento : conduz
+    Paciente "1" --> "0..1" Acompanhamento : acompanhado em
+    Acompanhamento "1" *-- "0..*" AtribuicaoParceiro
     Parceiro "1" --> "0..*" AtribuicaoParceiro : atua em
-    Jornada "1" *-- "0..*" Consulta
+    Acompanhamento "1" *-- "0..*" Consulta
     Consulta "1" *-- "0..*" Prescricao
-    Jornada "1" *-- "0..*" Solicitacao
-    Jornada "1" *-- "0..*" Documento
+    Acompanhamento "1" *-- "0..*" Solicitacao
+    Acompanhamento "1" *-- "0..*" Documento
     Solicitacao "0..*" --> "1" Usuario : destinatário
     Documento "0..*" --> "0..1" Solicitacao : atende
     Documento "1" --> "1" Arquivo
@@ -207,9 +207,9 @@ erDiagram
         datetime ultimo_login_em "NULL"
         datetime criado_em
     }
-    FICHAS_PACIENTE {
+    ANAMNESES {
         int id PK
-        int paciente_id FK,UK "uma ficha por paciente"
+        int paciente_id FK,UK "uma anamnese por paciente"
         date data_nascimento "NULL"
         enum sexo "masculino | feminino | outro"
         int altura_cm "NULL"
@@ -222,26 +222,26 @@ erDiagram
         text observacoes "NULL"
         datetime atualizado_em
     }
-    JORNADAS {
+    ACOMPANHAMENTOS {
         int id PK
         int medico_id FK
-        int paciente_id FK,UK "uma jornada por paciente"
+        int paciente_id FK,UK "um acompanhamento por paciente"
         varchar titulo
         text descricao "NULL"
         enum passo_atual "consulta | exame | retorno"
-        enum status "ativa | encerrada"
+        enum status "ativo | encerrado"
         datetime criado_em
         datetime atualizado_em
     }
-    JORNADA_PARCEIROS {
+    ACOMPANHAMENTO_PARCEIROS {
         int id PK
-        int jornada_id FK "único junto com parceiro_id"
+        int acompanhamento_id FK "único junto com parceiro_id"
         int parceiro_id FK
         datetime criado_em
     }
     CONSULTAS {
         int id PK
-        int jornada_id FK
+        int acompanhamento_id FK
         enum tipo "consulta | retorno"
         datetime data
         text anotacoes "NULL"
@@ -256,7 +256,7 @@ erDiagram
     }
     SOLICITACOES {
         int id PK
-        int jornada_id FK
+        int acompanhamento_id FK
         int destinatario_id FK "paciente ou parceiro atribuído"
         enum tipo "exame | consulta_extra | orientacao_profissional | outro"
         text descricao
@@ -267,7 +267,7 @@ erDiagram
     }
     DOCUMENTOS {
         int id PK
-        int jornada_id FK
+        int acompanhamento_id FK
         int solicitacao_id FK "NULL"
         int enviado_por_id FK
         int arquivo_id FK
@@ -280,7 +280,7 @@ erDiagram
     }
     ARQUIVOS {
         int id PK
-        int jornada_id FK
+        int acompanhamento_id FK
         varchar nome_original
         varchar nome_armazenado UK
         varchar tipo_mime
@@ -289,20 +289,20 @@ erDiagram
         datetime criado_em
     }
 
-    USUARIOS ||--o| FICHAS_PACIENTE : "tem (paciente)"
-    USUARIOS ||--o{ JORNADAS : "conduz (médico)"
-    USUARIOS ||--o| JORNADAS : "é acompanhado (paciente)"
-    JORNADAS ||--o{ JORNADA_PARCEIROS : "tem"
-    USUARIOS ||--o{ JORNADA_PARCEIROS : "atua (parceiro)"
-    JORNADAS ||--o{ CONSULTAS : "tem"
+    USUARIOS ||--o| ANAMNESES : "tem (paciente)"
+    USUARIOS ||--o{ ACOMPANHAMENTOS : "conduz (médico)"
+    USUARIOS ||--o| ACOMPANHAMENTOS : "é acompanhado (paciente)"
+    ACOMPANHAMENTOS ||--o{ ACOMPANHAMENTO_PARCEIROS : "tem"
+    USUARIOS ||--o{ ACOMPANHAMENTO_PARCEIROS : "atua (parceiro)"
+    ACOMPANHAMENTOS ||--o{ CONSULTAS : "tem"
     CONSULTAS ||--o{ PRESCRICOES : "tem"
-    JORNADAS ||--o{ SOLICITACOES : "tem"
+    ACOMPANHAMENTOS ||--o{ SOLICITACOES : "tem"
     USUARIOS ||--o{ SOLICITACOES : "é destinatário"
-    JORNADAS ||--o{ DOCUMENTOS : "tem"
+    ACOMPANHAMENTOS ||--o{ DOCUMENTOS : "tem"
     SOLICITACOES |o--o{ DOCUMENTOS : "é atendida por"
     USUARIOS ||--o{ DOCUMENTOS : "envia"
     ARQUIVOS ||--|| DOCUMENTOS : "conteúdo"
-    JORNADAS ||--o{ ARQUIVOS : "guarda"
+    ACOMPANHAMENTOS ||--o{ ARQUIVOS : "guarda"
 ```
 
 ## Diagrama de casos de uso
@@ -325,10 +325,10 @@ flowchart LR
             UC04(["UC04 Criar conta de paciente ou parceiro"])
             UC05(["UC05 Reenviar acesso"])
             UC06(["UC06 Ativar / desativar conta"])
-            UC07(["UC07 Abrir jornada"])
-            UC08(["UC08 Alterar passo / encerrar jornada"])
-            UC09(["UC09 Manter ficha do paciente"])
-            UC10(["UC10 Atribuir parceiro à jornada"])
+            UC07(["UC07 Abrir acompanhamento"])
+            UC08(["UC08 Alterar passo / encerrar acompanhamento"])
+            UC09(["UC09 Manter anamnese do paciente"])
+            UC10(["UC10 Atribuir parceiro ao acompanhamento"])
             UC11(["UC11 Registrar consulta e prescrições"])
             UC12(["UC12 Criar solicitação com prazo"])
             UC13(["UC13 Concluir / cancelar solicitação"])
@@ -338,8 +338,8 @@ flowchart LR
         subgraph Comum["Uso do dia a dia"]
             direction TB
             UC01(["UC01 Entrar no sistema"])
-            UC15(["UC15 Ver jornada e linha do tempo"])
-            UC16(["UC16 Ver ficha do paciente"])
+            UC15(["UC15 Ver acompanhamento e linha do tempo"])
+            UC16(["UC16 Ver anamnese do paciente"])
             UC17(["UC17 Enviar documento"])
             UC18(["UC18 Atender solicitação com um envio"])
             UC19(["UC19 Ver painel de pendências"])

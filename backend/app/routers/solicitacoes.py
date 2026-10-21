@@ -3,17 +3,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.deps import (
-    carregar_jornada_com_acesso,
+    carregar_acompanhamento_com_acesso,
     exigir_tipo,
-    garantir_jornada_editavel,
-    obter_jornada_com_acesso_de_parceiro,
-    obter_jornada_do_medico,
+    garantir_acompanhamento_editavel,
+    obter_acompanhamento_com_acesso_de_parceiro,
+    obter_acompanhamento_do_medico,
     obter_usuario_atual,
     parceiro_atribuido,
 )
 from app.db.base import agora_utc
 from app.db.sessao import obter_sessao
-from app.models.jornada import Jornada
+from app.models.acompanhamento import Acompanhamento
 from app.models.solicitacao import Solicitacao, StatusSolicitacao, TipoSolicitacao
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.solicitacao import SolicitacaoEntrada, SolicitacaoSaida
@@ -21,15 +21,15 @@ from app.schemas.solicitacao import SolicitacaoEntrada, SolicitacaoSaida
 router = APIRouter(tags=["Solicitações"])
 
 
-def _resolver_destinatario(sessao: Session, jornada: Jornada, dados: SolicitacaoEntrada) -> int:
-    """Destinatário válido: o paciente da jornada (padrão) ou um parceiro atribuído a ela."""
-    if dados.destinatario_id is None or dados.destinatario_id == jornada.paciente_id:
-        return jornada.paciente_id
+def _resolver_destinatario(sessao: Session, acompanhamento: Acompanhamento, dados: SolicitacaoEntrada) -> int:
+    """Destinatário válido: o paciente do acompanhamento (padrão) ou um parceiro atribuído a ele."""
+    if dados.destinatario_id is None or dados.destinatario_id == acompanhamento.paciente_id:
+        return acompanhamento.paciente_id
 
-    if not parceiro_atribuido(sessao, jornada.id, dados.destinatario_id):
+    if not parceiro_atribuido(sessao, acompanhamento.id, dados.destinatario_id):
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
-            "O destinatário precisa ser o paciente ou um parceiro atribuído a esta jornada.",
+            "O destinatário precisa ser o paciente ou um parceiro atribuído a este acompanhamento.",
         )
     if dados.tipo == TipoSolicitacao.consulta_extra:
         raise HTTPException(
@@ -40,23 +40,23 @@ def _resolver_destinatario(sessao: Session, jornada: Jornada, dados: Solicitacao
 
 
 @router.post(
-    "/journeys/{jornada_id}/requests",
+    "/follow-ups/{acompanhamento_id}/requests",
     response_model=SolicitacaoSaida,
     status_code=status.HTTP_201_CREATED,
 )
 def criar_solicitacao(
     dados: SolicitacaoEntrada,
-    jornada: Jornada = Depends(obter_jornada_do_medico),
+    acompanhamento: Acompanhamento = Depends(obter_acompanhamento_do_medico),
     sessao: Session = Depends(obter_sessao),
 ) -> Solicitacao:
-    """Cria uma solicitação com prazo para o paciente ou para um parceiro da jornada."""
-    garantir_jornada_editavel(jornada)
+    """Cria uma solicitação com prazo para o paciente ou para um parceiro do acompanhamento."""
+    garantir_acompanhamento_editavel(acompanhamento)
     if dados.prazo <= agora_utc():
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "O prazo deve ser uma data futura.")
 
     solicitacao = Solicitacao(
-        jornada_id=jornada.id,
-        destinatario_id=_resolver_destinatario(sessao, jornada, dados),
+        acompanhamento_id=acompanhamento.id,
+        destinatario_id=_resolver_destinatario(sessao, acompanhamento, dados),
         tipo=dados.tipo,
         descricao=dados.descricao,
         prazo=dados.prazo,
@@ -66,15 +66,15 @@ def criar_solicitacao(
     return solicitacao
 
 
-@router.get("/journeys/{jornada_id}/requests", response_model=list[SolicitacaoSaida])
+@router.get("/follow-ups/{acompanhamento_id}/requests", response_model=list[SolicitacaoSaida])
 def listar_solicitacoes(
     status_filtro: StatusSolicitacao | None = Query(None, alias="status"),
-    jornada: Jornada = Depends(obter_jornada_com_acesso_de_parceiro),
+    acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso_de_parceiro),
     usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
 ) -> list[Solicitacao]:
-    """Médico e paciente veem todas as solicitações da jornada; o parceiro, só as destinadas a ele."""
-    consulta = select(Solicitacao).where(Solicitacao.jornada_id == jornada.id)
+    """Médico e paciente veem todas as solicitações do acompanhamento; o parceiro, só as destinadas a ele."""
+    consulta = select(Solicitacao).where(Solicitacao.acompanhamento_id == acompanhamento.id)
     if usuario.tipo_usuario == TipoUsuario.parceiro:
         consulta = consulta.where(Solicitacao.destinatario_id == usuario.id)
     if status_filtro is not None:
@@ -88,8 +88,8 @@ def _obter_solicitacao_pendente_do_medico(
     solicitacao = sessao.get(Solicitacao, solicitacao_id)
     if solicitacao is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Solicitação não encontrada.")
-    jornada = carregar_jornada_com_acesso(sessao, medico, solicitacao.jornada_id)
-    garantir_jornada_editavel(jornada)
+    acompanhamento = carregar_acompanhamento_com_acesso(sessao, medico, solicitacao.acompanhamento_id)
+    garantir_acompanhamento_editavel(acompanhamento)
     if solicitacao.status != StatusSolicitacao.pendente:
         raise HTTPException(status.HTTP_409_CONFLICT, "Esta solicitação não está mais pendente.")
     return solicitacao

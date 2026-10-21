@@ -1,0 +1,107 @@
+"""Anamnese do paciente: mantida pelo médico, lida pelo paciente e pelos parceiros atribuídos."""
+
+from datetime import date, timedelta
+
+ANAMNESE = {
+    "data_nascimento": "1978-03-14",
+    "sexo": "masculino",
+    "altura_cm": 172,
+    "peso_kg": 84.5,
+    "diagnosticos": "Hipertensão estágio 1",
+    "alergias": "Dipirona",
+    "medicamentos_em_uso": "Losartana 50 mg",
+    "restricoes": "Evitar exercícios de alto impacto",
+    "objetivos": "Reduzir a pressão e perder 8 kg",
+    "observacoes": "  ",
+}
+
+
+def _url(acompanhamento) -> str:
+    return f"/follow-ups/{acompanhamento['id']}/anamnesis"
+
+
+def test_anamnese_ainda_nao_preenchida(cliente, medico, paciente, acompanhamento):
+    resposta = cliente.get(_url(acompanhamento), headers=medico["headers"])
+    assert resposta.status_code == 200
+    anamnese = resposta.json()
+    assert anamnese["preenchida"] is False
+    assert anamnese["paciente"]["nome"] == "Carlos Lima"
+    assert anamnese["idade"] is None
+    assert anamnese["atualizado_em"] is None
+
+
+def test_medico_preenche_a_anamnese(cliente, medico, acompanhamento):
+    resposta = cliente.put(_url(acompanhamento), json=ANAMNESE, headers=medico["headers"])
+    assert resposta.status_code == 200, resposta.text
+    anamnese = resposta.json()
+    assert anamnese["preenchida"] is True
+    assert anamnese["sexo"] == "masculino"
+    assert anamnese["altura_cm"] == 172
+    assert anamnese["peso_kg"] == 84.5
+    assert anamnese["diagnosticos"] == "Hipertensão estágio 1"
+    # Texto só com espaços é gravado como vazio
+    assert anamnese["observacoes"] is None
+    assert anamnese["atualizado_em"] is not None
+
+    hoje = date.today()
+    esperada = hoje.year - 1978 - ((hoje.month, hoje.day) < (3, 14))
+    assert anamnese["idade"] == esperada
+
+
+def test_salvar_substitui_a_anamnese_inteira(cliente, medico, acompanhamento):
+    cliente.put(_url(acompanhamento), json=ANAMNESE, headers=medico["headers"])
+    resposta = cliente.put(_url(acompanhamento), json={"alergias": "Nenhuma conhecida"}, headers=medico["headers"])
+    anamnese = resposta.json()
+    assert anamnese["alergias"] == "Nenhuma conhecida"
+    assert anamnese["diagnosticos"] is None
+    assert anamnese["data_nascimento"] is None
+    assert anamnese["idade"] is None
+
+
+def test_validacoes_da_anamnese(cliente, medico, acompanhamento):
+    amanha = (date.today() + timedelta(days=1)).isoformat()
+    for dados in (
+        {"data_nascimento": amanha},
+        {"altura_cm": 5},
+        {"peso_kg": 900},
+        {"sexo": "indefinido"},
+    ):
+        resposta = cliente.put(_url(acompanhamento), json=dados, headers=medico["headers"])
+        assert resposta.status_code == 422, dados
+
+    resposta = cliente.put(_url(acompanhamento), json={"data_nascimento": amanha}, headers=medico["headers"])
+    assert "futuro" in str(resposta.json())
+
+
+def test_paciente_le_a_propria_anamnese_mas_nao_edita(cliente, medico, paciente, acompanhamento):
+    cliente.put(_url(acompanhamento), json=ANAMNESE, headers=medico["headers"])
+
+    leitura = cliente.get(_url(acompanhamento), headers=paciente["headers"])
+    assert leitura.status_code == 200
+    assert leitura.json()["objetivos"] == "Reduzir a pressão e perder 8 kg"
+
+    assert cliente.put(_url(acompanhamento), json=ANAMNESE, headers=paciente["headers"]).status_code == 403
+
+
+def test_parceiro_atribuido_le_a_anamnese_mas_nao_edita(cliente, medico, parceiro_atribuido, acompanhamento):
+    cliente.put(_url(acompanhamento), json=ANAMNESE, headers=medico["headers"])
+
+    leitura = cliente.get(_url(acompanhamento), headers=parceiro_atribuido["headers"])
+    assert leitura.status_code == 200
+    assert leitura.json()["restricoes"] == "Evitar exercícios de alto impacto"
+
+    assert cliente.put(_url(acompanhamento), json=ANAMNESE, headers=parceiro_atribuido["headers"]).status_code == 403
+
+
+def test_quem_nao_participa_nao_le_a_anamnese(cliente, medico, parceiro, outro_paciente, acompanhamento):
+    cliente.put(_url(acompanhamento), json=ANAMNESE, headers=medico["headers"])
+    # Parceiro existe, mas não foi atribuído a este acompanhamento
+    for usuario in (parceiro, outro_paciente):
+        assert cliente.get(_url(acompanhamento), headers=usuario["headers"]).status_code == 403
+    assert cliente.get(_url(acompanhamento)).status_code == 401
+
+
+def test_anamnese_continua_editavel_com_o_acompanhamento_encerrado(cliente, medico, acompanhamento):
+    cliente.patch(f"/follow-ups/{acompanhamento['id']}/status", json={"status": "encerrado"}, headers=medico["headers"])
+    resposta = cliente.put(_url(acompanhamento), json=ANAMNESE, headers=medico["headers"])
+    assert resposta.status_code == 200

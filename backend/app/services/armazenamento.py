@@ -43,7 +43,7 @@ def caminho_do_arquivo(arquivo: Arquivo) -> Path:
     return obter_configuracoes().pasta_uploads / arquivo.nome_armazenado
 
 
-def salvar_upload(upload: UploadFile, jornada_id: int, usuario_id: int) -> Arquivo:
+def salvar_upload(upload: UploadFile, acompanhamento_id: int, usuario_id: int) -> Arquivo:
     """Valida e grava o upload em disco com nome gerado (UUID).
 
     Devolve o objeto Arquivo ainda não adicionado à sessão. Se o commit falhar,
@@ -83,7 +83,7 @@ def salvar_upload(upload: UploadFile, jornada_id: int, usuario_id: int) -> Arqui
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "O arquivo enviado está vazio.")
 
     return Arquivo(
-        jornada_id=jornada_id,
+        acompanhamento_id=acompanhamento_id,
         nome_original=nome_original,
         nome_armazenado=nome_armazenado,
         tipo_mime=EXTENSOES_PERMITIDAS[extensao],

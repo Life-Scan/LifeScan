@@ -13,7 +13,7 @@ import {
   formatarPrazoRelativo,
   paraCampoDataHora,
 } from '../../utils/formatacao'
-import estilos from './Jornada.module.css'
+import estilos from './Acompanhamento.module.css'
 
 // Solicitações que o destinatário atende enviando um documento
 const TIPOS_COM_ENVIO = ['exame', 'orientacao_profissional']
@@ -34,7 +34,7 @@ export function nomeDoDestinatario({ nome, tipo_usuario: tipo, profissao }) {
 export default function AbaSolicitacoes({
   solicitacoes,
   parceiros,
-  jornada,
+  acompanhamento,
   usuario,
   ehMedico,
   ehParceiro,
@@ -76,7 +76,7 @@ export default function AbaSolicitacoes({
 
       {formularioAberto && (
         <FormularioSolicitacao
-          jornada={jornada}
+          acompanhamento={acompanhamento}
           parceiros={parceiros}
           aoConcluir={async () => {
             setFormularioAberto(false)
@@ -90,7 +90,7 @@ export default function AbaSolicitacoes({
 
       {ordenadas.length === 0 ? (
         <EstadoVazio icone={ClipboardList}>
-          {ehParceiro ? 'O médico ainda não fez solicitações para você.' : 'Nenhuma solicitação nesta jornada.'}
+          {ehParceiro ? 'O médico ainda não fez solicitações para você.' : 'Nenhuma solicitação neste acompanhamento.'}
         </EstadoVazio>
       ) : (
         <ul className={ui.lista}>
@@ -177,9 +177,9 @@ export default function AbaSolicitacoes({
   )
 }
 
-function FormularioSolicitacao({ jornada, parceiros, aoConcluir, aoCancelar }) {
+function FormularioSolicitacao({ acompanhamento, parceiros, aoConcluir, aoCancelar }) {
   const [tipo, setTipo] = useState('exame')
-  const [destinatarioId, setDestinatarioId] = useState(String(jornada.paciente.id))
+  const [destinatarioId, setDestinatarioId] = useState(String(acompanhamento.paciente.id))
   const [descricao, setDescricao] = useState('')
   const [prazo, setPrazo] = useState(() => paraCampoDataHora(new Date(Date.now() + 7 * 86_400_000)))
   const [erro, setErro] = useState('')
@@ -190,7 +190,7 @@ function FormularioSolicitacao({ jornada, parceiros, aoConcluir, aoCancelar }) {
 
   function aoMudarTipo(novoTipo) {
     setTipo(novoTipo)
-    if (novoTipo === 'consulta_extra') setDestinatarioId(String(jornada.paciente.id))
+    if (novoTipo === 'consulta_extra') setDestinatarioId(String(acompanhamento.paciente.id))
   }
 
   async function aoEnviar(evento) {
@@ -198,7 +198,7 @@ function FormularioSolicitacao({ jornada, parceiros, aoConcluir, aoCancelar }) {
     setErro('')
     setEnviando(true)
     try {
-      await criarSolicitacao(jornada.id, {
+      await criarSolicitacao(acompanhamento.id, {
         tipo,
         descricao,
         prazo: campoDataHoraParaIso(prazo),
@@ -234,7 +234,7 @@ function FormularioSolicitacao({ jornada, parceiros, aoConcluir, aoCancelar }) {
             onChange={(e) => setDestinatarioId(e.target.value)}
             disabled={soPaciente}
           >
-            <option value={jornada.paciente.id}>{jornada.paciente.nome} (paciente)</option>
+            <option value={acompanhamento.paciente.id}>{acompanhamento.paciente.nome} (paciente)</option>
             {parceiros.map(({ parceiro }) => (
               <option key={parceiro.id} value={parceiro.id}>
                 {parceiro.nome} ({parceiro.profissao})
@@ -256,7 +256,7 @@ function FormularioSolicitacao({ jornada, parceiros, aoConcluir, aoCancelar }) {
       </div>
       {parceiros.length === 0 && !soPaciente && (
         <p className={ui.ajuda}>
-          Para pedir algo a um parceiro (ex.: plano alimentar), atribua-o a esta jornada na aba Parceiros.
+          Para pedir algo a um parceiro (ex.: plano alimentar), atribua-o a este acompanhamento na aba Parceiros.
         </p>
       )}
       <div>

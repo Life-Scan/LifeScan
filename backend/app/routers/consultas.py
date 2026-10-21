@@ -2,25 +2,25 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.deps import garantir_jornada_editavel, obter_jornada_com_acesso, obter_jornada_do_medico
+from app.core.deps import garantir_acompanhamento_editavel, obter_acompanhamento_com_acesso, obter_acompanhamento_do_medico
 from app.db.sessao import obter_sessao
 from app.models.consulta import Consulta, Prescricao
-from app.models.jornada import Jornada
+from app.models.acompanhamento import Acompanhamento
 from app.schemas.consulta import ConsultaEntrada, ConsultaSaida
 
-router = APIRouter(prefix="/journeys/{jornada_id}/consultations", tags=["Consultas"])
+router = APIRouter(prefix="/follow-ups/{acompanhamento_id}/consultations", tags=["Consultas"])
 
 
 @router.post("", response_model=ConsultaSaida, status_code=status.HTTP_201_CREATED)
 def registrar_consulta(
     dados: ConsultaEntrada,
-    jornada: Jornada = Depends(obter_jornada_do_medico),
+    acompanhamento: Acompanhamento = Depends(obter_acompanhamento_do_medico),
     sessao: Session = Depends(obter_sessao),
 ) -> Consulta:
     """Registra uma consulta ou retorno, com as prescrições (RF10, RF13)."""
-    garantir_jornada_editavel(jornada)
+    garantir_acompanhamento_editavel(acompanhamento)
     consulta = Consulta(
-        jornada_id=jornada.id,
+        acompanhamento_id=acompanhamento.id,
         tipo=dados.tipo,
         data=dados.data,
         anotacoes=dados.anotacoes,
@@ -33,12 +33,12 @@ def registrar_consulta(
 
 @router.get("", response_model=list[ConsultaSaida])
 def listar_consultas(
-    jornada: Jornada = Depends(obter_jornada_com_acesso),
+    acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso),
     sessao: Session = Depends(obter_sessao),
 ) -> list[Consulta]:
     consulta = (
         select(Consulta)
-        .where(Consulta.jornada_id == jornada.id)
+        .where(Consulta.acompanhamento_id == acompanhamento.id)
         .order_by(Consulta.data.desc(), Consulta.id.desc())
     )
     return list(sessao.scalars(consulta).all())

@@ -53,5 +53,5 @@ class ContaSaida(SchemaSaida):
     primeiro_acesso_pendente: bool
     ultimo_login_em: DataHoraUTC | None
     criado_em: DataHoraUTC
-    # Jornada do paciente, se já foi aberta (sempre nulo para parceiros)
-    jornada_id: int | None = None
+    # Acompanhamento do paciente, se já foi aberto (sempre nulo para parceiros)
+    acompanhamento_id: int | None = None

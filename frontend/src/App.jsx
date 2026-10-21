@@ -5,11 +5,11 @@ import RotaProtegida from './components/RotaProtegida'
 import { useAuth } from './context/AuthContext'
 import DefinirSenha from './pages/DefinirSenha'
 import EsqueciSenha from './pages/EsqueciSenha'
-import Jornada from './pages/jornada/Jornada'
-import Jornadas from './pages/Jornadas'
+import Acompanhamento from './pages/acompanhamento/Acompanhamento'
+import Acompanhamentos from './pages/Acompanhamentos'
 import Login from './pages/Login'
 import NaoEncontrada from './pages/NaoEncontrada'
-import NovaJornada from './pages/NovaJornada'
+import NovoAcompanhamento from './pages/NovoAcompanhamento'
 import Painel from './pages/Painel'
 import Usuarios from './pages/Usuarios'
 
@@ -34,12 +34,12 @@ export default function App() {
           <Route path="/" element={<Navigate to="/painel" replace />} />
           <Route path="/painel" element={<Painel />} />
 
-          <Route path="/jornadas" element={<Jornadas />} />
-          <Route path="/jornadas/:id" element={<Jornada />} />
+          <Route path="/acompanhamentos" element={<Acompanhamentos />} />
+          <Route path="/acompanhamentos/:id" element={<Acompanhamento />} />
 
           <Route element={<RotaProtegida tipos={['medico']} />}>
             <Route path="/usuarios" element={<Usuarios />} />
-            <Route path="/jornadas/nova" element={<NovaJornada />} />
+            <Route path="/acompanhamentos/novo" element={<NovoAcompanhamento />} />
           </Route>
 
           <Route path="*" element={<NaoEncontrada />} />

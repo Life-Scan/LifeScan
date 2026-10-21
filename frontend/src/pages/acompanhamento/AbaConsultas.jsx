@@ -10,11 +10,11 @@ import {
   formatarDataHora,
   paraCampoDataHora,
 } from '../../utils/formatacao'
-import estilos from './Jornada.module.css'
+import estilos from './Acompanhamento.module.css'
 
 const prescricaoVazia = () => ({ descricao: '', dosagem: '', instrucoes: '' })
 
-export default function AbaConsultas({ consultas, jornada, ehMedico, editavel, atualizar }) {
+export default function AbaConsultas({ consultas, acompanhamento, ehMedico, editavel, atualizar }) {
   const [formularioAberto, setFormularioAberto] = useState(false)
 
   return (
@@ -31,7 +31,7 @@ export default function AbaConsultas({ consultas, jornada, ehMedico, editavel, a
 
       {formularioAberto && (
         <FormularioConsulta
-          jornadaId={jornada.id}
+          acompanhamentoId={acompanhamento.id}
           aoConcluir={async () => {
             setFormularioAberto(false)
             await atualizar()
@@ -75,7 +75,7 @@ export default function AbaConsultas({ consultas, jornada, ehMedico, editavel, a
   )
 }
 
-function FormularioConsulta({ jornadaId, aoConcluir, aoCancelar }) {
+function FormularioConsulta({ acompanhamentoId, aoConcluir, aoCancelar }) {
   const [tipo, setTipo] = useState('consulta')
   const [data, setData] = useState(() => paraCampoDataHora(new Date()))
   const [anotacoes, setAnotacoes] = useState('')
@@ -91,7 +91,7 @@ function FormularioConsulta({ jornadaId, aoConcluir, aoCancelar }) {
     setErro('')
     setEnviando(true)
     try {
-      await registrarConsulta(jornadaId, {
+      await registrarConsulta(acompanhamentoId, {
         tipo,
         data: campoDataHoraParaIso(data),
         anotacoes: anotacoes.trim() || null,

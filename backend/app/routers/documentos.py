@@ -3,16 +3,16 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.deps import (
-    carregar_jornada_com_acesso,
+    carregar_acompanhamento_com_acesso,
     exigir_tipo,
-    garantir_jornada_editavel,
-    obter_jornada_com_acesso_de_parceiro,
+    garantir_acompanhamento_editavel,
+    obter_acompanhamento_com_acesso_de_parceiro,
     obter_usuario_atual,
 )
 from app.db.base import agora_utc
 from app.db.sessao import obter_sessao
 from app.models.documento import CategoriaDocumento, Documento, StatusDocumento
-from app.models.jornada import Jornada
+from app.models.acompanhamento import Acompanhamento
 from app.models.solicitacao import TIPOS_ATENDIDOS_POR_ENVIO, Solicitacao, StatusSolicitacao
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.documento import DocumentoSaida, RevisaoEntrada
@@ -20,16 +20,16 @@ from app.services.armazenamento import confirmar_ou_remover, salvar_upload
 
 router = APIRouter(tags=["Documentos"])
 
-SOLICITACAO_NAO_ENCONTRADA = "Solicitação não encontrada nesta jornada."
+SOLICITACAO_NAO_ENCONTRADA = "Solicitação não encontrada neste acompanhamento."
 
 
 def _validar_solicitacao_para_envio(
-    sessao: Session, jornada: Jornada, usuario: Usuario, solicitacao_id: int
+    sessao: Session, acompanhamento: Acompanhamento, usuario: Usuario, solicitacao_id: int
 ) -> Solicitacao:
-    """A solicitação precisa ser desta jornada, estar pendente, aceitar envio de documento
+    """A solicitação precisa ser deste acompanhamento, estar pendente, aceitar envio de documento
     e ser destinada a quem está enviando (o médico pode atender qualquer uma)."""
     solicitacao = sessao.get(Solicitacao, solicitacao_id)
-    if solicitacao is None or solicitacao.jornada_id != jornada.id:
+    if solicitacao is None or solicitacao.acompanhamento_id != acompanhamento.id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, SOLICITACAO_NAO_ENCONTRADA)
 
     if usuario.tipo_usuario != TipoUsuario.medico and solicitacao.destinatario_id != usuario.id:
@@ -49,7 +49,7 @@ def _validar_solicitacao_para_envio(
 
 
 @router.post(
-    "/journeys/{jornada_id}/documents",
+    "/follow-ups/{acompanhamento_id}/documents",
     response_model=DocumentoSaida,
     status_code=status.HTTP_201_CREATED,
 )
@@ -58,7 +58,7 @@ def enviar_documento(
     categoria: CategoriaDocumento = Form(CategoriaDocumento.exame),
     solicitacao_id: int | None = Form(None),
     arquivo: UploadFile = File(...),
-    jornada: Jornada = Depends(obter_jornada_com_acesso_de_parceiro),
+    acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso_de_parceiro),
     usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
 ) -> Documento:
@@ -66,19 +66,19 @@ def enviar_documento(
 
     Se vinculado a uma solicitação de exame ou orientação profissional, ela é marcada como atendida.
     """
-    garantir_jornada_editavel(jornada)
+    garantir_acompanhamento_editavel(acompanhamento)
     solicitacao = (
-        _validar_solicitacao_para_envio(sessao, jornada, usuario, solicitacao_id)
+        _validar_solicitacao_para_envio(sessao, acompanhamento, usuario, solicitacao_id)
         if solicitacao_id is not None
         else None
     )
 
-    registro_arquivo = salvar_upload(arquivo, jornada.id, usuario.id)
+    registro_arquivo = salvar_upload(arquivo, acompanhamento.id, usuario.id)
     sessao.add(registro_arquivo)
     sessao.flush()
 
     documento = Documento(
-        jornada_id=jornada.id,
+        acompanhamento_id=acompanhamento.id,
         solicitacao_id=solicitacao.id if solicitacao else None,
         enviado_por_id=usuario.id,
         categoria=categoria,
@@ -93,15 +93,15 @@ def enviar_documento(
     return documento
 
 
-@router.get("/journeys/{jornada_id}/documents", response_model=list[DocumentoSaida])
+@router.get("/follow-ups/{acompanhamento_id}/documents", response_model=list[DocumentoSaida])
 def listar_documentos(
     categoria: CategoriaDocumento | None = Query(None),
-    jornada: Jornada = Depends(obter_jornada_com_acesso_de_parceiro),
+    acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso_de_parceiro),
     usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
 ) -> list[Documento]:
     """Médico e paciente veem todos os documentos; o parceiro vê apenas os próprios envios."""
-    consulta = select(Documento).where(Documento.jornada_id == jornada.id)
+    consulta = select(Documento).where(Documento.acompanhamento_id == acompanhamento.id)
     if usuario.tipo_usuario == TipoUsuario.parceiro:
         consulta = consulta.where(Documento.enviado_por_id == usuario.id)
     if categoria is not None:
@@ -120,8 +120,8 @@ def revisar_documento(
     documento = sessao.get(Documento, documento_id)
     if documento is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Documento não encontrado.")
-    jornada = carregar_jornada_com_acesso(sessao, medico, documento.jornada_id)
-    garantir_jornada_editavel(jornada)
+    acompanhamento = carregar_acompanhamento_com_acesso(sessao, medico, documento.acompanhamento_id)
+    garantir_acompanhamento_editavel(acompanhamento)
 
     documento.status = StatusDocumento.revisado
     documento.observacao_revisao = (dados.observacao_revisao or "").strip() or None

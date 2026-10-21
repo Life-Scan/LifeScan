@@ -1,4 +1,4 @@
-"""Monta a linha do tempo unificada da jornada."""
+"""Monta a linha do tempo unificada do acompanhamento."""
 
 from collections.abc import Iterable
 
@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models.consulta import Consulta, TipoConsulta
 from app.models.documento import CategoriaDocumento, Documento, StatusDocumento
-from app.models.jornada import Jornada
+from app.models.acompanhamento import Acompanhamento
 from app.models.solicitacao import Solicitacao, StatusSolicitacao, TipoSolicitacao
 from app.schemas.consulta import ConsultaSaida
 from app.schemas.documento import DocumentoSaida
@@ -69,7 +69,7 @@ def _eventos_de_consultas(consultas: Iterable[Consulta]) -> list[EventoLinhaDoTe
 
 
 def _eventos_de_solicitacoes(
-    solicitacoes: Iterable[Solicitacao], jornada: Jornada
+    solicitacoes: Iterable[Solicitacao], acompanhamento: Acompanhamento
 ) -> list[EventoLinhaDoTempo]:
     eventos = []
     for solicitacao in solicitacoes:
@@ -77,7 +77,7 @@ def _eventos_de_solicitacoes(
         # Só menciona o destinatário quando não é o próprio paciente
         para = (
             f" para {solicitacao.destinatario.nome}"
-            if solicitacao.destinatario_id != jornada.paciente_id
+            if solicitacao.destinatario_id != acompanhamento.paciente_id
             else ""
         )
         eventos.append(
@@ -116,7 +116,7 @@ def _eventos_de_documentos(documentos: Iterable[Documento]) -> list[EventoLinhaD
 
 
 def montar_linha_do_tempo(
-    sessao: Session, jornada: Jornada, tipos: set[TipoEvento] | None = None
+    sessao: Session, acompanhamento: Acompanhamento, tipos: set[TipoEvento] | None = None
 ) -> list[EventoLinhaDoTempo]:
     """Reúne consultas, solicitações e documentos em ordem cronológica.
 
@@ -126,13 +126,13 @@ def montar_linha_do_tempo(
     eventos: list[EventoLinhaDoTempo] = []
 
     if TipoEvento.consulta in tipos:
-        consultas = sessao.scalars(select(Consulta).where(Consulta.jornada_id == jornada.id))
+        consultas = sessao.scalars(select(Consulta).where(Consulta.acompanhamento_id == acompanhamento.id))
         eventos += _eventos_de_consultas(consultas)
     if TipoEvento.solicitacao in tipos:
-        solicitacoes = sessao.scalars(select(Solicitacao).where(Solicitacao.jornada_id == jornada.id))
-        eventos += _eventos_de_solicitacoes(solicitacoes, jornada)
+        solicitacoes = sessao.scalars(select(Solicitacao).where(Solicitacao.acompanhamento_id == acompanhamento.id))
+        eventos += _eventos_de_solicitacoes(solicitacoes, acompanhamento)
     if TipoEvento.documento in tipos:
-        documentos = sessao.scalars(select(Documento).where(Documento.jornada_id == jornada.id))
+        documentos = sessao.scalars(select(Documento).where(Documento.acompanhamento_id == acompanhamento.id))
         eventos += _eventos_de_documentos(documentos)
 
     eventos.sort(key=lambda evento: (evento.data, ORDEM_TIPOS[evento.tipo], evento.id))

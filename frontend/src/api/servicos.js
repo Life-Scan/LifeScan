@@ -15,50 +15,50 @@ export const criarConta = (conta) => dados(api.post('/users', conta))
 export const atualizarConta = (id, alteracoes) => dados(api.patch(`/users/${id}`, alteracoes))
 export const reenviarAcesso = (id) => dados(api.post(`/users/${id}/resend-access`))
 
-// Jornadas
-export const listarJornadas = () => dados(api.get('/journeys'))
-export const obterJornada = (id) => dados(api.get(`/journeys/${id}`))
-export const criarJornada = (jornada) => dados(api.post('/journeys', jornada))
-export const alterarPasso = (id, passo) => dados(api.patch(`/journeys/${id}/step`, { passo_atual: passo }))
-export const alterarStatusJornada = (id, status) => dados(api.patch(`/journeys/${id}/status`, { status }))
+// Acompanhamentos
+export const listarAcompanhamentos = () => dados(api.get('/follow-ups'))
+export const obterAcompanhamento = (id) => dados(api.get(`/follow-ups/${id}`))
+export const criarAcompanhamento = (acompanhamento) => dados(api.post('/follow-ups', acompanhamento))
+export const alterarPasso = (id, passo) => dados(api.patch(`/follow-ups/${id}/step`, { passo_atual: passo }))
+export const alterarStatusAcompanhamento = (id, status) => dados(api.patch(`/follow-ups/${id}/status`, { status }))
 
-// Ficha do paciente e parceiros da jornada
-export const obterFicha = (jornadaId) => dados(api.get(`/journeys/${jornadaId}/patient-record`))
-export const salvarFicha = (jornadaId, ficha) => dados(api.put(`/journeys/${jornadaId}/patient-record`, ficha))
-export const listarParceirosDaJornada = (jornadaId) => dados(api.get(`/journeys/${jornadaId}/partners`))
-export const atribuirParceiro = (jornadaId, parceiroId) =>
-  dados(api.post(`/journeys/${jornadaId}/partners`, { parceiro_id: parceiroId }))
-export const removerParceiro = (jornadaId, parceiroId) =>
-  dados(api.delete(`/journeys/${jornadaId}/partners/${parceiroId}`))
+// Anamnese do paciente e parceiros do acompanhamento
+export const obterAnamnese = (acompanhamentoId) => dados(api.get(`/follow-ups/${acompanhamentoId}/anamnesis`))
+export const salvarAnamnese = (acompanhamentoId, anamnese) => dados(api.put(`/follow-ups/${acompanhamentoId}/anamnesis`, anamnese))
+export const listarParceirosDoAcompanhamento = (acompanhamentoId) => dados(api.get(`/follow-ups/${acompanhamentoId}/partners`))
+export const atribuirParceiro = (acompanhamentoId, parceiroId) =>
+  dados(api.post(`/follow-ups/${acompanhamentoId}/partners`, { parceiro_id: parceiroId }))
+export const removerParceiro = (acompanhamentoId, parceiroId) =>
+  dados(api.delete(`/follow-ups/${acompanhamentoId}/partners/${parceiroId}`))
 
 // Consultas
-export const listarConsultas = (jornadaId) => dados(api.get(`/journeys/${jornadaId}/consultations`))
-export const registrarConsulta = (jornadaId, consulta) =>
-  dados(api.post(`/journeys/${jornadaId}/consultations`, consulta))
+export const listarConsultas = (acompanhamentoId) => dados(api.get(`/follow-ups/${acompanhamentoId}/consultations`))
+export const registrarConsulta = (acompanhamentoId, consulta) =>
+  dados(api.post(`/follow-ups/${acompanhamentoId}/consultations`, consulta))
 
 // Solicitações
-export const listarSolicitacoes = (jornadaId) => dados(api.get(`/journeys/${jornadaId}/requests`))
-export const criarSolicitacao = (jornadaId, solicitacao) =>
-  dados(api.post(`/journeys/${jornadaId}/requests`, solicitacao))
+export const listarSolicitacoes = (acompanhamentoId) => dados(api.get(`/follow-ups/${acompanhamentoId}/requests`))
+export const criarSolicitacao = (acompanhamentoId, solicitacao) =>
+  dados(api.post(`/follow-ups/${acompanhamentoId}/requests`, solicitacao))
 export const concluirSolicitacao = (id) => dados(api.patch(`/requests/${id}/complete`))
 export const cancelarSolicitacao = (id) => dados(api.patch(`/requests/${id}/cancel`))
 
 // Documentos (exames, laudos, planos alimentares, planos de treino, orientações...)
-export const listarDocumentos = (jornadaId) => dados(api.get(`/journeys/${jornadaId}/documents`))
-export function enviarDocumento(jornadaId, { titulo, categoria, arquivo, solicitacaoId }) {
+export const listarDocumentos = (acompanhamentoId) => dados(api.get(`/follow-ups/${acompanhamentoId}/documents`))
+export function enviarDocumento(acompanhamentoId, { titulo, categoria, arquivo, solicitacaoId }) {
   const formulario = new FormData()
   formulario.append('titulo', titulo)
   formulario.append('categoria', categoria)
   formulario.append('arquivo', arquivo)
   if (solicitacaoId) formulario.append('solicitacao_id', solicitacaoId)
-  return dados(api.post(`/journeys/${jornadaId}/documents`, formulario))
+  return dados(api.post(`/follow-ups/${acompanhamentoId}/documents`, formulario))
 }
 export const revisarDocumento = (id, observacao) =>
   dados(api.patch(`/documents/${id}/review`, { observacao_revisao: observacao }))
 
 // Linha do tempo e painel
-export const obterLinhaDoTempo = (jornadaId, tipos) =>
-  dados(api.get(`/journeys/${jornadaId}/timeline`, { params: tipos?.length ? { tipos: tipos.join(',') } : {} }))
+export const obterLinhaDoTempo = (acompanhamentoId, tipos) =>
+  dados(api.get(`/follow-ups/${acompanhamentoId}/timeline`, { params: tipos?.length ? { tipos: tipos.join(',') } : {} }))
 export const obterPendencias = () => dados(api.get('/dashboard/pending'))
 
 // Arquivos: o download exige o token, então buscamos o conteúdo como blob

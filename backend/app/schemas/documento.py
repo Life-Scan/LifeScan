@@ -12,7 +12,7 @@ class RevisaoEntrada(BaseModel):
 
 class DocumentoSaida(SchemaSaida):
     id: int
-    jornada_id: int
+    acompanhamento_id: int
     solicitacao_id: int | None
     categoria: CategoriaDocumento
     titulo: str
