@@ -10,7 +10,7 @@ export const obterPagina = (caminho, parametros = {}) =>
 // Autenticação
 export const entrar = (email, senha) => dados(api.post('/auth/login', { email, senha }))
 export const obterUsuarioAtual = () => dados(api.get('/auth/me'))
-export const definirSenha = (novaSenha) => dados(api.post('/auth/set-password', { nova_senha: novaSenha }))
+export const definirSenha = (novaSenha, aceiteLgpd) => dados(api.post('/auth/set-password', { nova_senha: novaSenha, aceite_lgpd: aceiteLgpd }))
 export const esqueciSenha = (email) => dados(api.post('/auth/forgot-password', { email }))
 
 // Contas de pacientes e parceiros (médico)

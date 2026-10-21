@@ -118,7 +118,9 @@ def test_primeiro_acesso_exige_troca_de_senha(cliente, medico):
         assert bloqueio.json()["detail"] == "Defina uma nova senha para continuar usando o sistema."
 
     troca = cliente.post(
-        "/auth/set-password", json={"nova_senha": "minha-senha-nova"}, headers=acesso["headers"]
+        "/auth/set-password",
+        json={"nova_senha": "minha-senha-nova", "aceite_lgpd": True},
+        headers=acesso["headers"],
     )
     assert troca.status_code == 200
     assert troca.json()["deve_trocar_senha"] is False
@@ -173,7 +175,41 @@ def test_validacoes_ao_definir_a_senha(cliente, medico):
     assert igual.json()["detail"] == "Escolha uma senha diferente da senha provisória."
 
     assert cliente.post(url, json={"nova_senha": "senha-valida"}).status_code == 401
-    assert cliente.post(url, json={"nova_senha": "senha-valida"}, headers=headers).status_code == 200
+    # LGPD: o paciente precisa do aceite do termo para assumir a conta
+    negado = cliente.post(
+        url, json={"nova_senha": "senha-valida", "aceite_lgpd": False}, headers=headers
+    )
+    assert negado.status_code == 422
+    assert "termo" in negado.json()["detail"]
+    assert cliente.post(url, json={"nova_senha": "senha-valida", "aceite_lgpd": True}, headers=headers).status_code == 200
+
+
+def test_paciente_sem_aceite_do_termo_nao_habilita_a_conta_e_parceiro_nao_precisa_de_aceite(cliente, medico):
+    criar_conta(cliente, medico, "paciente", "Carlos Lima", "carlos@email.com")
+    provisoria = senha_provisoria_enviada("carlos@email.com")
+    paciente_headers = entrar(cliente, "carlos@email.com", provisoria)["headers"]
+
+    recusado = cliente.post(
+        "/auth/set-password", json={"nova_senha": "senha-do-paciente"}, headers=paciente_headers
+    )
+    assert recusado.status_code == 422
+    # Sem o aceite, o paciente não conseguiu sair da troca de senha
+    assert cliente.get("/follow-ups", headers=paciente_headers).status_code == 403
+
+    aceite = cliente.post(
+        "/auth/set-password",
+        json={"nova_senha": "senha-do-paciente", "aceite_lgpd": True},
+        headers=paciente_headers,
+    )
+    assert aceite.status_code == 200
+    assert cliente.get("/follow-ups", headers=paciente_headers).status_code == 200
+
+    # Parceiro não precisa de aceite: só o titular dos dados de saúde precisa consentir
+    criar_conta(cliente, medico, "parceiro", "Nutri Beto", "beto@email.com", "Nutricionista")
+    provisoria_parceiro = senha_provisoria_enviada("beto@email.com")
+    cabecalhos = entrar(cliente, "beto@email.com", provisoria_parceiro)["headers"]
+    feito = cliente.post("/auth/set-password", json={"nova_senha": "outra-senha"}, headers=cabecalhos)
+    assert feito.status_code == 200
 
 
 # --- Esqueci minha senha
@@ -194,7 +230,11 @@ def test_esqueci_minha_senha_envia_provisoria_e_mantem_a_senha_atual(cliente, pa
     provisoria = senha_provisoria_enviada("carlos@email.com")
     acesso = entrar(cliente, "carlos@email.com", provisoria)
     assert acesso["usuario"]["deve_trocar_senha"] is True
-    cliente.post("/auth/set-password", json={"nova_senha": "senha-recuperada"}, headers=acesso["headers"])
+    cliente.post(
+        "/auth/set-password",
+        json={"nova_senha": "senha-recuperada", "aceite_lgpd": True},
+        headers=acesso["headers"],
+    )
     entrar(cliente, "carlos@email.com", "senha-recuperada")
     assert cliente.post("/auth/login", json={"email": "carlos@email.com", "senha": SENHA}).status_code == 401
 

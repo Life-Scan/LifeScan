@@ -16,8 +16,13 @@ export default function DefinirSenha() {
 
   const [novaSenha, setNovaSenha] = useState('')
   const [confirmacao, setConfirmacao] = useState('')
+  const [aceiteLgpd, setAceiteLgpd] = useState(false)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+
+  // LGPD: o consentimento de tratamento de dados só é pedido a quem é titular
+  // dos dados de saúde (o paciente); médicos e parceiros só definem a senha
+  const ehPaciente = usuario.tipo_usuario === 'paciente'
 
   if (!usuario.deve_trocar_senha) return <Navigate to="/painel" replace />
 
@@ -28,9 +33,13 @@ export default function DefinirSenha() {
       setErro('As senhas não conferem.')
       return
     }
+    if (ehPaciente && !aceiteLgpd) {
+      setErro('Para continuar, é preciso aceitar o termo de tratamento de dados.')
+      return
+    }
     setEnviando(true)
     try {
-      await definirSenha(novaSenha)
+      await definirSenha(novaSenha, ehPaciente)
       navegar('/painel', { replace: true })
     } catch (erroDefinicao) {
       setErro(mensagemDeErro(erroDefinicao))
@@ -82,6 +91,23 @@ export default function DefinirSenha() {
                 required
               />
             </div>
+            {ehPaciente && (
+              <div>
+                <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontWeight: 'normal' }}>
+                  <input
+                    type="checkbox"
+                    checked={aceiteLgpd}
+                    onChange={(e) => setAceiteLgpd(e.target.checked)}
+                    style={{ marginTop: 3 }}
+                  />
+                  <span>
+                    Autorizo o tratamento dos meus dados de saúde (anamnese, consultas e documentos)
+                    para a finalidade de acompanhamento clínico, conforme a LGPD. Posso revogar este
+                    consentimento a qualquer momento.
+                  </span>
+                </label>
+              </div>
+            )}
             <p className={ui.ajuda}>
               Pelo menos 6 caracteres. A senha provisória que você recebeu por email deixa de valer.
             </p>

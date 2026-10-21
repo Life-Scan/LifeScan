@@ -27,8 +27,8 @@ export function AuthProvider({ children }) {
   }, [])
 
   /** Define a senha de quem entrou com a provisória e libera o uso do sistema. */
-  const definirSenha = useCallback(async (novaSenha) => {
-    const atualizado = await servicos.definirSenha(novaSenha)
+  const definirSenha = useCallback(async (novaSenha, aceiteLgpd) => {
+    const atualizado = await servicos.definirSenha(novaSenha, aceiteLgpd)
     setUsuario(atualizado)
     return atualizado
   }, [])

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -6,7 +6,8 @@ from app.core.deps import obter_usuario_autenticado
 from app.core.seguranca import criar_token_acesso, gerar_hash_senha, verificar_senha
 from app.db.base import agora_utc
 from app.db.sessao import obter_sessao
-from app.models.usuario import Usuario
+from app.models.consentimento import Consentimento
+from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.auth import (
     DefinicaoSenhaEntrada,
     EsqueciSenhaEntrada,
@@ -74,6 +75,7 @@ def obter_eu(usuario: Usuario = Depends(obter_usuario_autenticado)) -> Usuario:
 @router.post("/set-password", response_model=UsuarioSaida)
 def definir_senha(
     dados: DefinicaoSenhaEntrada,
+    request: Request,
     usuario: Usuario = Depends(obter_usuario_autenticado),
     sessao: Session = Depends(obter_sessao),
 ) -> Usuario:
@@ -93,10 +95,20 @@ def definir_senha(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             "Escolha uma senha diferente da senha provisória.",
         )
+    # LGPD (art. 11): o paciente é o titular dos dados de saúde; o consentimento
+    # específico dele é registrado no momento em que ele assume a própria conta
+    if usuario.tipo_usuario is TipoUsuario.paciente and not dados.aceite_lgpd:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "É preciso aceitar o termo de tratamento de dados para continuar.",
+        )
 
     usuario.senha_hash = gerar_hash_senha(dados.nova_senha)
     limpar_senha_provisoria(usuario)
     usuario.deve_trocar_senha = False
+    if usuario.tipo_usuario is TipoUsuario.paciente:
+        ip = request.client.host if request.client else None
+        sessao.add(Consentimento(usuario_id=usuario.id, ip_aceite=ip))
     sessao.commit()
     return usuario
 

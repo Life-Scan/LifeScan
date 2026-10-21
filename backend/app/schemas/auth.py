@@ -31,6 +31,8 @@ class LoginEntrada(BaseModel):
 
 class DefinicaoSenhaEntrada(BaseModel):
     nova_senha: SenhaNova
+    # Aceite do termo de tratamento de dados (LGPD): exigido do paciente na rota
+    aceite_lgpd: bool = False
 
 
 class EsqueciSenhaEntrada(BaseModel):
