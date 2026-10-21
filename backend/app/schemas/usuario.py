@@ -36,6 +36,7 @@ class ContaEntrada(BaseModel):
 
 class ContaAtualizacao(BaseModel):
     nome: Nome | None = None
+    email: Email | None = None
     profissao: Profissao | None = None
     ativo: bool | None = None
 

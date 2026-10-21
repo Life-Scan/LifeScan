@@ -99,6 +99,26 @@ def test_medico_atualiza_nome_e_profissao(cliente, medico, parceiro):
     assert resposta.json()["profissao"] == "Nutricionista esportiva"
 
 
+def test_medico_atualiza_email(cliente, medico, paciente):
+    resposta = cliente.patch(
+        f"/users/{paciente['usuario']['id']}",
+        json={"email": "carlos.novo@email.com"},
+        headers=medico["headers"],
+    )
+    assert resposta.status_code == 200
+    assert resposta.json()["email"] == "carlos.novo@email.com"
+
+
+def test_medico_atualiza_email_duplicado(cliente, medico, paciente, parceiro):
+    resposta = cliente.patch(
+        f"/users/{paciente['usuario']['id']}",
+        json={"email": parceiro["usuario"]["email"]},
+        headers=medico["headers"],
+    )
+    assert resposta.status_code == 409
+    assert "Já existe uma conta com este email" in resposta.json()["detail"]
+
+
 def test_conta_desativada_perde_o_acesso_e_pode_ser_reativada(cliente, medico, paciente):
     url = f"/users/{paciente['usuario']['id']}"
     assert cliente.patch(url, json={"ativo": False}, headers=medico["headers"]).json()["ativo"] is False

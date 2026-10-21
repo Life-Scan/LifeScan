@@ -1,5 +1,5 @@
-import { MailCheck, Route, UserCheck, UserPlus, UserX, Users } from 'lucide-react'
-import { useState } from 'react'
+import { Check, MailCheck, Pencil, Route, UserCheck, UserPlus, UserX, Users, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
@@ -185,6 +185,9 @@ function ItemConta({ conta, aoAlterar }) {
   const [erro, setErro] = useState('')
   const [aviso, setAviso] = useState('')
   const [ocupado, setOcupado] = useState(false)
+  const [editandoEmail, setEditandoEmail] = useState(false)
+  const [novoEmail, setNovoEmail] = useState(conta.email)
+  const [reenviarAposSalvar, setReenviarAposSalvar] = useState(true)
   const ehPaciente = conta.tipo_usuario === 'paciente'
 
   async function executar(acao) {
@@ -220,6 +223,10 @@ function ItemConta({ conta, aoAlterar }) {
     if (confirmado) executar(() => atualizarConta(conta.id, { ativo: !conta.ativo }))
   }
 
+  useEffect(() => {
+    setNovoEmail(conta.email)
+  }, [conta.email])
+
   async function reenviar() {
     const confirmado = await confirmar({
       titulo: 'Reenviar os dados de acesso?',
@@ -227,6 +234,41 @@ function ItemConta({ conta, aoAlterar }) {
       rotuloConfirmar: 'Reenviar acesso',
     })
     if (confirmado) executar(() => reenviarAcesso(conta.id))
+  }
+
+  async function salvarEmail(evento) {
+    evento.preventDefault()
+    const emailLimpo = novoEmail.trim().toLowerCase()
+    if (!emailLimpo) return
+    if (emailLimpo === conta.email.toLowerCase()) {
+      setEditandoEmail(false)
+      return
+    }
+
+    setErro('')
+    setAviso('')
+    setOcupado(true)
+    try {
+      await atualizarConta(conta.id, { email: emailLimpo })
+      let mensagemSucesso = `Email de ${conta.nome} alterado com sucesso para ${emailLimpo}.`
+      if (reenviarAposSalvar && conta.ativo) {
+        try {
+          const resultadoReenvio = await reenviarAcesso(conta.id)
+          if (resultadoReenvio?.mensagem) {
+            mensagemSucesso = `${mensagemSucesso} Novos dados de acesso enviados!`
+          }
+        } catch (erroEnvio) {
+          mensagemSucesso = `${mensagemSucesso} (Aviso: email alterado com sucesso, mas o envio de email falhou: ${mensagemDeErro(erroEnvio)})`
+        }
+      }
+      setAviso(mensagemSucesso)
+      setEditandoEmail(false)
+      await aoAlterar()
+    } catch (erroSalvar) {
+      setErro(mensagemDeErro(erroSalvar))
+    } finally {
+      setOcupado(false)
+    }
   }
 
   return (
@@ -260,6 +302,23 @@ function ItemConta({ conta, aoAlterar }) {
             </Link>
           )}
           {conta.ativo && (
+            <button
+              type="button"
+              className={`${ui.botaoSecundario} ${ui.botaoPequeno}`}
+              onClick={() => {
+                setNovoEmail(conta.email)
+                setEditandoEmail((atual) => !atual)
+                setErro('')
+                setAviso('')
+              }}
+              disabled={ocupado}
+              title="Editar email"
+            >
+              <Pencil size={14} aria-hidden="true" />
+              Editar email
+            </button>
+          )}
+          {conta.ativo && (
             <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={reenviar} disabled={ocupado}>
               <MailCheck size={14} aria-hidden="true" />
               Reenviar acesso
@@ -276,6 +335,58 @@ function ItemConta({ conta, aoAlterar }) {
           </button>
         </div>
       </div>
+
+      {editandoEmail && (
+        <form onSubmit={salvarEmail} className={estilos.edicaoEmail}>
+          <div className={estilos.edicaoEmailLinha}>
+            <div className={estilos.edicaoEmailCampo}>
+              <label htmlFor={`email-${conta.id}`}>Novo endereço de email de {conta.nome}:</label>
+              <input
+                id={`email-${conta.id}`}
+                type="email"
+                value={novoEmail}
+                onChange={(e) => setNovoEmail(e.target.value)}
+                required
+                autoFocus
+                disabled={ocupado}
+                placeholder="novo.email@exemplo.com"
+              />
+            </div>
+            {conta.ativo && (
+              <div className={estilos.edicaoEmailOpcoes}>
+                <label className={estilos.opcaoCheck}>
+                  <input
+                    type="checkbox"
+                    checked={reenviarAposSalvar}
+                    onChange={(e) => setReenviarAposSalvar(e.target.checked)}
+                    disabled={ocupado}
+                  />
+                  Enviar dados de acesso para o novo email após salvar
+                </label>
+              </div>
+            )}
+            <div className={estilos.edicaoEmailBotoes}>
+              <button type="submit" className={`${ui.botao} ${ui.botaoPequeno}`} disabled={ocupado}>
+                <Check size={14} aria-hidden="true" />
+                Salvar email
+              </button>
+              <button
+                type="button"
+                className={`${ui.botaoSecundario} ${ui.botaoPequeno}`}
+                onClick={() => {
+                  setEditandoEmail(false)
+                  setNovoEmail(conta.email)
+                }}
+                disabled={ocupado}
+              >
+                <X size={14} aria-hidden="true" />
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
       <Alerta tipo="erro">{erro}</Alerta>
       <Alerta tipo="sucesso">{aviso}</Alerta>
     </li>

@@ -11,6 +11,7 @@ from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.auth import MensagemSaida
 from app.schemas.usuario import ContaAtualizacao, ContaEntrada, ContaSaida
 from app.services.contas import enviar_acesso_da_conta
+from app.services.email import ErroEnvioEmail
 
 router = APIRouter(
     prefix="/users",
@@ -56,7 +57,11 @@ def criar_conta(dados: ContaEntrada, sessao: Session = Depends(obter_sessao)) ->
         email=dados.email,
         profissao=dados.profissao,
     )
-    enviar_acesso_da_conta(usuario)
+    try:
+        enviar_acesso_da_conta(usuario)
+    except ErroEnvioEmail as err:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Falha ao enviar email por SMTP: {err}") from err
+
     sessao.add(usuario)
     sessao.commit()
     return _montar_saidas(sessao, [usuario])[0]
@@ -80,8 +85,15 @@ def atualizar_conta(
     dados: ContaAtualizacao,
     sessao: Session = Depends(obter_sessao),
 ) -> ContaSaida:
-    """Altera nome, profissão (parceiro) ou ativa/desativa a conta."""
+    """Altera nome, email, profissão (parceiro) ou ativa/desativa a conta."""
     usuario = _obter_conta(sessao, usuario_id)
+    if dados.email is not None and dados.email != usuario.email:
+        existente = sessao.scalar(
+            select(Usuario.id).where(Usuario.email == dados.email, Usuario.id != usuario.id)
+        )
+        if existente:
+            raise HTTPException(status.HTTP_409_CONFLICT, "Já existe uma conta com este email.")
+        usuario.email = dados.email
     if dados.nome is not None:
         usuario.nome = dados.nome
     if dados.profissao is not None and usuario.tipo_usuario == TipoUsuario.parceiro:
@@ -98,6 +110,10 @@ def reenviar_acesso(usuario_id: int, sessao: Session = Depends(obter_sessao)) ->
     usuario = _obter_conta(sessao, usuario_id)
     if not usuario.ativo:
         raise HTTPException(status.HTTP_409_CONFLICT, "Reative a conta antes de reenviar o acesso.")
-    enviar_acesso_da_conta(usuario)
+    try:
+        enviar_acesso_da_conta(usuario)
+    except ErroEnvioEmail as err:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Falha ao enviar email por SMTP: {err}") from err
+
     sessao.commit()
     return MensagemSaida(mensagem=f"Dados de acesso enviados para {usuario.email}.")
