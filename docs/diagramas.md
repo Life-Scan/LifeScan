@@ -11,6 +11,7 @@ as três ficam em uma única tabela (`usuarios`), diferenciadas por `tipo_usuari
 
 - `senha_hash` fica vazio até o primeiro acesso; até lá vale a senha provisória enviada por email.
 - `definirSenha` só existe logo depois de entrar com a senha provisória.
+- `excluirPaciente` só vale para paciente desativado e sem histórico; com histórico, a conta fica desativada.
 
 ![Diagrama de classes](diagramas/classes.png)
 
@@ -39,13 +40,16 @@ classDiagram
 
     class Medico {
         +criarConta(tipo, nome, email, profissao)
+        +editarConta(usuario, nome, email, profissao)
         +reenviarAcesso(usuario)
         +ativarOuDesativar(usuario)
+        +excluirPaciente(paciente)
         +abrirAcompanhamento(paciente)
         +alterarPasso(acompanhamento, passo)
         +encerrarOuReabrir(acompanhamento)
         +manterAnamnese(paciente)
         +atribuirParceiro(acompanhamento, parceiro)
+        +removerParceiro(acompanhamento, parceiro)
         +registrarConsulta(acompanhamento, dados)
         +criarSolicitacao(acompanhamento, destinatario)
         +concluirOuCancelar(solicitacao)
@@ -54,6 +58,7 @@ classDiagram
     class Paciente {
         +verAcompanhamento()
         +verAnamnese()
+        +verLinhaDoTempo()
         +verPendencias()
         +enviarDocumento(acompanhamento, arquivo)
     }
@@ -87,6 +92,8 @@ classDiagram
         +StatusAcompanhamento status
         +datetime criado_em
         +datetime atualizado_em
+        +encerrado() bool
+        +resumoPendencias(usuario)
     }
     class AtribuicaoParceiro {
         +int id
@@ -133,38 +140,6 @@ classDiagram
         +datetime criado_em
     }
 
-    class TipoUsuario {
-        medico
-        paciente
-        parceiro
-    }
-    <<enumeration>> TipoUsuario
-
-    class PassoAcompanhamento {
-        consulta
-        exame
-        retorno
-    }
-    <<enumeration>> PassoAcompanhamento
-
-    class TipoSolicitacao {
-        exame
-        consulta_extra
-        orientacao_profissional
-        outro
-    }
-    <<enumeration>> TipoSolicitacao
-
-    class CategoriaDocumento {
-        exame
-        laudo
-        plano_alimentar
-        plano_treino
-        orientacao
-        outro
-    }
-    <<enumeration>> CategoriaDocumento
-
     Usuario <|-- Medico
     Usuario <|-- Paciente
     Usuario <|-- Parceiro
@@ -183,7 +158,23 @@ classDiagram
     Documento "0..*" --> "0..1" Solicitacao : atende
     Documento "1" --> "1" Arquivo
     Documento "0..*" --> "1" Usuario : enviado por
+    Acompanhamento "1" *-- "0..*" Arquivo
+    Arquivo "0..*" --> "1" Usuario : enviado por
 ```
+
+Enumerações usadas nos atributos:
+
+| Enumeração | Valores |
+|---|---|
+| `TipoUsuario` | `medico`, `paciente`, `parceiro` |
+| `PassoAcompanhamento` | `consulta`, `exame`, `retorno` |
+| `StatusAcompanhamento` | `ativo`, `encerrado` |
+| `Sexo` | `masculino`, `feminino`, `outro` |
+| `TipoConsulta` | `consulta`, `retorno` |
+| `StatusSolicitacao` | `pendente`, `atendida`, `cancelada` |
+| `StatusDocumento` | `enviado`, `revisado` |
+| `TipoSolicitacao` | `exame`, `consulta_extra`, `orientacao_profissional`, `outro` |
+| `CategoriaDocumento` | `exame`, `laudo`, `plano_alimentar`, `plano_treino`, `orientacao`, `outro` |
 
 ## Diagrama ER
 

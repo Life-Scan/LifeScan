@@ -23,29 +23,36 @@ com prazo, documentos e uma linha do tempo.
 
 | Código | Descrição | Situação |
 |---|---|---|
-| RF01 | O médico é criado por script de instalação; não existe cadastro público. | Implementado |
-| RF02 | Login de usuários ativos com email e senha. | Implementado |
+| RF01 | O médico é criado por um script de instalação; não existe cadastro público. | Implementado |
+| RF02 | Usuários com conta ativa entram com email e senha. | Implementado |
 | RF03 | O médico cria a conta de um paciente informando nome e email. | Implementado |
 | RF04 | O médico cria a conta de um parceiro informando nome, email e profissão. | Implementado |
-| RF05 | Os dados de acesso são enviados por email, com senha provisória que expira. | Implementado (email em modo console) |
+| RF05 | Os dados de acesso são enviados por email, com uma senha provisória que expira. | Implementado |
 | RF06 | No primeiro acesso, a pessoa define a própria senha antes de usar o sistema. | Implementado |
 | RF07 | O médico reenvia o acesso (nova senha provisória) e vê quem ainda não entrou. | Implementado |
-| RF08 | O médico ativa e desativa contas; conta desativada não entra no sistema. | Implementado |
-| RF09 | "Esqueci minha senha": nova senha provisória por email, sem invalidar a atual. | Implementado |
-| RF10 | Não há troca de senha dentro do sistema; quem quiser trocar usa "esqueci minha senha". | Implementado |
-| RF11 | Somente o médico abre o acompanhamento de um paciente; cada paciente tem um único acompanhamento. | Implementado |
-| RF12 | O médico altera o passo atual (`consulta`/`exame`/`retorno`) e encerra ou reabre o acompanhamento. | Implementado |
-| RF13 | O médico registra consultas e retornos com prescrições. | Implementado |
-| RF14 | O médico cria solicitações com prazo, destinadas ao paciente ou a um parceiro atribuído. | Implementado |
-| RF15 | O paciente vê as consultas extras marcadas pelo médico, como lembrete. | Implementado |
-| RF16 | Médico, paciente e parceiro atribuído enviam documentos com categoria (exame, laudo, plano alimentar, plano de treino, orientação, outro). | Implementado |
-| RF17 | Documento vinculado a uma solicitação pendente marca a solicitação como atendida; cada um só atende as próprias solicitações (o médico, qualquer uma). | Implementado |
-| RF18 | O médico revisa documentos (status + observação). | Implementado |
-| RF19 | Linha do tempo unificada do acompanhamento, em ordem cronológica e com filtro por tipo. | Implementado |
-| RF20 | Painel de pendências por tipo de usuário. | Implementado |
-| RF21 | O médico mantém a anamnese do paciente (dados clínicos resumidos). | Implementado |
-| RF22 | O médico atribui parceiros ao acompanhamento de um paciente. | Implementado |
-| RF23 | O parceiro vê a anamnese dos pacientes atribuídos, as solicitações destinadas a ele e os próprios envios. | Implementado |
+| RF08 | O médico altera o nome e o email das contas, e a profissão dos parceiros; o email continua único. | Implementado |
+| RF09 | O médico ativa e desativa contas; uma conta desativada não entra no sistema. | Implementado |
+| RF10 | O médico exclui definitivamente um paciente desativado que não tenha acompanhamento nem histórico, liberando o email. | Implementado |
+| RF11 | "Esqueci minha senha" envia uma nova senha provisória por email, sem invalidar a senha atual. | Implementado |
+| RF12 | Não há troca de senha dentro do sistema; quem quiser trocar usa "esqueci minha senha". | Implementado |
+| RF13 | Só o médico abre o acompanhamento de um paciente, e cada paciente tem um único acompanhamento. | Implementado |
+| RF14 | O médico altera o passo atual (`consulta` → `exame` → `retorno`). | Implementado |
+| RF15 | O médico encerra e reabre o acompanhamento; encerrado, ele fica somente para leitura. | Implementado |
+| RF16 | O médico mantém a anamnese do paciente (nascimento, sexo, altura, peso, diagnósticos, alergias, medicamentos, restrições, objetivos, observações); ela continua editável com o acompanhamento encerrado. | Implementado |
+| RF17 | O médico atribui parceiros ao acompanhamento e os remove. | Implementado |
+| RF18 | O médico registra consultas e retornos, com prescrições. | Implementado |
+| RF19 | O médico cria solicitações com prazo (exame, consulta extra, orientação profissional, outro), destinadas ao paciente ou a um parceiro atribuído. | Implementado |
+| RF20 | O médico marca uma solicitação como atendida ou a cancela. | Implementado |
+| RF21 | O paciente vê as consultas extras marcadas pelo médico como lembrete. | Implementado |
+| RF22 | O médico, o paciente e o parceiro atribuído enviam documentos com categoria (exame, laudo, plano alimentar, plano de treino, orientação, outro). | Implementado |
+| RF23 | Quem tem acesso visualiza os documentos no navegador e baixa os arquivos. | Implementado |
+| RF24 | Um documento vinculado a uma solicitação pendente marca a solicitação como atendida; cada pessoa só atende as solicitações destinadas a ela (o médico, qualquer uma). | Implementado |
+| RF25 | O médico revisa documentos (status + observação) e pode revisar de novo. | Implementado |
+| RF26 | O acompanhamento tem uma linha do tempo unificada, em ordem cronológica, com filtro por tipo e opção de inverter a ordem. | Implementado |
+| RF27 | Cada tipo de usuário tem um painel de pendências; o do médico mostra as solicitações vencidas e as que vencem nos próximos dias. | Implementado |
+| RF28 | A página do acompanhamento mostra nas abas a quantidade de pendências, contando para paciente e parceiro só o que cabe a eles. | Implementado |
+| RF29 | O parceiro vê a anamnese dos pacientes atribuídos, as solicitações destinadas a ele e os próprios envios. | Implementado |
+| RF30 | O paciente vê o próprio acompanhamento: anamnese, consultas, solicitações (inclusive as destinadas a parceiros), documentos e linha do tempo. | Implementado |
 
 Removidos em relação à primeira versão: cadastro público, vínculo médico-paciente por busca de
 email e o chat entre médico e paciente.
@@ -54,18 +61,22 @@ email e o chat entre médico e paciente.
 
 | Código | Descrição |
 |---|---|
-| RNF01 | Uploads só de `pdf, png, jpg, jpeg, webp, dcm, txt`, até 30 MB, validados no backend e no frontend. |
-| RNF02 | Persistência em MySQL, com migrações Alembic. |
+| RNF01 | Uploads só de `pdf, png, jpg, jpeg, webp, dcm, txt`, até 30 MB (configurável), validados no backend e no frontend. |
+| RNF02 | Persistência em MySQL 8, com migrações Alembic que preservam os dados. |
 | RNF03 | Controle de acesso por `tipo_usuario` (`medico` / `paciente` / `parceiro`). |
-| RNF04 | Atualização das páginas por polling a cada 30 s, pausado com a aba oculta. |
-| RNF05 | Backend em FastAPI; frontend em React + Vite. |
-| RNF06 | CORS com origens vindas do `.env`. |
-| RNF07 | Senhas com bcrypt; JWT HS256 com validade de 480 min. |
-| RNF08 | Acesso ao acompanhamento: o médico e o paciente dono, com conta ativa; o parceiro atribuído, apenas à anamnese, às solicitações destinadas a ele e aos próprios envios. |
-| RNF09 | Senha provisória gerada pelo sistema; no banco fica só o hash; expira em 7 dias (conta nova) ou 60 min (redefinição), configurável. |
-| RNF10 | Envio de email configurável; em desenvolvimento, modo "console" (mostra o email no terminal da API). |
-| RNF11 | "Esqueci minha senha" responde igual para email existente ou não. |
-| RNF12 | Interface e mensagens de erro em português; código com nomes em português. |
+| RNF04 | O acompanhamento só é acessado pelo médico e pelo paciente dono, com conta ativa; o parceiro atribuído acessa apenas a anamnese, as solicitações destinadas a ele e os próprios envios. |
+| RNF05 | O download de arquivos é autenticado e verifica o acesso ao acompanhamento. |
+| RNF06 | As páginas se atualizam por polling a cada 30 s, só no conteúdo aberto e com pausa quando a aba do navegador está oculta. |
+| RNF07 | As listas principais são paginadas no servidor: 20 registros por página (até 100), com filtros e contagem aplicados no banco. |
+| RNF08 | A página do acompanhamento carrega o cabeçalho e cada aba de forma independente; as requisições têm tempo limite de 20 s. |
+| RNF09 | Backend em FastAPI e frontend em React + Vite. |
+| RNF10 | CORS com as origens definidas no `.env`. |
+| RNF11 | Senhas com bcrypt; JWT HS256 com validade de 480 min (configurável). |
+| RNF12 | A senha provisória é gerada pelo sistema e só o hash fica no banco; ela expira em 7 dias (conta nova) ou 60 min (redefinição), configurável. |
+| RNF13 | Envio de email configurável no `.env`: modo "console" (mostra o email no terminal da API) ou "smtp" (STARTTLS ou SSL, com autenticação). |
+| RNF14 | "Esqueci minha senha" responde igual para email existente ou não. |
+| RNF15 | Datas gravadas em UTC com microssegundos; a API devolve as datas com fuso explícito. |
+| RNF16 | Interface, mensagens de erro, código, tabelas e JSON em português; caminhos HTTP e variáveis do `.env` em inglês. |
 
 ## Decisões tomadas
 
@@ -89,7 +100,11 @@ email e o chat entre médico e paciente.
 - Uma nova senha provisória substitui a anterior.
 - Conta desativada: o login é recusado e os tokens já emitidos deixam de valer.
 - O médico não é administrado pelas rotas `/users`; a senha dele é redefinida por `scripts.criar_medico`.
-- Envio real de email (Gmail/Outlook por SMTP) fica para depois; o ponto de troca é `app/services/email.py`.
+- O médico pode alterar o email de uma conta; se o email já pertence a outra conta, a alteração é recusada (409).
+- **Excluir conta** existe só para paciente desativado sem acompanhamento, anamnese, envios ou solicitações
+  vinculados; com histórico, o caminho é manter a conta desativada (ou reativá-la). A exclusão libera o email.
+- Envio de email em `app/services/email.py`: modo `console` em desenvolvimento e modo `smtp` para envio real
+  (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_TLS`, `SMTP_SSL`); `scripts/testar_smtp.py` testa a configuração.
 
 ### Acompanhamentos
 - **Um único médico** no sistema; sem tabela de vínculos. Preparar o sistema para vários médicos
@@ -148,7 +163,7 @@ email e o chat entre médico e paciente.
   janela própria (`useConfirmar`), não o `window.confirm` do navegador.
 - A linha do tempo é montada a partir de `dados` de cada evento, com etiquetas de status.
 - O hook de polling se chama `useAtualizacaoPeriodica(buscar, 30000)`.
-- A jornada carrega o cabeçalho independentemente e busca apenas a aba selecionada; o polling atualiza somente o conteúdo aberto.
+- O acompanhamento carrega o cabeçalho independentemente e busca apenas a aba selecionada; o polling atualiza somente o conteúdo aberto.
 - As listas principais usam paginação no servidor, com 20 registros por página. Filtros de histórico e categoria são aplicados antes de limitar os resultados. Detalhes em [paginacao.md](paginacao.md).
 - Downloads usam o token: o arquivo é baixado como blob e aberto ou salvo pelo navegador.
 - A aba ativa do acompanhamento fica na URL (`/acompanhamentos/3?aba=documentos`).
@@ -157,4 +172,4 @@ email e o chat entre médico e paciente.
 
 | Fase | Conteúdo |
 |---|---|
-| **9. Endurecimento** | Limite de tentativas de login e de pedidos de senha, envio real de email por SMTP, testes cobrindo os três tipos de usuário. |
+| **9. Endurecimento** | Limite de tentativas de login e de pedidos de senha, testes cobrindo os três tipos de usuário. |

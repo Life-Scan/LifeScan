@@ -2,7 +2,7 @@
 
 ## Problema corrigido
 
-Antes, abrir o acompanhamento executava até sete buscas em paralelo e aguardava todas terminarem para mostrar qualquer conteúdo. A linha do tempo consultava e montava todos os registros, mesmo quando a pessoa só queria consultar a ficha.
+Antes, abrir o acompanhamento executava até sete buscas em paralelo e aguardava todas terminarem para mostrar qualquer conteúdo. A linha do tempo consultava e montava todos os registros, mesmo quando a pessoa só queria consultar a anamnese.
 
 Agora, o cabeçalho carrega independentemente e cada aba busca somente o próprio conteúdo. A atualização de 30 segundos mantém os dados já exibidos durante a atualização; abas fechadas não fazem polling. As requisições têm tempo limite de 20 segundos, e uma falha inicial no conteúdo oferece nova tentativa sem bloquear o restante do acompanhamento.
 
