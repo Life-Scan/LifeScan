@@ -53,7 +53,7 @@ export default function AbaAnamnese({ anamnese, acompanhamento, ehMedico, ehParc
           aoCancelar={() => setEditando(false)}
         />
       ) : anamnese.preenchida ? (
-        <VisualizacaoAnamnese anamnese={anamnese} />
+        <VisualizacaoAnamnese anamnese={anamnese} ehParceiro={ehParceiro} />
       ) : (
         <EstadoVazio icone={NotebookPen}>
           {ehMedico
@@ -95,10 +95,11 @@ function TrilhaDeAcessos({ acessos }) {
   )
 }
 
-function VisualizacaoAnamnese({ anamnese }) {
+function VisualizacaoAnamnese({ anamnese, ehParceiro }) {
   const basicos = [
     { rotulo: 'Idade', valor: anamnese.idade != null ? `${anamnese.idade} anos` : null },
-    { rotulo: 'Nascimento', valor: formatarDataSemHora(anamnese.data_nascimento) || null },
+    // Minimização (LGPD): a API não envia a data de nascimento ao parceiro, só a idade
+    { rotulo: 'Nascimento', valor: ehParceiro ? null : formatarDataSemHora(anamnese.data_nascimento) || null },
     { rotulo: 'Sexo', valor: ROTULOS_SEXO[anamnese.sexo] || null },
     { rotulo: 'Altura', valor: anamnese.altura_cm ? `${anamnese.altura_cm} cm` : null },
     { rotulo: 'Peso', valor: anamnese.peso_kg ? `${String(anamnese.peso_kg).replace('.', ',')} kg` : null },

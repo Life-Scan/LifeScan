@@ -40,17 +40,24 @@ def _calcular_idade(nascimento: date | None) -> int | None:
     return hoje.year - nascimento.year - ainda_nao_fez_aniversario
 
 
-def _montar_saida(acompanhamento: Acompanhamento, anamnese: Anamnese | None) -> AnamneseSaida:
+def _montar_saida(
+    acompanhamento: Acompanhamento, anamnese: Anamnese | None, para_parceiro: bool = False
+) -> AnamneseSaida:
     paciente = UsuarioResumo.model_validate(acompanhamento.paciente)
     if anamnese is None:
         return AnamneseSaida(paciente=paciente, preenchida=False)
-    return AnamneseSaida(
+    saida = AnamneseSaida(
         paciente=paciente,
         preenchida=True,
         idade=_calcular_idade(anamnese.data_nascimento),
         atualizado_em=anamnese.atualizado_em,
         **{campo: getattr(anamnese, campo) for campo in CAMPOS},
     )
+    if para_parceiro:
+        # Minimização (LGPD, art. 6º, III): o parceiro precisa da idade para
+        # contextualizar o cuidado, não da data completa de nascimento do titular
+        saida.data_nascimento = None
+    return saida
 
 
 def _obter_anamnese(sessao: Session, acompanhamento: Acompanhamento) -> Anamnese | None:
@@ -64,7 +71,9 @@ def obter_anamnese(
     sessao: Session = Depends(obter_sessao),
 ) -> AnamneseSaida:
     """Anamnese do paciente: visível ao médico, ao próprio paciente e aos parceiros atribuídos."""
-    saida = _montar_saida(acompanhamento, _obter_anamnese(sessao, acompanhamento))
+    saida = _montar_saida(
+        acompanhamento, _obter_anamnese(sessao, acompanhamento), para_parceiro=usuario.tipo_usuario is TipoUsuario.parceiro
+    )
     registrar_acesso(sessao, usuario, acompanhamento, "leitura")
     sessao.commit()
     return saida

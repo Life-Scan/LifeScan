@@ -137,3 +137,23 @@ def test_medico_vê_a_trilha_mas_parceiro_nao(cliente, medico, parceiro_atribuid
     cliente.get(_url(acompanhamento), headers=medico["headers"])
     assert cliente.get(f"{_url(acompanhamento)}/acessos", headers=medico["headers"]).status_code == 200
     assert cliente.get(f"{_url(acompanhamento)}/acessos", headers=parceiro_atribuido["headers"]).status_code == 403
+
+
+def test_parceiro_ve_a_idade_mas_nao_a_data_de_nascimento(cliente, medico, paciente, parceiro_atribuido, acompanhamento):
+    cliente.put(_url(acompanhamento), json=ANAMNESE, headers=medico["headers"])
+
+    hoje = date.today()
+    esperada = hoje.year - 1978 - ((hoje.month, hoje.day) < (3, 14))
+
+    para_medico = cliente.get(_url(acompanhamento), headers=medico["headers"]).json()
+    assert para_medico["data_nascimento"] == "1978-03-14"
+    assert para_medico["idade"] == esperada
+
+    para_paciente = cliente.get(_url(acompanhamento), headers=paciente["headers"]).json()
+    assert para_paciente["data_nascimento"] == "1978-03-14"
+
+    # Minimização (LGPD, art. 6º, III): o parceiro vê só a idade, sem a data completa
+    para_parceiro = cliente.get(_url(acompanhamento), headers=parceiro_atribuido["headers"]).json()
+    assert para_parceiro["data_nascimento"] is None
+    assert para_parceiro["idade"] == esperada
+    assert para_parceiro["diagnosticos"] == "Hipertensão estágio 1"
