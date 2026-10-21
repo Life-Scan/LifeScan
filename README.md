@@ -112,11 +112,26 @@ acesso pela tela **Pacientes e parceiros**.
 | `UPLOAD_DIR` | Pasta dos arquivos enviados (relativa a `backend/`) |
 | `MAX_UPLOAD_MB` | Tamanho máximo de upload (padrão 30) |
 | `DUE_SOON_DAYS` | Dias para uma solicitação ser considerada "próxima do prazo" (padrão 3) |
-| `EMAIL_MODE` | Modo de envio de email. Só `console` por enquanto |
-| `EMAIL_FROM` | Remetente mostrado nos emails |
+| `EMAIL_MODE` | Modo de envio de email: `console` (padrão em dev) ou `smtp` (envio real) |
+| `EMAIL_FROM` | Remetente mostrado nos emails (ex: `LifeScan <contato@clinica.com>`) |
+| `SMTP_HOST` | Host do servidor SMTP (ex: `smtp.gmail.com`, `smtp.office365.com`) |
+| `SMTP_PORT` | Porta do servidor SMTP (padrão `587` para STARTTLS ou `465` para SSL) |
+| `SMTP_USER` | Usuário/email de autenticação SMTP |
+| `SMTP_PASSWORD` | Senha ou senha de app do servidor SMTP |
+| `SMTP_TLS` | Habilita STARTTLS (`true`/`false`, padrão `true`) |
+| `SMTP_SSL` | Habilita SSL direto (`true`/`false`, padrão `false`) |
+| `SMTP_TIMEOUT` | Tempo limite da conexão em segundos (padrão `15`) |
 | `FRONTEND_URL` | Endereço do frontend, usado nos emails (padrão `http://localhost:5173`) |
 | `ACCESS_PASSWORD_DAYS` | Validade da senha provisória de uma conta nova (padrão 7 dias) |
 | `RESET_PASSWORD_MINUTES` | Validade da senha provisória do "esqueci minha senha" (padrão 60 min) |
+
+### Testar envio de email / SMTP
+
+Para verificar se as credenciais de SMTP e a conexão estão funcionando:
+
+```powershell
+python -m scripts.testar_smtp --para seu-email@exemplo.com
+```
 
 ### Dados de exemplo (opcional)
 

@@ -28,7 +28,8 @@ def upgrade() -> None:
     """
     # exames -> documentos, com categoria
     op.rename_table('exames', 'documentos')
-    op.execute('ALTER TABLE documentos RENAME INDEX ix_exames_jornada_id TO ix_documentos_jornada_id')
+    op.create_index(op.f('ix_documentos_jornada_id'), 'documentos', ['jornada_id'], unique=False)
+    op.drop_index('ix_exames_jornada_id', table_name='documentos')
     op.add_column(
         'documentos',
         sa.Column(
@@ -71,5 +72,6 @@ def downgrade() -> None:
     op.drop_column('solicitacoes', 'destinatario_id')
 
     op.drop_column('documentos', 'categoria')
-    op.execute('ALTER TABLE documentos RENAME INDEX ix_documentos_jornada_id TO ix_exames_jornada_id')
+    op.create_index('ix_exames_jornada_id', 'documentos', ['jornada_id'], unique=False)
+    op.drop_index(op.f('ix_documentos_jornada_id'), table_name='documentos')
     op.rename_table('documentos', 'exames')

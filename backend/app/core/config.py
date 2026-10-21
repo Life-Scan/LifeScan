@@ -26,9 +26,18 @@ class Configuracoes(BaseSettings):
     tamanho_maximo_upload_mb: int = Field(30, validation_alias="MAX_UPLOAD_MB")
     dias_prazo_proximo: int = Field(3, validation_alias="DUE_SOON_DAYS")
 
-    # Email: por enquanto só o modo "console", que mostra o email no terminal da API
+    # Email: suporta modo "console" (terminal) e "smtp" (envio real)
     modo_email: str = Field("console", validation_alias="EMAIL_MODE")
     remetente_email: str = Field("LifeScan <nao-responda@lifescan.local>", validation_alias="EMAIL_FROM")
+    # Configurações de SMTP (quando EMAIL_MODE=smtp)
+    smtp_host: str = Field("localhost", validation_alias="SMTP_HOST")
+    smtp_port: int = Field(587, validation_alias="SMTP_PORT")
+    smtp_user: str = Field("", validation_alias="SMTP_USER")
+    smtp_password: str = Field("", validation_alias="SMTP_PASSWORD")
+    smtp_tls: bool = Field(True, validation_alias="SMTP_TLS")
+    smtp_ssl: bool = Field(False, validation_alias="SMTP_SSL")
+    smtp_timeout: int = Field(30, validation_alias="SMTP_TIMEOUT")
+
     # Endereço do frontend, usado nos links dos emails
     url_frontend: str = Field("http://localhost:5173", validation_alias="FRONTEND_URL")
     # Validade da senha provisória de uma conta nova e da enviada pelo "esqueci minha senha"

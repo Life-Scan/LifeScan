@@ -21,6 +21,7 @@ from app.services.contas import (
     senha_provisoria_confere,
     senha_provisoria_expirada,
 )
+from app.services.email import ErroEnvioEmail
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
@@ -108,8 +109,14 @@ def esqueci_senha(dados: EsqueciSenhaEntrada, sessao: Session = Depends(obter_se
     """
     usuario = sessao.scalar(select(Usuario).where(Usuario.email == dados.email))
     if usuario is not None and usuario.ativo:
-        enviar_senha_de_redefinicao(usuario)
-        sessao.commit()
+        try:
+            enviar_senha_de_redefinicao(usuario)
+            sessao.commit()
+        except ErroEnvioEmail as err:
+            raise HTTPException(
+                status.HTTP_502_BAD_GATEWAY,
+                f"Falha ao enviar email por SMTP: {err}",
+            ) from err
     return MensagemSaida(
         mensagem="Se este email tiver uma conta ativa, enviaremos uma senha provisória para ele."
     )
