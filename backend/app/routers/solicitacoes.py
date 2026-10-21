@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import case, select
 from sqlalchemy.orm import Session
 
 from app.core.deps import (
@@ -17,6 +17,8 @@ from app.models.jornada import Jornada
 from app.models.solicitacao import Solicitacao, StatusSolicitacao, TipoSolicitacao
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.solicitacao import SolicitacaoEntrada, SolicitacaoSaida
+from app.schemas.paginacao import Pagina, Paginacao, paginar
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(tags=["Solicitações"])
 
@@ -66,20 +68,23 @@ def criar_solicitacao(
     return solicitacao
 
 
-@router.get("/journeys/{jornada_id}/requests", response_model=list[SolicitacaoSaida])
+@router.get("/journeys/{jornada_id}/requests", response_model=Pagina[SolicitacaoSaida] | list[SolicitacaoSaida])
 def listar_solicitacoes(
     status_filtro: StatusSolicitacao | None = Query(None, alias="status"),
+    paginacao: Paginacao = Depends(),
     jornada: Jornada = Depends(obter_jornada_com_acesso_de_parceiro),
     usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
-) -> list[Solicitacao]:
+):
     """Médico e paciente veem todas as solicitações da jornada; o parceiro, só as destinadas a ele."""
-    consulta = select(Solicitacao).where(Solicitacao.jornada_id == jornada.id)
+    consulta = select(Solicitacao).options(selectinload(Solicitacao.destinatario)).where(Solicitacao.jornada_id == jornada.id)
     if usuario.tipo_usuario == TipoUsuario.parceiro:
         consulta = consulta.where(Solicitacao.destinatario_id == usuario.id)
     if status_filtro is not None:
         consulta = consulta.where(Solicitacao.status == status_filtro)
-    return list(sessao.scalars(consulta.order_by(Solicitacao.prazo, Solicitacao.id)).all())
+    if paginacao.pagina is not None:
+        consulta = consulta.order_by(case((Solicitacao.status == StatusSolicitacao.pendente, 0), (Solicitacao.status == StatusSolicitacao.atendida, 1), else_=2))
+    return paginar(sessao, consulta.order_by(Solicitacao.prazo, Solicitacao.id), paginacao)
 
 
 def _obter_solicitacao_pendente_do_medico(

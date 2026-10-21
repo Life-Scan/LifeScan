@@ -1,4 +1,6 @@
 import { ArrowLeft } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import Paginacao from '../../components/Paginacao'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { mensagemDeErro } from '../../api/cliente'
@@ -31,29 +33,6 @@ const ABAS_PARCEIRO = [
   { id: 'documentos', rotulo: 'Meus envios' },
 ]
 
-/** Carrega tudo o que o usuário pode ver da jornada; o polling repete essa busca a cada 30 s. */
-async function carregarJornada(id, ehParceiro) {
-  if (ehParceiro) {
-    const [jornada, ficha, solicitacoes, documentos] = await Promise.all([
-      servicos.obterJornada(id),
-      servicos.obterFicha(id),
-      servicos.listarSolicitacoes(id),
-      servicos.listarDocumentos(id),
-    ])
-    return { jornada, ficha, solicitacoes, documentos, linhaDoTempo: [], consultas: [], parceiros: [] }
-  }
-  const [jornada, linhaDoTempo, ficha, consultas, solicitacoes, documentos, parceiros] = await Promise.all([
-    servicos.obterJornada(id),
-    servicos.obterLinhaDoTempo(id),
-    servicos.obterFicha(id),
-    servicos.listarConsultas(id),
-    servicos.listarSolicitacoes(id),
-    servicos.listarDocumentos(id),
-    servicos.listarParceirosDaJornada(id),
-  ])
-  return { jornada, linhaDoTempo, ficha, consultas, solicitacoes, documentos, parceiros }
-}
-
 export default function Jornada() {
   const { id } = useParams()
   const { usuario, ehMedico, ehParceiro } = useAuth()
@@ -62,10 +41,11 @@ export default function Jornada() {
   const abas = ehParceiro ? ABAS_PARCEIRO : ABAS
   const abaAtual = abas.some((aba) => aba.id === parametros.get('aba')) ? parametros.get('aba') : abas[0].id
 
-  const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(
-    () => carregarJornada(id, ehParceiro),
-    undefined,
-    [id, ehParceiro],
+  const { dados: jornada, erro, carregando, atualizar } = useAtualizacaoPeriodica(
+    () => servicos.obterJornada(id), undefined, [id],
+  )
+  const { dados: contagens, atualizar: atualizarResumo } = useAtualizacaoPeriodica(
+    () => servicos.obterResumoJornada(id), undefined, [id],
   )
 
   /** Troca de aba mantendo o histórico do navegador; `extras` vira parâmetro da URL. */
@@ -73,9 +53,9 @@ export default function Jornada() {
     setParametros({ aba, ...extras })
   }
 
-  if (carregando && !dados) return <Carregando texto="Carregando a jornada…" />
+  if (carregando && !jornada) return <Carregando texto="Carregando a jornada…" />
 
-  if (!dados) {
+  if (!jornada) {
     const status = erro?.response?.status
     return (
       <div className={estilos.pilha}>
@@ -85,25 +65,15 @@ export default function Jornada() {
             : mensagemDeErro(erro, 'Não foi possível carregar a jornada.')}
         </Alerta>
         <p>
+          <button type="button" className={ui.botaoSecundario} onClick={atualizar}>Tentar novamente</button>{' '}
           <Link to="/jornadas">Voltar</Link>
         </p>
       </div>
     )
   }
 
-  const { jornada, linhaDoTempo, ficha, consultas, solicitacoes, documentos, parceiros } = dados
   const editavel = jornada.status === 'ativa'
-  const contexto = { jornada, usuario, ehMedico, ehParceiro, editavel, atualizar, irParaAba }
-
-  // Médico: tudo o que está pendente na jornada. Demais: só o que cabe a eles.
-  const contagens = {
-    solicitacoes: solicitacoes.filter(
-      (s) => s.status === 'pendente' && (ehMedico || s.destinatario.id === usuario.id),
-    ).length,
-    documentos: ehMedico
-      ? documentos.filter((d) => d.status === 'enviado' && d.enviado_por.id !== usuario.id).length
-      : 0,
-  }
+  const contexto = { jornada, usuario, ehMedico, ehParceiro, editavel, atualizar: async () => { await Promise.all([atualizar(), atualizarResumo()]) }, irParaAba }
 
   return (
     <div className={estilos.pilha}>
@@ -137,28 +107,65 @@ export default function Jornada() {
             onClick={() => irParaAba(aba.id)}
           >
             {aba.rotulo}
-            {contagens[aba.id] > 0 && <span className={estilos.contador}>{contagens[aba.id]}</span>}
+            {contagens?.[aba.id] > 0 && <span className={estilos.contador}>{contagens[aba.id]}</span>}
           </button>
         ))}
       </div>
 
       <div role="tabpanel" id={`painel-${abaAtual}`} aria-labelledby={`aba-${abaAtual}`} className={ui.cartao}>
-        {abaAtual === 'linha' && <AbaLinhaDoTempo eventos={linhaDoTempo} {...contexto} />}
-        {abaAtual === 'ficha' && <AbaFicha ficha={ficha} {...contexto} />}
-        {abaAtual === 'consultas' && <AbaConsultas consultas={consultas} {...contexto} />}
-        {abaAtual === 'solicitacoes' && (
-          <AbaSolicitacoes solicitacoes={solicitacoes} parceiros={parceiros} {...contexto} />
-        )}
-        {abaAtual === 'documentos' && (
-          <AbaDocumentos
-            documentos={documentos}
-            solicitacoes={solicitacoes}
-            solicitacaoInicial={parametros.get('solicitacao')}
-            {...contexto}
-          />
-        )}
-        {abaAtual === 'parceiros' && <AbaParceiros parceiros={parceiros} {...contexto} />}
+        <ConteudoAba key={`${id}-${abaAtual}-${usuario.id}`} aba={abaAtual} solicitacaoInicial={parametros.get('solicitacao')} {...contexto} />
       </div>
     </div>
+  )
+}
+
+/** Cada aba busca apenas o que precisa; o histórico completo nunca bloqueia o cabeçalho. */
+function ConteudoAba({ aba, solicitacaoInicial, ...contexto }) {
+  const { jornada, ehMedico, atualizar: atualizarCabecalho } = contexto
+  const [pagina, setPagina] = useState(1)
+  const [tipos, setTipos] = useState([])
+  const [recentes, setRecentes] = useState(false)
+  const [categoria, setCategoria] = useState('')
+  const base = `/journeys/${jornada.id}`
+  const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(async () => {
+    const parametros = { pagina }
+    if (aba === 'ficha') return { ficha: await servicos.obterFicha(jornada.id) }
+    if (aba === 'parceiros') return { parceiros: await servicos.listarParceirosDaJornada(jornada.id) }
+    if (aba === 'linha') return { lista: await servicos.obterPagina(`${base}/timeline`, { ...parametros, tipos: tipos.length ? tipos.join(',') : undefined, recentes }) }
+    if (aba === 'consultas') return { lista: await servicos.obterPagina(`${base}/consultations`, parametros) }
+    if (aba === 'solicitacoes') {
+      const [lista, parceiros] = await Promise.all([
+        servicos.obterPagina(`${base}/requests`, parametros),
+        ehMedico ? servicos.listarParceirosDaJornada(jornada.id) : [],
+      ])
+      return { lista, parceiros }
+    }
+    const [lista, solicitacoes] = await Promise.all([
+      servicos.obterPagina(`${base}/documents`, { ...parametros, categoria: categoria || undefined }),
+      servicos.listarSolicitacoes(jornada.id, { status: 'pendente' }),
+    ])
+    return { lista, solicitacoes }
+  }, undefined, [pagina, tipos.join(','), recentes, categoria])
+  useEffect(() => { if (dados?.lista) setPagina(dados.lista.pagina) }, [dados?.lista?.pagina])
+
+  const atualizarTudo = async () => { await Promise.all([atualizar(), atualizarCabecalho()]) }
+  const propriedades = { ...contexto, atualizar: atualizarTudo }
+  function mudarFiltro(acao, valor) { acao(valor); setPagina(1) }
+
+  return (
+    <>
+      <ErroCarregamento erro={erro} />
+      {erro && !dados && <button type="button" className={ui.botaoSecundario} onClick={atualizar}>Tentar novamente</button>}
+      {carregando && !dados && <Carregando texto="Carregando esta seção…" />}
+      {dados && <>
+        {aba === 'ficha' && <AbaFicha ficha={dados.ficha} {...propriedades} />}
+        {aba === 'parceiros' && <AbaParceiros parceiros={dados.parceiros} {...propriedades} />}
+        {aba === 'linha' && <AbaLinhaDoTempo eventos={dados.lista.itens} filtro={tipos} setFiltro={(valor) => mudarFiltro(setTipos, valor)} recentesPrimeiro={recentes} setRecentesPrimeiro={(valor) => mudarFiltro(setRecentes, valor)} {...propriedades} />}
+        {aba === 'consultas' && <AbaConsultas consultas={dados.lista.itens} {...propriedades} />}
+        {aba === 'solicitacoes' && <AbaSolicitacoes solicitacoes={dados.lista.itens} parceiros={dados.parceiros} {...propriedades} />}
+        {aba === 'documentos' && <AbaDocumentos documentos={dados.lista.itens} solicitacoes={dados.solicitacoes} solicitacaoInicial={solicitacaoInicial} filtro={categoria} setFiltro={(valor) => mudarFiltro(setCategoria, valor)} {...propriedades} />}
+      </>}
+      <Paginacao dados={dados?.lista} aoMudar={setPagina} carregando={carregando} />
+    </>
   )
 }

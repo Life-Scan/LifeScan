@@ -1,9 +1,10 @@
-import { Check, MailCheck, Pencil, Route, UserCheck, UserPlus, UserX, Users, X } from 'lucide-react'
+import { MailCheck, Pencil, Route, UserCheck, UserPlus, Users, UserX } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
-import { atualizarConta, criarConta, listarContas, reenviarAcesso } from '../api/servicos'
+import { atualizarConta, criarConta, obterPagina, reenviarAcesso } from '../api/servicos'
+import Paginacao from '../components/Paginacao'
 import { useConfirmar } from '../components/Confirmacao'
 import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
@@ -17,10 +18,8 @@ const TIPOS = [
 
 /** Pacientes e parceiros em uma única tela: o médico cria as contas e as administra. */
 export default function Usuarios() {
-  const { dados: contas, erro, carregando, atualizar } = useAtualizacaoPeriodica(() => listarContas())
-
-  const pacientes = contas?.filter((conta) => conta.tipo_usuario === 'paciente')
-  const parceiros = contas?.filter((conta) => conta.tipo_usuario === 'parceiro')
+  const [versao, setVersao] = useState(0)
+  const atualizar = () => setVersao((atual) => atual + 1)
 
   return (
     <div className={estilos.pilha}>
@@ -35,47 +34,83 @@ export default function Usuarios() {
 
       <FormularioConta aoCriar={atualizar} />
 
-      <ErroCarregamento erro={erro} />
-      {carregando && !contas && <Carregando />}
-
-      {contas && (
-        <>
-          <SecaoContas
-            titulo="Pacientes"
-            contas={pacientes}
-            vazio="Nenhum paciente cadastrado ainda."
-            aoAlterar={atualizar}
-          />
-          <SecaoContas
-            titulo="Parceiros"
-            contas={parceiros}
-            vazio="Nenhum parceiro cadastrado ainda. Parceiros são profissionais como nutricionista, fisioterapeuta ou educador físico."
-            aoAlterar={atualizar}
-          />
-        </>
-      )}
+      <SecaoContas tipo="paciente" versao={versao} />
+      <SecaoContas tipo="parceiro" versao={versao} />
     </div>
   )
 }
 
-function SecaoContas({ titulo, contas, vazio, aoAlterar }) {
+function SecaoContas({ tipo, versao }) {
+  const [aba, setAba] = useState('ativos')
+  const [pagina, setPagina] = useState(1)
+  const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(async () => {
+    const [atual, outra] = await Promise.all([
+      obterPagina('/users', { tipo, ativo: aba === 'ativos', pagina }),
+      obterPagina('/users', { tipo, ativo: aba !== 'ativos', tamanho: 1 }),
+    ])
+    return { ...atual, ativos: aba === 'ativos' ? atual.total : outra.total, desativados: aba === 'desativados' ? atual.total : outra.total }
+  }, undefined, [tipo, aba, pagina, versao])
+  useEffect(() => { if (dados) setPagina(dados.pagina) }, [dados?.pagina])
+  const titulo = tipo === 'paciente' ? 'Pacientes' : 'Parceiros'
+  const plural = titulo.toLowerCase()
+  const abas = [
+    { id: 'ativos', titulo, vazio: `Nenhum ${tipo} ativo. Crie uma conta ou reative um ${tipo} na aba ${titulo} desativados.` },
+    { id: 'desativados', titulo: `${titulo} desativados`, vazio: `Nenhum ${tipo} desativado.` },
+  ]
+  const selecionada = abas.find((item) => item.id === aba)
+
+  function mudarAba(valor) {
+    setAba(valor)
+    setPagina(1)
+  }
+
+  function navegarAbas(evento, indice) {
+    let destino
+    if (evento.key === 'ArrowRight' || evento.key === 'ArrowLeft') destino = 1 - indice
+    else if (evento.key === 'Home') destino = 0
+    else if (evento.key === 'End') destino = 1
+    else return
+    evento.preventDefault()
+    mudarAba(abas[destino].id)
+    document.getElementById(`aba-${plural}-${abas[destino].id}`).focus()
+  }
+
   return (
     <section className={ui.cartao} aria-label={titulo}>
-      <div className={ui.cartaoCabecalho}>
-        <h2>
-          {titulo} <span className={estilos.contagem}>{contas.length}</span>
-        </h2>
+      <div className={estilos.abasPacientes} role="tablist" aria-label={`Situação dos ${plural}`}>
+        {abas.map((item, indice) => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            id={`aba-${plural}-${item.id}`}
+            aria-controls={`painel-${plural}`}
+            aria-selected={aba === item.id}
+            tabIndex={aba === item.id ? 0 : -1}
+            className={estilos.abaPacientes}
+            onClick={() => mudarAba(item.id)}
+            onKeyDown={(evento) => navegarAbas(evento, indice)}
+          >
+            {item.titulo} {dados && <span className={estilos.contagem}>{dados[item.id]}</span>}
+          </button>
+        ))}
       </div>
-      {contas.length === 0 ? (
-        <EstadoVazio icone={Users}>{vazio}</EstadoVazio>
-      ) : (
-        <ul className={ui.lista}>
-          {contas.map((conta) => (
-            <ItemConta key={conta.id} conta={conta} aoAlterar={aoAlterar} />
-          ))}
-        </ul>
-      )}
+      <div role="tabpanel" id={`painel-${plural}`} aria-labelledby={`aba-${plural}-${aba}`} tabIndex={0}>
+        <ErroCarregamento erro={erro} />
+        {carregando && !dados && <Carregando />}
+        {dados && <ListaContas contas={dados.itens} vazio={selecionada.vazio} aoAlterar={atualizar} />}
+        <Paginacao dados={dados} aoMudar={setPagina} carregando={carregando} />
+      </div>
     </section>
+  )
+}
+
+function ListaContas({ contas, vazio, aoAlterar }) {
+  if (contas.length === 0) return <EstadoVazio icone={Users}>{vazio}</EstadoVazio>
+  return (
+    <ul className={ui.lista}>
+      {contas.map((conta) => <ItemConta key={conta.id} conta={conta} aoAlterar={aoAlterar} />)}
+    </ul>
   )
 }
 
@@ -185,10 +220,10 @@ function ItemConta({ conta, aoAlterar }) {
   const [erro, setErro] = useState('')
   const [aviso, setAviso] = useState('')
   const [ocupado, setOcupado] = useState(false)
-  const [editandoEmail, setEditandoEmail] = useState(false)
-  const [novoEmail, setNovoEmail] = useState(conta.email)
-  const [reenviarAposSalvar, setReenviarAposSalvar] = useState(true)
+  const [editando, setEditando] = useState(false)
   const ehPaciente = conta.tipo_usuario === 'paciente'
+  const tipo = ehPaciente ? 'paciente' : 'parceiro'
+  const lista = ehPaciente ? 'Pacientes' : 'Parceiros'
 
   async function executar(acao) {
     setErro('')
@@ -210,22 +245,18 @@ function ItemConta({ conta, aoAlterar }) {
       conta.ativo
         ? {
             titulo: `Desativar a conta de ${conta.nome}?`,
-            mensagem: 'A pessoa não conseguirá mais entrar no sistema. Os dados dela são mantidos e a conta pode ser reativada.',
-            rotuloConfirmar: 'Desativar conta',
+            mensagem: `O ${tipo} será movido para a aba ${lista} desativados e perderá o acesso ao sistema. O histórico será mantido e a conta poderá ser reativada nessa aba.`,
+            rotuloConfirmar: `Desativar ${tipo}`,
             perigo: true,
           }
         : {
             titulo: `Reativar a conta de ${conta.nome}?`,
-            mensagem: 'A pessoa volta a poder entrar com a senha que já tinha.',
+            mensagem: `O ${tipo} voltará à lista de ${lista} e poderá entrar com a senha que já tinha.`,
             rotuloConfirmar: 'Reativar conta',
           },
     )
     if (confirmado) executar(() => atualizarConta(conta.id, { ativo: !conta.ativo }))
   }
-
-  useEffect(() => {
-    setNovoEmail(conta.email)
-  }, [conta.email])
 
   async function reenviar() {
     const confirmado = await confirmar({
@@ -236,39 +267,31 @@ function ItemConta({ conta, aoAlterar }) {
     if (confirmado) executar(() => reenviarAcesso(conta.id))
   }
 
-  async function salvarEmail(evento) {
-    evento.preventDefault()
-    const emailLimpo = novoEmail.trim().toLowerCase()
-    if (!emailLimpo) return
-    if (emailLimpo === conta.email.toLowerCase()) {
-      setEditandoEmail(false)
-      return
-    }
-
-    setErro('')
-    setAviso('')
-    setOcupado(true)
-    try {
-      await atualizarConta(conta.id, { email: emailLimpo })
-      let mensagemSucesso = `Email de ${conta.nome} alterado com sucesso para ${emailLimpo}.`
-      if (reenviarAposSalvar && conta.ativo) {
-        try {
-          const resultadoReenvio = await reenviarAcesso(conta.id)
-          if (resultadoReenvio?.mensagem) {
-            mensagemSucesso = `${mensagemSucesso} Novos dados de acesso enviados!`
-          }
-        } catch (erroEnvio) {
-          mensagemSucesso = `${mensagemSucesso} (Aviso: email alterado com sucesso, mas o envio de email falhou: ${mensagemDeErro(erroEnvio)})`
-        }
+  async function salvarEdicao(dados, reenviarAposSalvar) {
+    const atualizada = await atualizarConta(conta.id, dados)
+    let avisoEnvio = ''
+    if (reenviarAposSalvar && atualizada.email !== conta.email) {
+      try {
+        await reenviarAcesso(conta.id)
+        avisoEnvio = ' Novos dados de acesso enviados para o novo email.'
+      } catch (erroEnvio) {
+        avisoEnvio = ` Os dados foram salvos, mas o envio falhou: ${mensagemDeErro(erroEnvio)}`
       }
-      setAviso(mensagemSucesso)
-      setEditandoEmail(false)
-      await aoAlterar()
-    } catch (erroSalvar) {
-      setErro(mensagemDeErro(erroSalvar))
-    } finally {
-      setOcupado(false)
     }
+    await aoAlterar()
+    setEditando(false)
+    setErro('')
+    setAviso((atualizada.email !== conta.email
+      ? 'Dados atualizados. O novo email será usado para entrar no sistema. Se necessário, use Reenviar acesso.'
+      : `Dados do ${tipo} atualizados.`) + avisoEnvio)
+  }
+
+  if (editando && conta.ativo) {
+    return (
+      <li className={ui.itemLista}>
+        <FormularioEdicaoConta conta={conta} aoSalvar={salvarEdicao} aoCancelar={() => setEditando(false)} />
+      </li>
+    )
   }
 
   return (
@@ -302,26 +325,15 @@ function ItemConta({ conta, aoAlterar }) {
             </Link>
           )}
           {conta.ativo && (
-            <button
-              type="button"
-              className={`${ui.botaoSecundario} ${ui.botaoPequeno}`}
-              onClick={() => {
-                setNovoEmail(conta.email)
-                setEditandoEmail((atual) => !atual)
-                setErro('')
-                setAviso('')
-              }}
-              disabled={ocupado}
-              title="Editar email"
-            >
-              <Pencil size={14} aria-hidden="true" />
-              Editar email
-            </button>
-          )}
-          {conta.ativo && (
             <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={reenviar} disabled={ocupado}>
               <MailCheck size={14} aria-hidden="true" />
               Reenviar acesso
+            </button>
+          )}
+          {conta.ativo && (
+            <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={() => setEditando(true)} disabled={ocupado}>
+              <Pencil size={14} aria-hidden="true" />
+              Editar
             </button>
           )}
           <button
@@ -335,60 +347,67 @@ function ItemConta({ conta, aoAlterar }) {
           </button>
         </div>
       </div>
-
-      {editandoEmail && (
-        <form onSubmit={salvarEmail} className={estilos.edicaoEmail}>
-          <div className={estilos.edicaoEmailLinha}>
-            <div className={estilos.edicaoEmailCampo}>
-              <label htmlFor={`email-${conta.id}`}>Novo endereço de email de {conta.nome}:</label>
-              <input
-                id={`email-${conta.id}`}
-                type="email"
-                value={novoEmail}
-                onChange={(e) => setNovoEmail(e.target.value)}
-                required
-                autoFocus
-                disabled={ocupado}
-                placeholder="novo.email@exemplo.com"
-              />
-            </div>
-            {conta.ativo && (
-              <div className={estilos.edicaoEmailOpcoes}>
-                <label className={estilos.opcaoCheck}>
-                  <input
-                    type="checkbox"
-                    checked={reenviarAposSalvar}
-                    onChange={(e) => setReenviarAposSalvar(e.target.checked)}
-                    disabled={ocupado}
-                  />
-                  Enviar dados de acesso para o novo email após salvar
-                </label>
-              </div>
-            )}
-            <div className={estilos.edicaoEmailBotoes}>
-              <button type="submit" className={`${ui.botao} ${ui.botaoPequeno}`} disabled={ocupado}>
-                <Check size={14} aria-hidden="true" />
-                Salvar email
-              </button>
-              <button
-                type="button"
-                className={`${ui.botaoSecundario} ${ui.botaoPequeno}`}
-                onClick={() => {
-                  setEditandoEmail(false)
-                  setNovoEmail(conta.email)
-                }}
-                disabled={ocupado}
-              >
-                <X size={14} aria-hidden="true" />
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
-
       <Alerta tipo="erro">{erro}</Alerta>
       <Alerta tipo="sucesso">{aviso}</Alerta>
     </li>
+  )
+}
+
+function FormularioEdicaoConta({ conta, aoSalvar, aoCancelar }) {
+  const ehParceiro = conta.tipo_usuario === 'parceiro'
+  const tipo = ehParceiro ? 'parceiro' : 'paciente'
+  const [nome, setNome] = useState(conta.nome)
+  const [email, setEmail] = useState(conta.email)
+  const [profissao, setProfissao] = useState(conta.profissao || '')
+  const [reenviarAposSalvar, setReenviarAposSalvar] = useState(true)
+  const [erro, setErro] = useState('')
+  const [salvando, setSalvando] = useState(false)
+
+  async function enviar(evento) {
+    evento.preventDefault()
+    setErro('')
+    setSalvando(true)
+    try {
+      await aoSalvar({ nome: nome.trim(), email: email.trim(), ...(ehParceiro ? { profissao: profissao.trim() } : {}) }, reenviarAposSalvar)
+    } catch (erroEdicao) {
+      setErro(mensagemDeErro(erroEdicao))
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  return (
+    <form className={ui.formulario} onSubmit={enviar} aria-label={`Editar ${tipo} ${conta.nome}`}>
+      <h3>Editar {tipo}</h3>
+      <fieldset className={estilos.camposEdicao} disabled={salvando}>
+        <legend className="visualmente-oculto">Dados do {tipo}</legend>
+        <div className={ui.linhaCampos}>
+          <div>
+            <label htmlFor={`editar-nome-${conta.id}`}>Nome completo</label>
+            <input id={`editar-nome-${conta.id}`} value={nome} onChange={(evento) => setNome(evento.target.value)} required minLength={2} maxLength={120} autoFocus />
+          </div>
+          <div>
+            <label htmlFor={`editar-email-${conta.id}`}>Email</label>
+            <input id={`editar-email-${conta.id}`} type="email" value={email} onChange={(evento) => setEmail(evento.target.value)} required maxLength={255} aria-describedby={`ajuda-email-${conta.id}`} />
+          </div>
+          {ehParceiro && (
+            <div>
+              <label htmlFor={`editar-profissao-${conta.id}`}>Profissão</label>
+              <input id={`editar-profissao-${conta.id}`} value={profissao} onChange={(evento) => setProfissao(evento.target.value)} required minLength={2} maxLength={100} />
+            </div>
+          )}
+        </div>
+        <p id={`ajuda-email-${conta.id}`} className={ui.ajuda}>O email é usado para entrar no sistema e receber os dados de acesso.</p>
+        <label className={estilos.opcaoCheck}>
+          <input type="checkbox" checked={reenviarAposSalvar} onChange={(evento) => setReenviarAposSalvar(evento.target.checked)} />
+          Enviar novos dados de acesso se o email for alterado
+        </label>
+        <Alerta tipo="erro">{erro}</Alerta>
+        <div className={ui.acoes}>
+          <button type="submit" className={ui.botao}>{salvando ? 'Salvando…' : 'Salvar alterações'}</button>
+          <button type="button" className={ui.botaoSecundario} onClick={aoCancelar}>Cancelar</button>
+        </div>
+      </fieldset>
+    </form>
   )
 }

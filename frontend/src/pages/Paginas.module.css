@@ -126,6 +126,59 @@
   color: var(--cor-texto-suave);
 }
 
+.camposEdicao {
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.opcaoCheck {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.opcaoCheck input {
+  accent-color: var(--cor-primaria);
+}
+
+.abasPacientes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.abaPacientes {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--raio-pequeno);
+  background: transparent;
+  color: var(--cor-texto-suave);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.abaPacientes:hover,
+.abaPacientes[aria-selected='true'] {
+  background: var(--cor-primaria-clara);
+  color: var(--cor-primaria);
+}
+
+.abaPacientes[aria-selected='true'] {
+  border-color: var(--cor-primaria);
+}
+
 .contagem {
   display: inline-grid;
   place-items: center;
@@ -201,60 +254,4 @@
   font-size: 0.82rem;
   font-weight: 400;
   color: var(--cor-texto-suave);
-}
-
-.edicaoEmail {
-  margin-top: 0.85rem;
-  padding: 0.85rem 1rem;
-  border-radius: var(--raio);
-  background: var(--cor-superficie-suave);
-  border: 1px solid var(--cor-borda);
-}
-
-.edicaoEmailLinha {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.edicaoEmailCampo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.edicaoEmailCampo label {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--cor-texto-suave);
-}
-
-.edicaoEmailCampo input {
-  max-width: 420px;
-}
-
-.edicaoEmailOpcoes {
-  display: flex;
-  align-items: center;
-}
-
-.opcaoCheck {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--cor-texto);
-  cursor: pointer;
-}
-
-.opcaoCheck input {
-  cursor: pointer;
-  accent-color: var(--cor-primaria);
-}
-
-.edicaoEmailBotoes {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
 }

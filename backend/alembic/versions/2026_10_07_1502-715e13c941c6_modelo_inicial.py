@@ -1,7 +1,7 @@
 """modelo inicial
 
 Revision ID: 715e13c941c6
-Revises: 
+Revises:
 Create Date: 2026-10-07 15:02:17.816028
 
 """

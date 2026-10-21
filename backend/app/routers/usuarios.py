@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.deps import exigir_tipo
@@ -10,6 +11,7 @@ from app.models.jornada import Jornada
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.auth import MensagemSaida
 from app.schemas.usuario import ContaAtualizacao, ContaEntrada, ContaSaida
+from app.schemas.paginacao import Pagina, Paginacao, paginar
 from app.services.contas import enviar_acesso_da_conta
 from app.services.email import ErroEnvioEmail
 
@@ -61,22 +63,28 @@ def criar_conta(dados: ContaEntrada, sessao: Session = Depends(obter_sessao)) ->
         enviar_acesso_da_conta(usuario)
     except ErroEnvioEmail as err:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Falha ao enviar email por SMTP: {err}") from err
-
     sessao.add(usuario)
     sessao.commit()
     return _montar_saidas(sessao, [usuario])[0]
 
 
-@router.get("", response_model=list[ContaSaida])
+@router.get("", response_model=Pagina[ContaSaida] | list[ContaSaida])
 def listar_contas(
     tipo: TipoUsuario | None = Query(None, description="paciente ou parceiro"),
+    ativo: bool | None = Query(None),
+    paginacao: Paginacao = Depends(),
     sessao: Session = Depends(obter_sessao),
-) -> list[ContaSaida]:
+):
     consulta = select(Usuario).where(Usuario.tipo_usuario != TipoUsuario.medico)
     if tipo is not None:
         consulta = consulta.where(Usuario.tipo_usuario == tipo)
-    usuarios = list(sessao.scalars(consulta.order_by(Usuario.nome, Usuario.id)))
-    return _montar_saidas(sessao, usuarios)
+    if ativo is not None:
+        consulta = consulta.where(Usuario.ativo == ativo)
+    resultado = paginar(sessao, consulta.order_by(Usuario.nome, Usuario.id), paginacao)
+    if isinstance(resultado, dict):
+        resultado["itens"] = _montar_saidas(sessao, resultado["itens"])
+        return resultado
+    return _montar_saidas(sessao, resultado)
 
 
 @router.patch("/{usuario_id}", response_model=ContaSaida)
@@ -87,11 +95,8 @@ def atualizar_conta(
 ) -> ContaSaida:
     """Altera nome, email, profissão (parceiro) ou ativa/desativa a conta."""
     usuario = _obter_conta(sessao, usuario_id)
-    if dados.email is not None and dados.email != usuario.email:
-        existente = sessao.scalar(
-            select(Usuario.id).where(Usuario.email == dados.email, Usuario.id != usuario.id)
-        )
-        if existente:
+    if dados.email is not None:
+        if sessao.scalar(select(Usuario.id).where(Usuario.email == dados.email, Usuario.id != usuario_id)):
             raise HTTPException(status.HTTP_409_CONFLICT, "Já existe uma conta com este email.")
         usuario.email = dados.email
     if dados.nome is not None:
@@ -100,7 +105,16 @@ def atualizar_conta(
         usuario.profissao = dados.profissao
     if dados.ativo is not None:
         usuario.ativo = dados.ativo
-    sessao.commit()
+    try:
+        sessao.commit()
+    except IntegrityError:
+        sessao.rollback()
+        # Outra requisição pode ter usado o email entre a consulta e o commit.
+        if dados.email is not None and sessao.scalar(
+            select(Usuario.id).where(Usuario.email == dados.email, Usuario.id != usuario_id)
+        ):
+            raise HTTPException(status.HTTP_409_CONFLICT, "Já existe uma conta com este email.") from None
+        raise
     return _montar_saidas(sessao, [usuario])[0]
 
 
@@ -114,6 +128,5 @@ def reenviar_acesso(usuario_id: int, sessao: Session = Depends(obter_sessao)) ->
         enviar_acesso_da_conta(usuario)
     except ErroEnvioEmail as err:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Falha ao enviar email por SMTP: {err}") from err
-
     sessao.commit()
     return MensagemSaida(mensagem=f"Dados de acesso enviados para {usuario.email}.")

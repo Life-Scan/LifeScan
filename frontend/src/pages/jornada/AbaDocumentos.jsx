@@ -28,6 +28,8 @@ export default function AbaDocumentos({
   ehParceiro,
   editavel,
   atualizar,
+  filtro,
+  setFiltro,
 }) {
   // Solicitações que este usuário pode atender com um envio: o médico, qualquer uma;
   // paciente e parceiro, só as destinadas a eles
@@ -38,10 +40,7 @@ export default function AbaDocumentos({
       (ehMedico || s.destinatario.id === usuario.id),
   )
   const [formularioAberto, setFormularioAberto] = useState(Boolean(solicitacaoInicial) && editavel)
-  const [filtro, setFiltro] = useState('')
-
-  const categoriasPresentes = [...new Set(documentos.map((d) => d.categoria))]
-  const visiveis = filtro ? documentos.filter((d) => d.categoria === filtro) : documentos
+  const visiveis = documentos
 
   return (
     <div className={estilos.pilha}>
@@ -70,7 +69,7 @@ export default function AbaDocumentos({
         />
       )}
 
-      {categoriasPresentes.length > 1 && (
+      {(
         <div className={estilos.filtros} role="group" aria-label="Filtrar por categoria">
           <button
             type="button"
@@ -81,7 +80,6 @@ export default function AbaDocumentos({
             Todos
           </button>
           {Object.keys(ROTULOS_CATEGORIA)
-            .filter((categoria) => categoriasPresentes.includes(categoria))
             .map((categoria) => (
               <button
                 key={categoria}
