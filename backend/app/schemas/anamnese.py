@@ -5,6 +5,7 @@ from typing import Annotated
 from pydantic import AfterValidator, BaseModel, Field, StringConstraints
 
 from app.models.anamnese import Sexo
+from app.models.usuario import TipoUsuario
 from app.schemas.base import DataHoraUTC
 from app.schemas.usuario import UsuarioResumo
 
@@ -51,3 +52,11 @@ class AnamneseSaida(BaseModel):
     objetivos: str | None = None
     observacoes: str | None = None
     atualizado_em: DataHoraUTC | None = None
+
+
+class AcessoAnamneseSaida(BaseModel):
+    """Uma linha da trilha de auditoria, sempre pseudônima (id oculto, só o tipo)."""
+
+    tipo_usuario: TipoUsuario
+    acao: str
+    ocorreu_em: DataHoraUTC

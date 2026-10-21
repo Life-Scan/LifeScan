@@ -1,8 +1,8 @@
 import { NotebookPen, Pencil } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
-import { salvarAnamnese } from '../../api/servicos'
+import { acessosAnamnese, salvarAnamnese } from '../../api/servicos'
 import { Alerta, EstadoVazio, estilos as ui } from '../../components/ui'
 import { ROTULOS_SEXO, formatarDataHora, formatarDataSemHora } from '../../utils/formatacao'
 import estilos from './Acompanhamento.module.css'
@@ -18,6 +18,14 @@ const CAMPOS_DE_TEXTO = [
 
 export default function AbaAnamnese({ anamnese, acompanhamento, ehMedico, ehParceiro, atualizar }) {
   const [editando, setEditando] = useState(false)
+  const [acessos, setAcessos] = useState([])
+
+  // Trilha de auditoria (LGPD): o médico e o paciente veem quem acessou a anamnese
+  const podeVerTrilha = !ehParceiro
+  useEffect(() => {
+    if (!podeVerTrilha) return
+    acessosAnamnese(acompanhamento.id).then(setAcessos).catch(() => setAcessos([]))
+  }, [podeVerTrilha, acompanhamento.id, anamnese.atualizado_em])
 
   return (
     <div className={estilos.pilha}>
@@ -62,7 +70,28 @@ export default function AbaAnamnese({ anamnese, acompanhamento, ehMedico, ehParc
       {ehParceiro && (
         <p className={ui.ajuda}>Estas informações são mantidas pelo médico responsável pelo paciente.</p>
       )}
+      {podeVerTrilha && acessos.length > 0 && (
+        <TrilhaDeAcessos acessos={acessos} />
+      )}
     </div>
+  )
+}
+
+const NOMES_DE_PAPEL = { medico: 'Médico', paciente: 'Paciente', parceiro: 'Parceiro' }
+const NOMES_DE_ACAO = { leitura: 'leu', escrita: 'alterou' }
+
+function TrilhaDeAcessos({ acessos }) {
+  return (
+    <p className={ui.ajuda}>
+      Registros de acesso (LGPD):{' '}
+      {acessos
+        .slice(0, 5)
+        .map((acesso) => (
+          `${NOMES_DE_PAPEL[acesso.tipo_usuario] || acesso.tipo_usuario} ${NOMES_DE_ACAO[acesso.acao] || acesso.acao} em ${formatarDataHora(acesso.ocorreu_em)}`
+        ))
+        .join(' · ')}
+      {acessos.length > 5 && ' · …'}
+    </p>
   )
 }
 

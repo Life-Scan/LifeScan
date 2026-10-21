@@ -4,12 +4,20 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.deps import obter_acompanhamento_com_acesso_de_parceiro, obter_acompanhamento_do_medico
+from app.core.deps import (
+    obter_acompanhamento_com_acesso,
+    obter_acompanhamento_com_acesso_de_parceiro,
+    obter_acompanhamento_do_medico,
+    obter_usuario_atual,
+)
 from app.db.sessao import obter_sessao
 from app.models.anamnese import Anamnese
 from app.models.acompanhamento import Acompanhamento
-from app.schemas.anamnese import AnamneseEntrada, AnamneseSaida
+from app.models.registro_acesso import RegistroAcesso
+from app.models.usuario import TipoUsuario, Usuario
+from app.schemas.anamnese import AnamneseEntrada, AnamneseSaida, AcessoAnamneseSaida
 from app.schemas.usuario import UsuarioResumo
+from app.services.registro_acesso import registrar_acesso
 
 router = APIRouter(prefix="/follow-ups/{acompanhamento_id}/anamnesis", tags=["Anamnese do paciente"])
 
@@ -52,16 +60,43 @@ def _obter_anamnese(sessao: Session, acompanhamento: Acompanhamento) -> Anamnese
 @router.get("", response_model=AnamneseSaida)
 def obter_anamnese(
     acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso_de_parceiro),
+    usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
 ) -> AnamneseSaida:
     """Anamnese do paciente: visível ao médico, ao próprio paciente e aos parceiros atribuídos."""
-    return _montar_saida(acompanhamento, _obter_anamnese(sessao, acompanhamento))
+    saida = _montar_saida(acompanhamento, _obter_anamnese(sessao, acompanhamento))
+    registrar_acesso(sessao, usuario, acompanhamento, "leitura")
+    sessao.commit()
+    return saida
+
+
+@router.get("/acessos", response_model=list[AcessoAnamneseSaida])
+def listar_acessos_da_anamnese(
+    acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso),
+    sessao: Session = Depends(obter_sessao),
+) -> list[AcessoAnamneseSaida]:
+    """Trilha de quem leu ou alterou a anamnese (LGPD, art. 18, V).
+
+    Sempre pseudônima: devolve apenas o tipo de usuário (médico, paciente ou parceiro),
+    sem nomes. Mais recentes primeiro; o parceiro não vê a trilha.
+    """
+    registros = sessao.scalars(
+        select(RegistroAcesso)
+        .where(RegistroAcesso.acompanhamento_id == acompanhamento.id)
+        .order_by(RegistroAcesso.ocorreu_em.desc(), RegistroAcesso.id.desc())
+        .limit(30)
+    ).all()
+    return [
+        AcessoAnamneseSaida(tipo_usuario=TipoUsuario(r.tipo_usuario), acao=r.acao, ocorreu_em=r.ocorreu_em)
+        for r in registros
+    ]
 
 
 @router.put("", response_model=AnamneseSaida)
 def salvar_anamnese(
     dados: AnamneseEntrada,
     acompanhamento: Acompanhamento = Depends(obter_acompanhamento_do_medico),
+    usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
 ) -> AnamneseSaida:
     """O médico cria ou substitui a anamnese inteira.
@@ -78,5 +113,6 @@ def salvar_anamnese(
         if campo in CAMPOS_DE_TEXTO:
             valor = valor or None
         setattr(anamnese, campo, valor)
+    registrar_acesso(sessao, usuario, acompanhamento, "escrita")
     sessao.commit()
     return _montar_saida(acompanhamento, anamnese)

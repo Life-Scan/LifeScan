@@ -6,6 +6,7 @@ from app.models.arquivo import Arquivo
 from app.models.atribuicao import AtribuicaoParceiro
 from app.models.consentimento import Consentimento
 from app.models.consulta import Consulta, Prescricao, TipoConsulta
+from app.models.registro_acesso import RegistroAcesso
 from app.models.documento import CategoriaDocumento, Documento, StatusDocumento
 from app.models.solicitacao import Solicitacao, StatusSolicitacao, TipoSolicitacao
 from app.models.usuario import TipoUsuario, Usuario
@@ -21,6 +22,7 @@ __all__ = [
     "Documento",
     "PassoAcompanhamento",
     "Prescricao",
+    "RegistroAcesso",
     "Sexo",
     "Solicitacao",
     "StatusAcompanhamento",

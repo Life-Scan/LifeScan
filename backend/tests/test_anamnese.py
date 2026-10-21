@@ -105,3 +105,35 @@ def test_anamnese_continua_editavel_com_o_acompanhamento_encerrado(cliente, medi
     cliente.patch(f"/follow-ups/{acompanhamento['id']}/status", json={"status": "encerrado"}, headers=medico["headers"])
     resposta = cliente.put(_url(acompanhamento), json=ANAMNESE, headers=medico["headers"])
     assert resposta.status_code == 200
+
+
+def test_leitura_e_escrita_ficam_na_trilha_de_acesso(cliente, medico, paciente, acompanhamento):
+    cliente.get(_url(acompanhamento), headers=medico["headers"])
+    cliente.put(_url(acompanhamento), json=ANAMNESE, headers=medico["headers"])
+    cliente.get(_url(acompanhamento), headers=paciente["headers"])
+
+    trilha = cliente.get(
+        f"{_url(acompanhamento)}/acessos",
+        headers=paciente["headers"],
+    )
+    assert trilha.status_code == 200
+    registros = trilha.json()
+    assert len(registros) == 3
+    # Sem nomes: só o papel de quem acessou (LGPD: log pseudônimo)
+    for registro in registros:
+        assert set(registro) == {"tipo_usuario", "acao", "ocorreu_em"}
+
+    # Mais recentes primeiro: leitura do paciente, escrita e leitura do médico
+    assert [
+        (r["tipo_usuario"], r["acao"]) for r in registros
+    ] == [
+        ("paciente", "leitura"),
+        ("medico", "escrita"),
+        ("medico", "leitura"),
+    ]
+
+
+def test_medico_vê_a_trilha_mas_parceiro_nao(cliente, medico, parceiro_atribuido, acompanhamento):
+    cliente.get(_url(acompanhamento), headers=medico["headers"])
+    assert cliente.get(f"{_url(acompanhamento)}/acessos", headers=medico["headers"]).status_code == 200
+    assert cliente.get(f"{_url(acompanhamento)}/acessos", headers=parceiro_atribuido["headers"]).status_code == 403
