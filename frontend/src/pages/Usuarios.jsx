@@ -1,4 +1,4 @@
-import { MailCheck, Pencil, Route, Trash2, UserCheck, UserPlus, Users } from 'lucide-react'
+import { MailCheck, Pencil, Route, UserCheck, UserPlus, Users, UserX } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -244,9 +244,9 @@ function ItemConta({ conta, aoAlterar }) {
     const confirmado = await confirmar(
       conta.ativo
         ? {
-            titulo: `Excluir a conta de ${conta.nome}?`,
+            titulo: `Desativar a conta de ${conta.nome}?`,
             mensagem: `O ${tipo} será movido para a aba ${lista} desativados e perderá o acesso ao sistema. O histórico será mantido e a conta poderá ser reativada nessa aba.`,
-            rotuloConfirmar: `Excluir ${tipo}`,
+            rotuloConfirmar: `Desativar ${tipo}`,
             perigo: true,
           }
         : {
@@ -277,7 +277,7 @@ function ItemConta({ conta, aoAlterar }) {
       : `Dados do ${tipo} atualizados.`)
   }
 
-  if (editando) {
+  if (editando && conta.ativo) {
     return (
       <li className={ui.itemLista}>
         <FormularioEdicaoConta conta={conta} aoSalvar={salvarEdicao} aoCancelar={() => setEditando(false)} />
@@ -321,18 +321,20 @@ function ItemConta({ conta, aoAlterar }) {
               Reenviar acesso
             </button>
           )}
-          <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={() => setEditando(true)} disabled={ocupado}>
-            <Pencil size={14} aria-hidden="true" />
-            Editar
-          </button>
+          {conta.ativo && (
+            <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={() => setEditando(true)} disabled={ocupado}>
+              <Pencil size={14} aria-hidden="true" />
+              Editar
+            </button>
+          )}
           <button
             type="button"
             className={`${conta.ativo ? ui.botaoPerigo : ui.botaoSecundario} ${ui.botaoPequeno}`}
             onClick={alternarAtivo}
             disabled={ocupado}
           >
-            {conta.ativo ? <Trash2 size={14} aria-hidden="true" /> : <UserCheck size={14} aria-hidden="true" />}
-            {conta.ativo ? 'Excluir' : 'Reativar'}
+            {conta.ativo ? <UserX size={14} aria-hidden="true" /> : <UserCheck size={14} aria-hidden="true" />}
+            {conta.ativo ? 'Desativar' : 'Reativar'}
           </button>
         </div>
       </div>
