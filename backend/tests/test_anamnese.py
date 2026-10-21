@@ -157,3 +157,30 @@ def test_parceiro_ve_a_idade_mas_nao_a_data_de_nascimento(cliente, medico, pacie
     assert para_parceiro["data_nascimento"] is None
     assert para_parceiro["idade"] == esperada
     assert para_parceiro["diagnosticos"] == "Hipertensão estágio 1"
+
+
+def test_paciente_exporta_a_propria_anamnese_e_parceiro_nao(cliente, medico, paciente, parceiro_atribuido, acompanhamento):
+    cliente.put(_url(acompanhamento), json=ANAMNESE, headers=medico["headers"])
+
+    # O paciente lê a própria anamnese, então a trilha já tem registros para exportar
+    cliente.get(_url(acompanhamento), headers=paciente["headers"])
+
+    resposta = cliente.get(f"{_url(acompanhamento)}/portabilidade", headers=paciente["headers"])
+    assert resposta.status_code == 200
+    assert resposta.headers["content-disposition"].startswith("attachment")
+
+    exportacao = resposta.json()
+    assert exportacao["paciente"]["nome"] == "Carlos Lima"
+    assert exportacao["anamnese"]["diagnosticos"] == "Hipertensão estágio 1"
+    assert exportacao["anamnese"]["data_nascimento"] == "1978-03-14"
+    # Consentimento gravado no primeiro acesso está no arquivo
+    assert len(exportacao["consentimentos"]) >= 1
+    assert exportacao["consentimentos"][0]["concedido_em"]
+    # E a trilha de acessos também
+    assert any(r["acao"] == "leitura" for r in exportacao["acessos"])
+
+    # O médico também pode exportar por ele, mas o parceiro não
+    assert cliente.get(f"{_url(acompanhamento)}/portabilidade", headers=medico["headers"]).status_code == 200
+    assert (
+        cliente.get(f"{_url(acompanhamento)}/portabilidade", headers=parceiro_atribuido["headers"]).status_code == 403
+    )

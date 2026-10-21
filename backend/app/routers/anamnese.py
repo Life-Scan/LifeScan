@@ -1,6 +1,7 @@
 from datetime import date
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -10,12 +11,20 @@ from app.core.deps import (
     obter_acompanhamento_do_medico,
     obter_usuario_atual,
 )
+from app.db.base import agora_utc
 from app.db.sessao import obter_sessao
 from app.models.anamnese import Anamnese
 from app.models.acompanhamento import Acompanhamento
+from app.models.consentimento import Consentimento
 from app.models.registro_acesso import RegistroAcesso
 from app.models.usuario import TipoUsuario, Usuario
-from app.schemas.anamnese import AnamneseEntrada, AnamneseSaida, AcessoAnamneseSaida
+from app.schemas.anamnese import (
+    AcessoAnamneseSaida,
+    AnamneseEntrada,
+    AnamneseSaida,
+    ConsentimentoSaida,
+    PortabilidadeAnamneseSaida,
+)
 from app.schemas.usuario import UsuarioResumo
 from app.services.registro_acesso import registrar_acesso
 
@@ -99,6 +108,49 @@ def listar_acessos_da_anamnese(
         AcessoAnamneseSaida(tipo_usuario=TipoUsuario(r.tipo_usuario), acao=r.acao, ocorreu_em=r.ocorreu_em)
         for r in registros
     ]
+
+
+@router.get("/portabilidade")
+def exportar_anamnese(
+    acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso),
+    sessao: Session = Depends(obter_sessao),
+) -> Response:
+    """Portabilidade da anamnese para o titular ou para o médico dele (LGPD, art. 18, V).
+
+    Devolve tudo o que o sistema guarda a respeito: a anamnese, os consentimentos
+    registrados e a trilha de acessos, em JSON baixável. O parceiro não exporta.
+    """
+    anamnese = _obter_anamnese(sessao, acompanhamento)
+    consentimentos = sessao.scalars(
+        select(Consentimento)
+        .where(Consentimento.usuario_id == acompanhamento.paciente_id)
+        .order_by(Consentimento.concedido_em.desc())
+    ).all()
+    acessos = sessao.scalars(
+        select(RegistroAcesso)
+        .where(RegistroAcesso.acompanhamento_id == acompanhamento.id)
+        .order_by(RegistroAcesso.ocorreu_em.desc(), RegistroAcesso.id.desc())
+        .limit(30)
+    ).all()
+
+    exportacao = PortabilidadeAnamneseSaida(
+        gerado_em=agora_utc(),
+        paciente=UsuarioResumo.model_validate(acompanhamento.paciente),
+        anamnese=_montar_saida(acompanhamento, anamnese),
+        consentimentos=[
+            ConsentimentoSaida.model_validate(c, from_attributes=True) for c in consentimentos
+        ],
+        acessos=[
+            AcessoAnamneseSaida(tipo_usuario=TipoUsuario(r.tipo_usuario), acao=r.acao, ocorreu_em=r.ocorreu_em)
+            for r in acessos
+        ],
+    )
+    conteudo = exportacao.model_dump_json(indent=2, exclude_none=True)
+    return Response(
+        content=conteudo,
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="anamnese-{acompanhamento.id}.json"'},
+    )
 
 
 @router.put("", response_model=AnamneseSaida)

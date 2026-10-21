@@ -60,3 +60,22 @@ class AcessoAnamneseSaida(BaseModel):
     tipo_usuario: TipoUsuario
     acao: str
     ocorreu_em: DataHoraUTC
+
+
+class ConsentimentoSaida(BaseModel):
+    """Histórico de um aceite do termo (LGPD, art. 11)."""
+
+    finalidade: str
+    versao_termo: str
+    concedido_em: DataHoraUTC
+    revogado_em: DataHoraUTC | None = None
+
+
+class PortabilidadeAnamneseSaida(BaseModel):
+    """Exportação completa da anamnese para o titular (LGPD, art. 18, II e V)."""
+
+    gerado_em: DataHoraUTC
+    paciente: UsuarioResumo
+    anamnese: AnamneseSaida
+    consentimentos: list[ConsentimentoSaida] = []
+    acessos: list[AcessoAnamneseSaida] = []

@@ -2,8 +2,9 @@ import { NotebookPen, Pencil } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
-import { acessosAnamnese, salvarAnamnese } from '../../api/servicos'
+import { acessosAnamnese, exportarAnamnese, salvarAnamnese } from '../../api/servicos'
 import { Alerta, EstadoVazio, estilos as ui } from '../../components/ui'
+import { baixarBlob } from '../../utils/arquivos'
 import { ROTULOS_SEXO, formatarDataHora, formatarDataSemHora } from '../../utils/formatacao'
 import estilos from './Acompanhamento.module.css'
 
@@ -39,6 +40,9 @@ export default function AbaAnamnese({ anamnese, acompanhamento, ehMedico, ehParc
             <Pencil size={15} aria-hidden="true" />
             {anamnese.preenchida ? 'Editar anamnese' : 'Preencher anamnese'}
           </button>
+        )}
+        {!ehParceiro && anamnese.preenchida && (
+          <BotaoExportarLgpd acompanhamentoId={acompanhamento.id} />
         )}
       </div>
 
@@ -79,6 +83,34 @@ export default function AbaAnamnese({ anamnese, acompanhamento, ehMedico, ehParc
 
 const NOMES_DE_PAPEL = { medico: 'Médico', paciente: 'Paciente', parceiro: 'Parceiro' }
 const NOMES_DE_ACAO = { leitura: 'leu', escrita: 'alterou' }
+
+function BotaoExportarLgpd({ acompanhamentoId }) {
+  const [erro, setErro] = useState('')
+  const [baixando, setBaixando] = useState(false)
+
+  async function aoExportar() {
+    setErro('')
+    setBaixando(true)
+    try {
+      const blob = await exportarAnamnese(acompanhamentoId)
+      baixarBlob(blob, `anamnese-${acompanhamentoId}.json`)
+    } catch (erroExportacao) {
+      setErro(mensagemDeErro(erroExportacao))
+    } finally {
+      setBaixando(false)
+    }
+  }
+
+  return (
+    <>
+      <button type="button" className={ui.botaoSecundario} onClick={aoExportar} disabled={baixando}>
+        {baixando ? 'Preparando…' : 'Exportar (LGPD)'}
+      </button>
+      {baixando || <span className={ui.ajuda}>JSON com anamnese, consentimentos e acessos.</span>}
+      {erro && <Alerta tipo="erro">{erro}</Alerta>}
+    </>
+  )
+}
 
 function TrilhaDeAcessos({ acessos }) {
   return (

@@ -20,9 +20,8 @@ export function validarArquivo(arquivo) {
   return null
 }
 
-/** Baixa o arquivo pelo endpoint autenticado e dispara o "salvar como" do navegador. */
-export async function baixarArquivo({ id, nome_original: nome }) {
-  const blob = await obterArquivo(id)
+/** Dispara o "salvar como" do navegador para um blob já baixado. */
+export function baixarBlob(blob, nome) {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -31,6 +30,12 @@ export async function baixarArquivo({ id, nome_original: nome }) {
   link.click()
   link.remove()
   setTimeout(() => URL.revokeObjectURL(url), 10_000)
+}
+
+/** Baixa o arquivo pelo endpoint autenticado e dispara o "salvar como" do navegador. */
+export async function baixarArquivo({ id, nome_original: nome }) {
+  const blob = await obterArquivo(id)
+  baixarBlob(blob, nome)
 }
 
 const TIPOS_VISUALIZAVEIS = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'text/plain']
