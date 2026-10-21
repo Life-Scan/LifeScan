@@ -129,16 +129,38 @@ function BotaoExportarLgpd({ acompanhamentoId }) {
 }
 
 function TrilhaDeAcessos({ acessos }) {
+  // A lista chega em ordem: mais recente primeiro. Agrupa por papel+ação para o
+  // resumo não encher de repetições; o detalhe completo está no export (LGPD).
+  const grupos = []
+  const porChave = new Map()
+  for (const acesso of acessos) {
+    const chave = `${acesso.tipo_usuario}|${acesso.acao}`
+    let grupo = porChave.get(chave)
+    if (!grupo) {
+      grupo = { ...acesso, vezes: 0 }
+      porChave.set(chave, grupo)
+      grupos.push(grupo)
+    }
+    grupo.vezes += 1
+  }
+
+  const resumo = grupos
+    .slice(0, 4)
+    .map((grupo) => {
+      const papel = NOMES_DE_PAPEL[grupo.tipo_usuario] || grupo.tipo_usuario
+      const acao = NOMES_DE_ACAO[grupo.acao] || grupo.acao
+      const quando = formatarDataHora(grupo.ocorreu_em)
+      // Com repetições, mostra quantas vezes e quando foi a última
+      return grupo.vezes > 1
+        ? `${papel} ${acao} ${grupo.vezes} vezes (última em ${quando})`
+        : `${papel} ${acao} em ${quando}`
+    })
+    .join(' · ')
+
   return (
     <p className={ui.ajuda}>
-      Registros de acesso (LGPD):{' '}
-      {acessos
-        .slice(0, 5)
-        .map((acesso) => (
-          `${NOMES_DE_PAPEL[acesso.tipo_usuario] || acesso.tipo_usuario} ${NOMES_DE_ACAO[acesso.acao] || acesso.acao} em ${formatarDataHora(acesso.ocorreu_em)}`
-        ))
-        .join(' · ')}
-      {acessos.length > 5 && ' · …'}
+      Registros de acesso (LGPD): {resumo}
+      {grupos.length > 4 && ' · …'} — o histórico completo está no arquivo da exportação.
     </p>
   )
 }
