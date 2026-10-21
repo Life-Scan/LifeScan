@@ -146,9 +146,9 @@ def parceiro(cliente, medico):
     )
 
 
-def criar_jornada(cliente, medico: dict, paciente: dict, titulo: str = "Controle da hipertensão") -> dict:
+def criar_acompanhamento(cliente, medico: dict, paciente: dict, titulo: str = "Controle da hipertensão") -> dict:
     resposta = cliente.post(
-        "/journeys",
+        "/follow-ups",
         json={"paciente_id": paciente["usuario"]["id"], "titulo": titulo},
         headers=medico["headers"],
     )
@@ -157,14 +157,14 @@ def criar_jornada(cliente, medico: dict, paciente: dict, titulo: str = "Controle
 
 
 @pytest.fixture
-def jornada(cliente, medico, paciente):
-    """Jornada aberta pelo médico para o paciente."""
-    return criar_jornada(cliente, medico, paciente)
+def acompanhamento(cliente, medico, paciente):
+    """Acompanhamento aberto pelo médico para o paciente."""
+    return criar_acompanhamento(cliente, medico, paciente)
 
 
-def atribuir_parceiro(cliente, medico: dict, jornada: dict, parceiro: dict) -> dict:
+def atribuir_parceiro(cliente, medico: dict, acompanhamento: dict, parceiro: dict) -> dict:
     resposta = cliente.post(
-        f"/journeys/{jornada['id']}/partners",
+        f"/follow-ups/{acompanhamento['id']}/partners",
         json={"parceiro_id": parceiro["usuario"]["id"]},
         headers=medico["headers"],
     )
@@ -173,22 +173,22 @@ def atribuir_parceiro(cliente, medico: dict, jornada: dict, parceiro: dict) -> d
 
 
 @pytest.fixture
-def parceiro_atribuido(cliente, medico, parceiro, jornada):
-    """Parceiro já atribuído à jornada do paciente."""
-    atribuir_parceiro(cliente, medico, jornada, parceiro)
+def parceiro_atribuido(cliente, medico, parceiro, acompanhamento):
+    """Parceiro já atribuído ao acompanhamento do paciente."""
+    atribuir_parceiro(cliente, medico, acompanhamento, parceiro)
     return parceiro
 
 
 def criar_solicitacao(
-    cliente, medico: dict, jornada: dict, tipo: str = "exame", dias: int = 7, destinatario: dict | None = None
+    cliente, medico: dict, acompanhamento: dict, tipo: str = "exame", dias: int = 7, destinatario: dict | None = None
 ) -> dict:
-    """Solicitação para o paciente da jornada ou, com `destinatario`, para um parceiro atribuído."""
+    """Solicitação para o paciente do acompanhamento ou, com `destinatario`, para um parceiro atribuído."""
     prazo = (datetime.now(timezone.utc) + timedelta(days=dias)).isoformat()
     dados = {"tipo": tipo, "descricao": f"Solicitação de {tipo}", "prazo": prazo}
     if destinatario is not None:
         dados["destinatario_id"] = destinatario["usuario"]["id"]
     resposta = cliente.post(
-        f"/journeys/{jornada['id']}/requests",
+        f"/follow-ups/{acompanhamento['id']}/requests",
         json=dados,
         headers=medico["headers"],
     )
@@ -199,7 +199,7 @@ def criar_solicitacao(
 def enviar_documento(
     cliente,
     usuario: dict,
-    jornada: dict,
+    acompanhamento: dict,
     nome: str = "hemograma.pdf",
     conteudo: bytes = b"%PDF-1.4 conteudo de teste",
     solicitacao_id: int | None = None,
@@ -211,7 +211,7 @@ def enviar_documento(
     if solicitacao_id is not None:
         dados["solicitacao_id"] = str(solicitacao_id)
     return cliente.post(
-        f"/journeys/{jornada['id']}/documents",
+        f"/follow-ups/{acompanhamento['id']}/documents",
         data=dados,
         files={"arquivo": (nome, conteudo)},
         headers=usuario["headers"],

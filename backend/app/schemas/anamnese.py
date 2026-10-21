@@ -4,7 +4,7 @@ from typing import Annotated
 
 from pydantic import AfterValidator, BaseModel, Field, StringConstraints
 
-from app.models.ficha import Sexo
+from app.models.anamnese import Sexo
 from app.schemas.base import DataHoraUTC
 from app.schemas.usuario import UsuarioResumo
 
@@ -19,8 +19,8 @@ def _validar_nascimento(valor: date | None) -> date | None:
 Texto = Annotated[str, StringConstraints(strip_whitespace=True)] | None
 
 
-class FichaEntrada(BaseModel):
-    """Ficha completa enviada pelo médico. Campos omitidos ou vazios ficam em branco."""
+class AnamneseEntrada(BaseModel):
+    """Anamnese completa enviada pelo médico. Campos omitidos ou vazios ficam em branco."""
 
     data_nascimento: Annotated[date | None, AfterValidator(_validar_nascimento)] = None
     sexo: Sexo | None = None
@@ -34,9 +34,9 @@ class FichaEntrada(BaseModel):
     observacoes: Texto = None
 
 
-class FichaSaida(BaseModel):
+class AnamneseSaida(BaseModel):
     paciente: UsuarioResumo
-    # Falso enquanto o médico ainda não salvou a ficha
+    # Falso enquanto o médico ainda não salvou a anamnese
     preenchida: bool
     data_nascimento: date | None = None
     # Calculada a partir da data de nascimento

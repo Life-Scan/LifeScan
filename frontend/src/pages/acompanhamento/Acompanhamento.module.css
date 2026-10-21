@@ -434,30 +434,30 @@ button.botaoPasso:hover:not(:disabled) {
   font-size: 0.92rem;
 }
 
-/* Ficha do paciente */
+/* Anamnese do paciente */
 
-.fichaBasicos {
+.anamneseBasicos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0.6rem;
   margin: 0;
 }
 
-.fichaTextos {
+.anamneseTextos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 0.6rem;
   margin: 0;
 }
 
-.fichaItem {
+.anamneseItem {
   padding: 0.7rem 0.85rem;
   border: 1px solid var(--cor-borda);
   border-radius: var(--raio-pequeno);
   background: var(--cor-superficie-suave);
 }
 
-.fichaItem dt {
+.anamneseItem dt {
   font-size: 0.74rem;
   font-weight: 600;
   color: var(--cor-texto-suave);
@@ -465,12 +465,12 @@ button.botaoPasso:hover:not(:disabled) {
   letter-spacing: 0.04em;
 }
 
-.fichaItem dd {
+.anamneseItem dd {
   margin: 0.15rem 0 0;
   font-weight: 600;
 }
 
-.fichaItem dd.texto {
+.anamneseItem dd.texto {
   font-weight: 400;
 }
 

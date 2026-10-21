@@ -1,23 +1,23 @@
-"""Atribuição de parceiros à jornada e o que o parceiro pode (e não pode) ver."""
+"""Atribuição de parceiros ao acompanhamento e o que o parceiro pode (e não pode) ver."""
 
 from tests.conftest import (
     atribuir_parceiro,
     criar_conta_ativa,
-    criar_jornada,
+    criar_acompanhamento,
     criar_solicitacao,
     enviar_documento,
 )
 
 
-def _url(jornada) -> str:
-    return f"/journeys/{jornada['id']}/partners"
+def _url(acompanhamento) -> str:
+    return f"/follow-ups/{acompanhamento['id']}/partners"
 
 
 # --- Atribuição
 
 
-def test_medico_atribui_parceiro(cliente, medico, parceiro, jornada):
-    atribuicao = atribuir_parceiro(cliente, medico, jornada, parceiro)
+def test_medico_atribui_parceiro(cliente, medico, parceiro, acompanhamento):
+    atribuicao = atribuir_parceiro(cliente, medico, acompanhamento, parceiro)
     assert atribuicao["parceiro"] == {
         "id": parceiro["usuario"]["id"],
         "nome": "Marina Costa",
@@ -25,68 +25,68 @@ def test_medico_atribui_parceiro(cliente, medico, parceiro, jornada):
         "profissao": "Nutricionista",
     }
 
-    lista = cliente.get(_url(jornada), headers=medico["headers"]).json()
+    lista = cliente.get(_url(acompanhamento), headers=medico["headers"]).json()
     assert [a["parceiro"]["nome"] for a in lista] == ["Marina Costa"]
 
 
-def test_paciente_ve_os_parceiros_mas_nao_atribui(cliente, medico, paciente, parceiro_atribuido, jornada):
-    lista = cliente.get(_url(jornada), headers=paciente["headers"])
+def test_paciente_ve_os_parceiros_mas_nao_atribui(cliente, medico, paciente, parceiro_atribuido, acompanhamento):
+    lista = cliente.get(_url(acompanhamento), headers=paciente["headers"])
     assert lista.status_code == 200
     assert lista.json()[0]["parceiro"]["profissao"] == "Nutricionista"
 
     resposta = cliente.post(
-        _url(jornada), json={"parceiro_id": parceiro_atribuido["usuario"]["id"]}, headers=paciente["headers"]
+        _url(acompanhamento), json={"parceiro_id": parceiro_atribuido["usuario"]["id"]}, headers=paciente["headers"]
     )
     assert resposta.status_code == 403
 
 
-def test_atribuicao_repetida_retorna_409(cliente, medico, parceiro_atribuido, jornada):
+def test_atribuicao_repetida_retorna_409(cliente, medico, parceiro_atribuido, acompanhamento):
     resposta = cliente.post(
-        _url(jornada), json={"parceiro_id": parceiro_atribuido["usuario"]["id"]}, headers=medico["headers"]
+        _url(acompanhamento), json={"parceiro_id": parceiro_atribuido["usuario"]["id"]}, headers=medico["headers"]
     )
     assert resposta.status_code == 409
 
 
-def test_so_parceiros_ativos_podem_ser_atribuidos(cliente, medico, paciente, outro_paciente, parceiro, jornada):
+def test_so_parceiros_ativos_podem_ser_atribuidos(cliente, medico, paciente, outro_paciente, parceiro, acompanhamento):
     for usuario_id in (outro_paciente["usuario"]["id"], medico["usuario"]["id"], 999):
-        resposta = cliente.post(_url(jornada), json={"parceiro_id": usuario_id}, headers=medico["headers"])
+        resposta = cliente.post(_url(acompanhamento), json={"parceiro_id": usuario_id}, headers=medico["headers"])
         assert resposta.status_code == 404
 
     cliente.patch(f"/users/{parceiro['usuario']['id']}", json={"ativo": False}, headers=medico["headers"])
     resposta = cliente.post(
-        _url(jornada), json={"parceiro_id": parceiro["usuario"]["id"]}, headers=medico["headers"]
+        _url(acompanhamento), json={"parceiro_id": parceiro["usuario"]["id"]}, headers=medico["headers"]
     )
     assert resposta.status_code == 409
 
 
-def test_parceiro_pode_ser_atribuido_antes_do_primeiro_acesso(cliente, medico, jornada):
+def test_parceiro_pode_ser_atribuido_antes_do_primeiro_acesso(cliente, medico, acompanhamento):
     """Como o paciente, o parceiro não precisa ter entrado no sistema para o médico trabalhar."""
     from tests.conftest import criar_conta
 
     conta = criar_conta(cliente, medico, "parceiro", "Rui Prado", "rui@fisio.com", "Fisioterapeuta").json()
     assert conta["primeiro_acesso_pendente"] is True
-    resposta = cliente.post(_url(jornada), json={"parceiro_id": conta["id"]}, headers=medico["headers"])
+    resposta = cliente.post(_url(acompanhamento), json={"parceiro_id": conta["id"]}, headers=medico["headers"])
     assert resposta.status_code == 201
 
 
-def test_medico_remove_parceiro_e_o_acesso_acaba(cliente, medico, parceiro_atribuido, jornada):
+def test_medico_remove_parceiro_e_o_acesso_acaba(cliente, medico, parceiro_atribuido, acompanhamento):
     parceiro_id = parceiro_atribuido["usuario"]["id"]
-    assert cliente.get(f"/journeys/{jornada['id']}", headers=parceiro_atribuido["headers"]).status_code == 200
+    assert cliente.get(f"/follow-ups/{acompanhamento['id']}", headers=parceiro_atribuido["headers"]).status_code == 200
 
-    resposta = cliente.delete(f"{_url(jornada)}/{parceiro_id}", headers=medico["headers"])
+    resposta = cliente.delete(f"{_url(acompanhamento)}/{parceiro_id}", headers=medico["headers"])
     assert resposta.status_code == 204
-    assert cliente.get(_url(jornada), headers=medico["headers"]).json() == []
-    assert cliente.get(f"/journeys/{jornada['id']}", headers=parceiro_atribuido["headers"]).status_code == 403
-    assert cliente.get("/journeys", headers=parceiro_atribuido["headers"]).json() == []
+    assert cliente.get(_url(acompanhamento), headers=medico["headers"]).json() == []
+    assert cliente.get(f"/follow-ups/{acompanhamento['id']}", headers=parceiro_atribuido["headers"]).status_code == 403
+    assert cliente.get("/follow-ups", headers=parceiro_atribuido["headers"]).json() == []
 
     # Remover de novo: não está mais atribuído
-    assert cliente.delete(f"{_url(jornada)}/{parceiro_id}", headers=medico["headers"]).status_code == 404
+    assert cliente.delete(f"{_url(acompanhamento)}/{parceiro_id}", headers=medico["headers"]).status_code == 404
 
 
-def test_nao_atribui_parceiro_em_jornada_encerrada(cliente, medico, parceiro, jornada):
-    cliente.patch(f"/journeys/{jornada['id']}/status", json={"status": "encerrada"}, headers=medico["headers"])
+def test_nao_atribui_parceiro_em_acompanhamento_encerrado(cliente, medico, parceiro, acompanhamento):
+    cliente.patch(f"/follow-ups/{acompanhamento['id']}/status", json={"status": "encerrado"}, headers=medico["headers"])
     resposta = cliente.post(
-        _url(jornada), json={"parceiro_id": parceiro["usuario"]["id"]}, headers=medico["headers"]
+        _url(acompanhamento), json={"parceiro_id": parceiro["usuario"]["id"]}, headers=medico["headers"]
     )
     assert resposta.status_code == 409
 
@@ -94,36 +94,36 @@ def test_nao_atribui_parceiro_em_jornada_encerrada(cliente, medico, parceiro, jo
 # --- O que o parceiro vê
 
 
-def test_parceiro_sem_atribuicao_nao_ve_nada(cliente, parceiro, jornada):
-    assert cliente.get("/journeys", headers=parceiro["headers"]).json() == []
-    assert cliente.get(f"/journeys/{jornada['id']}", headers=parceiro["headers"]).status_code == 403
-    assert cliente.get(_url(jornada), headers=parceiro["headers"]).status_code == 403
+def test_parceiro_sem_atribuicao_nao_ve_nada(cliente, parceiro, acompanhamento):
+    assert cliente.get("/follow-ups", headers=parceiro["headers"]).json() == []
+    assert cliente.get(f"/follow-ups/{acompanhamento['id']}", headers=parceiro["headers"]).status_code == 403
+    assert cliente.get(_url(acompanhamento), headers=parceiro["headers"]).status_code == 403
 
 
-def test_parceiro_lista_apenas_as_jornadas_atribuidas(cliente, medico, parceiro_atribuido, outro_paciente, jornada):
-    criar_jornada(cliente, medico, outro_paciente, titulo="Reabilitação do joelho")
+def test_parceiro_lista_apenas_as_acompanhamentos_atribuidas(cliente, medico, parceiro_atribuido, outro_paciente, acompanhamento):
+    criar_acompanhamento(cliente, medico, outro_paciente, titulo="Reabilitação do joelho")
 
-    jornadas = cliente.get("/journeys", headers=parceiro_atribuido["headers"]).json()
-    assert [j["id"] for j in jornadas] == [jornada["id"]]
-    assert jornadas[0]["paciente"]["nome"] == "Carlos Lima"
+    acompanhamentos = cliente.get("/follow-ups", headers=parceiro_atribuido["headers"]).json()
+    assert [j["id"] for j in acompanhamentos] == [acompanhamento["id"]]
+    assert acompanhamentos[0]["paciente"]["nome"] == "Carlos Lima"
 
 
-def test_parceiro_nao_ve_consultas_nem_linha_do_tempo(cliente, medico, parceiro_atribuido, jornada):
-    criar_solicitacao(cliente, medico, jornada)
-    base = f"/journeys/{jornada['id']}"
+def test_parceiro_nao_ve_consultas_nem_linha_do_tempo(cliente, medico, parceiro_atribuido, acompanhamento):
+    criar_solicitacao(cliente, medico, acompanhamento)
+    base = f"/follow-ups/{acompanhamento['id']}"
     # As solicitações destinadas ao paciente não aparecem para o parceiro
     assert cliente.get(f"{base}/requests", headers=parceiro_atribuido["headers"]).json() == []
     for rota in ("consultations", "timeline", "partners"):
         resposta = cliente.get(f"{base}/{rota}", headers=parceiro_atribuido["headers"])
         assert resposta.status_code == 403, rota
-        assert resposta.json()["detail"] == "Parceiros têm acesso apenas à ficha do paciente e aos próprios envios."
+        assert resposta.json()["detail"] == "Parceiros têm acesso apenas à anamnese do paciente e aos próprios envios."
 
 
-def test_parceiro_nao_altera_a_jornada(cliente, parceiro_atribuido, jornada):
-    base = f"/journeys/{jornada['id']}"
+def test_parceiro_nao_altera_o_acompanhamento(cliente, parceiro_atribuido, acompanhamento):
+    base = f"/follow-ups/{acompanhamento['id']}"
     headers = parceiro_atribuido["headers"]
     assert cliente.patch(f"{base}/step", json={"passo_atual": "exame"}, headers=headers).status_code == 403
-    assert cliente.patch(f"{base}/status", json={"status": "encerrada"}, headers=headers).status_code == 403
+    assert cliente.patch(f"{base}/status", json={"status": "encerrado"}, headers=headers).status_code == 403
     consulta = cliente.post(
         f"{base}/consultations", json={"tipo": "consulta", "data": "2026-10-01T10:00:00Z"}, headers=headers
     )
@@ -134,24 +134,24 @@ def test_parceiro_nao_altera_a_jornada(cliente, parceiro_atribuido, jornada):
 
 
 def test_parceiro_envia_documento_e_ve_apenas_os_proprios_envios(
-    cliente, medico, paciente, parceiro_atribuido, jornada
+    cliente, medico, paciente, parceiro_atribuido, acompanhamento
 ):
-    enviar_documento(cliente, paciente, jornada, nome="hemograma.pdf")
-    envio = enviar_documento(cliente, parceiro_atribuido, jornada, nome="plano_alimentar.pdf", conteudo=b"%PDF plano")
+    enviar_documento(cliente, paciente, acompanhamento, nome="hemograma.pdf")
+    envio = enviar_documento(cliente, parceiro_atribuido, acompanhamento, nome="plano_alimentar.pdf", conteudo=b"%PDF plano")
     assert envio.status_code == 201, envio.text
     assert envio.json()["enviado_por"]["nome"] == "Marina Costa"
 
-    do_parceiro = cliente.get(f"/journeys/{jornada['id']}/documents", headers=parceiro_atribuido["headers"]).json()
+    do_parceiro = cliente.get(f"/follow-ups/{acompanhamento['id']}/documents", headers=parceiro_atribuido["headers"]).json()
     assert [e["arquivo"]["nome_original"] for e in do_parceiro] == ["plano_alimentar.pdf"]
 
     # Médico e paciente veem os dois
     for usuario in (medico, paciente):
-        todos = cliente.get(f"/journeys/{jornada['id']}/documents", headers=usuario["headers"]).json()
+        todos = cliente.get(f"/follow-ups/{acompanhamento['id']}/documents", headers=usuario["headers"]).json()
         assert len(todos) == 2
 
 
-def test_envio_do_parceiro_aparece_para_o_medico_revisar(cliente, medico, parceiro_atribuido, jornada):
-    exame = enviar_documento(cliente, parceiro_atribuido, jornada, nome="plano.pdf").json()
+def test_envio_do_parceiro_aparece_para_o_medico_revisar(cliente, medico, parceiro_atribuido, acompanhamento):
+    exame = enviar_documento(cliente, parceiro_atribuido, acompanhamento, nome="plano.pdf").json()
 
     painel = cliente.get("/dashboard/pending", headers=medico["headers"]).json()
     assert [e["id"] for e in painel["documentos_aguardando_revisao"]] == [exame["id"]]
@@ -161,16 +161,16 @@ def test_envio_do_parceiro_aparece_para_o_medico_revisar(cliente, medico, parcei
     )
     assert revisao.status_code == 200
     # O parceiro vê a revisão do próprio envio, mas não pode revisar
-    do_parceiro = cliente.get(f"/journeys/{jornada['id']}/documents", headers=parceiro_atribuido["headers"]).json()
+    do_parceiro = cliente.get(f"/follow-ups/{acompanhamento['id']}/documents", headers=parceiro_atribuido["headers"]).json()
     assert do_parceiro[0]["observacao_revisao"] == "Plano aprovado."
     assert cliente.patch(
         f"/documents/{exame['id']}/review", json={}, headers=parceiro_atribuido["headers"]
     ).status_code == 403
 
 
-def test_parceiro_baixa_so_os_arquivos_que_enviou(cliente, medico, paciente, parceiro_atribuido, jornada):
-    do_paciente = enviar_documento(cliente, paciente, jornada).json()
-    do_parceiro = enviar_documento(cliente, parceiro_atribuido, jornada, nome="plano.pdf", conteudo=b"%PDF plano").json()
+def test_parceiro_baixa_so_os_arquivos_que_enviou(cliente, medico, paciente, parceiro_atribuido, acompanhamento):
+    do_paciente = enviar_documento(cliente, paciente, acompanhamento).json()
+    do_parceiro = enviar_documento(cliente, parceiro_atribuido, acompanhamento, nome="plano.pdf", conteudo=b"%PDF plano").json()
     headers = parceiro_atribuido["headers"]
 
     proprio = cliente.get(f"/files/{do_parceiro['arquivo']['id']}/download", headers=headers)
@@ -186,25 +186,25 @@ def test_parceiro_baixa_so_os_arquivos_que_enviou(cliente, medico, paciente, par
         assert cliente.get(f"/files/{do_parceiro['arquivo']['id']}/download", headers=usuario["headers"]).status_code == 200
 
 
-def test_parceiro_nao_atende_solicitacao_destinada_ao_paciente(cliente, medico, parceiro_atribuido, jornada):
-    solicitacao = criar_solicitacao(cliente, medico, jornada, tipo="orientacao_profissional")
-    resposta = enviar_documento(cliente, parceiro_atribuido, jornada, solicitacao_id=solicitacao["id"])
+def test_parceiro_nao_atende_solicitacao_destinada_ao_paciente(cliente, medico, parceiro_atribuido, acompanhamento):
+    solicitacao = criar_solicitacao(cliente, medico, acompanhamento, tipo="orientacao_profissional")
+    resposta = enviar_documento(cliente, parceiro_atribuido, acompanhamento, solicitacao_id=solicitacao["id"])
     # Para o parceiro, é como se a solicitação não existisse
     assert resposta.status_code == 404
 
 
-def test_parceiro_nao_envia_sem_atribuicao_nem_em_jornada_encerrada(cliente, medico, parceiro, jornada):
-    assert enviar_documento(cliente, parceiro, jornada).status_code == 403
+def test_parceiro_nao_envia_sem_atribuicao_nem_em_acompanhamento_encerrado(cliente, medico, parceiro, acompanhamento):
+    assert enviar_documento(cliente, parceiro, acompanhamento).status_code == 403
 
-    atribuir_parceiro(cliente, medico, jornada, parceiro)
-    cliente.patch(f"/journeys/{jornada['id']}/status", json={"status": "encerrada"}, headers=medico["headers"])
-    assert enviar_documento(cliente, parceiro, jornada).status_code == 409
+    atribuir_parceiro(cliente, medico, acompanhamento, parceiro)
+    cliente.patch(f"/follow-ups/{acompanhamento['id']}/status", json={"status": "encerrado"}, headers=medico["headers"])
+    assert enviar_documento(cliente, parceiro, acompanhamento).status_code == 409
 
 
-def test_um_parceiro_nao_ve_os_envios_de_outro(cliente, medico, parceiro_atribuido, jornada):
+def test_um_parceiro_nao_ve_os_envios_de_outro(cliente, medico, parceiro_atribuido, acompanhamento):
     outro = criar_conta_ativa(cliente, medico, "parceiro", "Rui Prado", "rui@fisio.com", "Fisioterapeuta")
-    atribuir_parceiro(cliente, medico, jornada, outro)
-    envio = enviar_documento(cliente, parceiro_atribuido, jornada, nome="plano.pdf").json()
+    atribuir_parceiro(cliente, medico, acompanhamento, outro)
+    envio = enviar_documento(cliente, parceiro_atribuido, acompanhamento, nome="plano.pdf").json()
 
-    assert cliente.get(f"/journeys/{jornada['id']}/documents", headers=outro["headers"]).json() == []
+    assert cliente.get(f"/follow-ups/{acompanhamento['id']}/documents", headers=outro["headers"]).json() == []
     assert cliente.get(f"/files/{envio['arquivo']['id']}/download", headers=outro["headers"]).status_code == 403

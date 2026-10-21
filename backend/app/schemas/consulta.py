@@ -28,7 +28,7 @@ class PrescricaoSaida(SchemaSaida):
 
 class ConsultaSaida(SchemaSaida):
     id: int
-    jornada_id: int
+    acompanhamento_id: int
     tipo: TipoConsulta
     data: DataHoraUTC
     anotacoes: str | None

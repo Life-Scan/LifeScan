@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { Anexo, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
 import { ROTULOS_CATEGORIA, ROTULOS_TIPO_CONSULTA, formatarDataHora } from '../../utils/formatacao'
 import { EtiquetaSolicitacao } from './AbaSolicitacoes'
-import estilos from './Jornada.module.css'
+import estilos from './Acompanhamento.module.css'
 
 const TIPOS = [
   { id: 'consulta', rotulo: 'Consultas', icone: Stethoscope, aba: 'consultas' },
@@ -57,7 +57,7 @@ function descreverEvento(evento, pacienteId) {
   }
 }
 
-export default function AbaLinhaDoTempo({ eventos, jornada, irParaAba }) {
+export default function AbaLinhaDoTempo({ eventos, acompanhamento, irParaAba }) {
   const [filtro, setFiltro] = useState([])
   const [recentesPrimeiro, setRecentesPrimeiro] = useState(false)
 
@@ -104,13 +104,13 @@ export default function AbaLinhaDoTempo({ eventos, jornada, irParaAba }) {
 
       {visiveis.length === 0 ? (
         <EstadoVazio icone={History}>
-          {eventos.length === 0 ? 'Nada registrado nesta jornada ainda.' : 'Nenhum evento deste tipo.'}
+          {eventos.length === 0 ? 'Nada registrado neste acompanhamento ainda.' : 'Nenhum evento deste tipo.'}
         </EstadoVazio>
       ) : (
         <ol className={estilos.linhaDoTempo}>
           {visiveis.map((evento) => {
             const { icone: Icone, aba, rotulo } = TIPO_POR_ID[evento.tipo]
-            const { titulo, texto, detalhes, etiqueta, anexo } = descreverEvento(evento, jornada.paciente.id)
+            const { titulo, texto, detalhes, etiqueta, anexo } = descreverEvento(evento, acompanhamento.paciente.id)
             return (
               <li key={`${evento.tipo}-${evento.id}`} className={estilos.evento}>
                 <span className={`${estilos.iconeEvento} ${estilos[`icone_${evento.tipo}`]}`} aria-hidden="true">

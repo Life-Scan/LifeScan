@@ -8,18 +8,18 @@ from app.schemas.solicitacao import SolicitacaoSaida
 from app.schemas.usuario import UsuarioResumo
 
 
-class JornadaResumo(SchemaSaida):
+class AcompanhamentoResumo(SchemaSaida):
     id: int
     titulo: str
     paciente: UsuarioResumo
 
 
 class DocumentoPendente(DocumentoSaida):
-    jornada: JornadaResumo
+    acompanhamento: AcompanhamentoResumo
 
 
 class SolicitacaoPendente(SolicitacaoSaida):
-    jornada: JornadaResumo
+    acompanhamento: AcompanhamentoResumo
 
 
 class PainelMedico(BaseModel):

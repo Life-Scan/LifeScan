@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import obter_jornada_com_acesso
+from app.core.deps import obter_acompanhamento_com_acesso
 from app.db.sessao import obter_sessao
-from app.models.jornada import Jornada
+from app.models.acompanhamento import Acompanhamento
 from app.schemas.linha_do_tempo import EventoLinhaDoTempo, TipoEvento
 from app.services.linha_do_tempo import montar_linha_do_tempo
 
@@ -24,14 +24,14 @@ def _interpretar_tipos(texto: str | None) -> set[TipoEvento] | None:
     return {TipoEvento(valor) for valor in valores}
 
 
-@router.get("/journeys/{jornada_id}/timeline", response_model=list[EventoLinhaDoTempo])
+@router.get("/follow-ups/{acompanhamento_id}/timeline", response_model=list[EventoLinhaDoTempo])
 def obter_linha_do_tempo(
     tipos: str | None = Query(
         None,
         description="Filtro opcional, separado por vírgula: consulta, documento, solicitacao",
     ),
-    jornada: Jornada = Depends(obter_jornada_com_acesso),
+    acompanhamento: Acompanhamento = Depends(obter_acompanhamento_com_acesso),
     sessao: Session = Depends(obter_sessao),
 ) -> list[EventoLinhaDoTempo]:
-    """Linha do tempo da jornada em ordem cronológica."""
-    return montar_linha_do_tempo(sessao, jornada, _interpretar_tipos(tipos))
+    """Linha do tempo do acompanhamento em ordem cronológica."""
+    return montar_linha_do_tempo(sessao, acompanhamento, _interpretar_tipos(tipos))

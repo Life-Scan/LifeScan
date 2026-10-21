@@ -2,10 +2,10 @@ import { NotebookPen, Pencil } from 'lucide-react'
 import { useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
-import { salvarFicha } from '../../api/servicos'
+import { salvarAnamnese } from '../../api/servicos'
 import { Alerta, EstadoVazio, estilos as ui } from '../../components/ui'
 import { ROTULOS_SEXO, formatarDataHora, formatarDataSemHora } from '../../utils/formatacao'
-import estilos from './Jornada.module.css'
+import estilos from './Acompanhamento.module.css'
 
 const CAMPOS_DE_TEXTO = [
   { campo: 'diagnosticos', rotulo: 'Diagnósticos e condições', exemplo: 'Ex.: Hipertensão estágio 1' },
@@ -16,47 +16,47 @@ const CAMPOS_DE_TEXTO = [
   { campo: 'observacoes', rotulo: 'Observações', exemplo: '' },
 ]
 
-export default function AbaFicha({ ficha, jornada, ehMedico, ehParceiro, atualizar }) {
+export default function AbaAnamnese({ anamnese, acompanhamento, ehMedico, ehParceiro, atualizar }) {
   const [editando, setEditando] = useState(false)
 
   return (
     <div className={estilos.pilha}>
       <div className={ui.cartaoCabecalho} style={{ marginBottom: 0 }}>
         <div>
-          <h2>Ficha de {ficha.paciente.nome}</h2>
-          {ficha.atualizado_em && <p className={ui.ajuda}>Atualizada em {formatarDataHora(ficha.atualizado_em)}</p>}
+          <h2>Anamnese de {anamnese.paciente.nome}</h2>
+          {anamnese.atualizado_em && <p className={ui.ajuda}>Atualizada em {formatarDataHora(anamnese.atualizado_em)}</p>}
         </div>
         {ehMedico && !editando && (
           <button type="button" className={ui.botao} onClick={() => setEditando(true)}>
             <Pencil size={15} aria-hidden="true" />
-            {ficha.preenchida ? 'Editar ficha' : 'Preencher ficha'}
+            {anamnese.preenchida ? 'Editar anamnese' : 'Preencher anamnese'}
           </button>
         )}
       </div>
 
       {editando ? (
-        <FormularioFicha
-          ficha={ficha}
-          jornadaId={jornada.id}
+        <FormularioAnamnese
+          anamnese={anamnese}
+          acompanhamentoId={acompanhamento.id}
           aoConcluir={async () => {
             setEditando(false)
             await atualizar()
           }}
           aoCancelar={() => setEditando(false)}
         />
-      ) : ficha.preenchida ? (
-        <VisualizacaoFicha ficha={ficha} />
+      ) : anamnese.preenchida ? (
+        <VisualizacaoAnamnese anamnese={anamnese} />
       ) : (
         <EstadoVazio icone={NotebookPen}>
           {ehMedico
-            ? 'A ficha ainda não foi preenchida. Ela resume o paciente para você e para os parceiros atribuídos.'
-            : 'O médico ainda não preencheu esta ficha.'}
+            ? 'A anamnese ainda não foi preenchida. Ela resume o paciente para você e para os parceiros atribuídos.'
+            : 'O médico ainda não preencheu esta anamnese.'}
         </EstadoVazio>
       )}
 
       {ehMedico && !editando && (
         <p className={ui.ajuda}>
-          Os parceiros atribuídos a esta jornada veem esta ficha, mas não veem consultas, prescrições nem exames.
+          Os parceiros atribuídos a este acompanhamento veem esta anamnese, mas não veem consultas, prescrições nem exames.
         </p>
       )}
       {ehParceiro && (
@@ -66,30 +66,30 @@ export default function AbaFicha({ ficha, jornada, ehMedico, ehParceiro, atualiz
   )
 }
 
-function VisualizacaoFicha({ ficha }) {
+function VisualizacaoAnamnese({ anamnese }) {
   const basicos = [
-    { rotulo: 'Idade', valor: ficha.idade != null ? `${ficha.idade} anos` : null },
-    { rotulo: 'Nascimento', valor: formatarDataSemHora(ficha.data_nascimento) || null },
-    { rotulo: 'Sexo', valor: ROTULOS_SEXO[ficha.sexo] || null },
-    { rotulo: 'Altura', valor: ficha.altura_cm ? `${ficha.altura_cm} cm` : null },
-    { rotulo: 'Peso', valor: ficha.peso_kg ? `${String(ficha.peso_kg).replace('.', ',')} kg` : null },
+    { rotulo: 'Idade', valor: anamnese.idade != null ? `${anamnese.idade} anos` : null },
+    { rotulo: 'Nascimento', valor: formatarDataSemHora(anamnese.data_nascimento) || null },
+    { rotulo: 'Sexo', valor: ROTULOS_SEXO[anamnese.sexo] || null },
+    { rotulo: 'Altura', valor: anamnese.altura_cm ? `${anamnese.altura_cm} cm` : null },
+    { rotulo: 'Peso', valor: anamnese.peso_kg ? `${String(anamnese.peso_kg).replace('.', ',')} kg` : null },
   ]
 
   return (
     <>
-      <dl className={estilos.fichaBasicos}>
+      <dl className={estilos.anamneseBasicos}>
         {basicos.map(({ rotulo, valor }) => (
-          <div key={rotulo} className={estilos.fichaItem}>
+          <div key={rotulo} className={estilos.anamneseItem}>
             <dt>{rotulo}</dt>
             <dd>{valor || <span className={ui.suave}>Não informado</span>}</dd>
           </div>
         ))}
       </dl>
-      <dl className={estilos.fichaTextos}>
-        {CAMPOS_DE_TEXTO.filter(({ campo }) => ficha[campo]).map(({ campo, rotulo }) => (
-          <div key={campo} className={estilos.fichaItem}>
+      <dl className={estilos.anamneseTextos}>
+        {CAMPOS_DE_TEXTO.filter(({ campo }) => anamnese[campo]).map(({ campo, rotulo }) => (
+          <div key={campo} className={estilos.anamneseItem}>
             <dt>{rotulo}</dt>
-            <dd className={estilos.texto}>{ficha[campo]}</dd>
+            <dd className={estilos.texto}>{anamnese[campo]}</dd>
           </div>
         ))}
       </dl>
@@ -97,13 +97,13 @@ function VisualizacaoFicha({ ficha }) {
   )
 }
 
-function FormularioFicha({ ficha, jornadaId, aoConcluir, aoCancelar }) {
+function FormularioAnamnese({ anamnese, acompanhamentoId, aoConcluir, aoCancelar }) {
   const [formulario, setFormulario] = useState(() => ({
-    data_nascimento: ficha.data_nascimento || '',
-    sexo: ficha.sexo || '',
-    altura_cm: ficha.altura_cm ?? '',
-    peso_kg: ficha.peso_kg ?? '',
-    ...Object.fromEntries(CAMPOS_DE_TEXTO.map(({ campo }) => [campo, ficha[campo] || ''])),
+    data_nascimento: anamnese.data_nascimento || '',
+    sexo: anamnese.sexo || '',
+    altura_cm: anamnese.altura_cm ?? '',
+    peso_kg: anamnese.peso_kg ?? '',
+    ...Object.fromEntries(CAMPOS_DE_TEXTO.map(({ campo }) => [campo, anamnese[campo] || ''])),
   }))
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -115,7 +115,7 @@ function FormularioFicha({ ficha, jornadaId, aoConcluir, aoCancelar }) {
     setErro('')
     setEnviando(true)
     try {
-      await salvarFicha(jornadaId, {
+      await salvarAnamnese(acompanhamentoId, {
         data_nascimento: formulario.data_nascimento || null,
         sexo: formulario.sexo || null,
         altura_cm: formulario.altura_cm === '' ? null : Number(formulario.altura_cm),
@@ -134,9 +134,9 @@ function FormularioFicha({ ficha, jornadaId, aoConcluir, aoCancelar }) {
       <Alerta tipo="erro">{erro}</Alerta>
       <div className={ui.linhaCampos}>
         <div>
-          <label htmlFor="ficha-nascimento">Data de nascimento</label>
+          <label htmlFor="anamnese-nascimento">Data de nascimento</label>
           <input
-            id="ficha-nascimento"
+            id="anamnese-nascimento"
             type="date"
             value={formulario.data_nascimento}
             max={new Date().toISOString().slice(0, 10)}
@@ -144,8 +144,8 @@ function FormularioFicha({ ficha, jornadaId, aoConcluir, aoCancelar }) {
           />
         </div>
         <div>
-          <label htmlFor="ficha-sexo">Sexo</label>
-          <select id="ficha-sexo" value={formulario.sexo} onChange={alterar('sexo')}>
+          <label htmlFor="anamnese-sexo">Sexo</label>
+          <select id="anamnese-sexo" value={formulario.sexo} onChange={alterar('sexo')}>
             <option value="">Não informado</option>
             {Object.entries(ROTULOS_SEXO).map(([valor, rotulo]) => (
               <option key={valor} value={valor}>
@@ -155,20 +155,20 @@ function FormularioFicha({ ficha, jornadaId, aoConcluir, aoCancelar }) {
           </select>
         </div>
         <div>
-          <label htmlFor="ficha-altura">Altura (cm)</label>
-          <input id="ficha-altura" type="number" min="30" max="260" value={formulario.altura_cm} onChange={alterar('altura_cm')} />
+          <label htmlFor="anamnese-altura">Altura (cm)</label>
+          <input id="anamnese-altura" type="number" min="30" max="260" value={formulario.altura_cm} onChange={alterar('altura_cm')} />
         </div>
         <div>
-          <label htmlFor="ficha-peso">Peso (kg)</label>
-          <input id="ficha-peso" type="number" min="1" max="500" step="0.1" value={formulario.peso_kg} onChange={alterar('peso_kg')} />
+          <label htmlFor="anamnese-peso">Peso (kg)</label>
+          <input id="anamnese-peso" type="number" min="1" max="500" step="0.1" value={formulario.peso_kg} onChange={alterar('peso_kg')} />
         </div>
       </div>
 
       {CAMPOS_DE_TEXTO.map(({ campo, rotulo, exemplo }) => (
         <div key={campo}>
-          <label htmlFor={`ficha-${campo}`}>{rotulo}</label>
+          <label htmlFor={`anamnese-${campo}`}>{rotulo}</label>
           <textarea
-            id={`ficha-${campo}`}
+            id={`anamnese-${campo}`}
             rows={2}
             value={formulario[campo]}
             onChange={alterar(campo)}
@@ -180,7 +180,7 @@ function FormularioFicha({ ficha, jornadaId, aoConcluir, aoCancelar }) {
       <p className={ui.ajuda}>Todos os campos são opcionais. Deixe em branco o que não se aplica.</p>
       <div className={ui.acoes}>
         <button type="submit" className={ui.botao} disabled={enviando}>
-          {enviando ? 'Salvando…' : 'Salvar ficha'}
+          {enviando ? 'Salvando…' : 'Salvar anamnese'}
         </button>
         <button type="button" className={ui.botaoSecundario} onClick={aoCancelar} disabled={enviando}>
           Cancelar

@@ -22,7 +22,7 @@ def test_medico_cria_conta_de_paciente_e_email_e_enviado(cliente, medico):
     assert conta["ativo"] is True
     assert conta["primeiro_acesso_pendente"] is True
     assert conta["ultimo_login_em"] is None
-    assert conta["jornada_id"] is None
+    assert conta["acompanhamento_id"] is None
     assert "senha" not in " ".join(conta)
 
     email = caixa_de_saida[-1]
@@ -77,15 +77,15 @@ def test_listagem_e_filtro_por_tipo(cliente, medico, paciente, outro_paciente, p
     assert [c["email"] for c in parceiros] == ["marina@nutri.com"]
 
 
-def test_listagem_mostra_primeiro_acesso_e_jornada(cliente, medico, paciente, jornada):
+def test_listagem_mostra_primeiro_acesso_e_acompanhamento(cliente, medico, paciente, acompanhamento):
     criar_conta(cliente, medico, "paciente", "Maria Alves", "maria@email.com")
     contas = {c["email"]: c for c in cliente.get("/users", headers=medico["headers"]).json()}
 
     assert contas["carlos@email.com"]["primeiro_acesso_pendente"] is False
     assert contas["carlos@email.com"]["ultimo_login_em"] is not None
-    assert contas["carlos@email.com"]["jornada_id"] == jornada["id"]
+    assert contas["carlos@email.com"]["acompanhamento_id"] == acompanhamento["id"]
     assert contas["maria@email.com"]["primeiro_acesso_pendente"] is True
-    assert contas["maria@email.com"]["jornada_id"] is None
+    assert contas["maria@email.com"]["acompanhamento_id"] is None
 
 
 def test_medico_atualiza_nome_e_profissao(cliente, medico, parceiro):
@@ -159,28 +159,28 @@ def test_nao_reenvia_acesso_para_conta_desativada(cliente, medico, paciente):
     assert cliente.post(f"{url}/resend-access", headers=medico["headers"]).status_code == 409
 
 
-def test_medico_trabalha_na_jornada_antes_do_primeiro_acesso_do_paciente(cliente, medico):
+def test_medico_trabalha_no_acompanhamento_antes_do_primeiro_acesso_do_paciente(cliente, medico):
     """O sistema não depende de o paciente entrar: o médico já centraliza os dados."""
     conta = criar_conta(cliente, medico, "paciente", "Carlos Lima", "carlos@email.com").json()
     assert conta["primeiro_acesso_pendente"] is True
 
-    jornada = cliente.post(
-        "/journeys",
+    acompanhamento = cliente.post(
+        "/follow-ups",
         json={"paciente_id": conta["id"], "titulo": "Controle da hipertensão"},
         headers=medico["headers"],
     )
-    assert jornada.status_code == 201
-    jornada_id = jornada.json()["id"]
+    assert acompanhamento.status_code == 201
+    acompanhamento_id = acompanhamento.json()["id"]
 
     consulta = cliente.post(
-        f"/journeys/{jornada_id}/consultations",
+        f"/follow-ups/{acompanhamento_id}/consultations",
         json={"tipo": "consulta", "data": "2026-10-01T14:00:00Z", "anotacoes": "Primeira consulta."},
         headers=medico["headers"],
     )
     assert consulta.status_code == 201
 
     exame = cliente.post(
-        f"/journeys/{jornada_id}/documents",
+        f"/follow-ups/{acompanhamento_id}/documents",
         data={"titulo": "Exame trazido na consulta"},
         files={"arquivo": ("exame.pdf", b"%PDF")},
         headers=medico["headers"],
@@ -189,7 +189,7 @@ def test_medico_trabalha_na_jornada_antes_do_primeiro_acesso_do_paciente(cliente
 
     # Quando o paciente finalmente entra, encontra tudo lá
     paciente = criar_conta_ativa_existente(cliente)
-    eventos = cliente.get(f"/journeys/{jornada_id}/timeline", headers=paciente["headers"]).json()
+    eventos = cliente.get(f"/follow-ups/{acompanhamento_id}/timeline", headers=paciente["headers"]).json()
     assert [e["tipo"] for e in eventos] == ["consulta", "documento"]
 
 
@@ -201,9 +201,9 @@ def criar_conta_ativa_existente(cliente) -> dict:
     return entrar(cliente, "carlos@email.com")
 
 
-def test_painel_do_parceiro(cliente, parceiro, jornada):
-    assert cliente.get("/journeys", headers=parceiro["headers"]).json() == []
-    assert cliente.get(f"/journeys/{jornada['id']}", headers=parceiro["headers"]).status_code == 403
+def test_painel_do_parceiro(cliente, parceiro, acompanhamento):
+    assert cliente.get("/follow-ups", headers=parceiro["headers"]).json() == []
+    assert cliente.get(f"/follow-ups/{acompanhamento['id']}", headers=parceiro["headers"]).status_code == 403
     painel = cliente.get("/dashboard/pending", headers=parceiro["headers"]).json()
     assert painel == {"tipo_usuario": "parceiro", "solicitacoes_pendentes": []}
 

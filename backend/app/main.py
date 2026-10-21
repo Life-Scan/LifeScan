@@ -5,13 +5,13 @@ from fastapi.responses import JSONResponse
 from app.core.config import obter_configuracoes
 from app.core.erros import registrar_tratadores_erro
 from app.routers import (
+    acompanhamentos,
+    anamnese,
     arquivos,
     atribuicoes,
     auth,
     consultas,
     documentos,
-    ficha,
-    jornadas,
     linha_do_tempo,
     painel,
     solicitacoes,
@@ -62,8 +62,8 @@ def criar_app() -> FastAPI:
     for modulo in (
         auth,
         usuarios,
-        jornadas,
-        ficha,
+        acompanhamentos,
+        anamnese,
         atribuicoes,
         consultas,
         solicitacoes,

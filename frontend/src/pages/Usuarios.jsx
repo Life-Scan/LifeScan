@@ -289,16 +289,16 @@ function ItemConta({ conta, aoAlterar }) {
           </div>
         </div>
         <div className={ui.acoes}>
-          {ehPaciente && conta.jornada_id && (
-            <Link to={`/jornadas/${conta.jornada_id}`} className={`${ui.botao} ${ui.botaoPequeno}`}>
+          {ehPaciente && conta.acompanhamento_id && (
+            <Link to={`/acompanhamentos/${conta.acompanhamento_id}`} className={`${ui.botao} ${ui.botaoPequeno}`}>
               <Route size={14} aria-hidden="true" />
-              Abrir jornada
+              Abrir acompanhamento
             </Link>
           )}
-          {ehPaciente && !conta.jornada_id && conta.ativo && (
-            <Link to={`/jornadas/nova?paciente=${conta.id}`} className={`${ui.botao} ${ui.botaoPequeno}`}>
+          {ehPaciente && !conta.acompanhamento_id && conta.ativo && (
+            <Link to={`/acompanhamentos/novo?paciente=${conta.id}`} className={`${ui.botao} ${ui.botaoPequeno}`}>
               <Route size={14} aria-hidden="true" />
-              Abrir nova jornada
+              Abrir novo acompanhamento
             </Link>
           )}
           {conta.ativo && (

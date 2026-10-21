@@ -11,7 +11,7 @@ import {
   formatarData,
   formatarDataHora,
 } from '../../utils/formatacao'
-import estilos from './Jornada.module.css'
+import estilos from './Acompanhamento.module.css'
 
 const TIPOS_COM_ENVIO = ['exame', 'orientacao_profissional']
 
@@ -22,7 +22,7 @@ export default function AbaDocumentos({
   documentos,
   solicitacoes,
   solicitacaoInicial,
-  jornada,
+  acompanhamento,
   usuario,
   ehMedico,
   ehParceiro,
@@ -57,7 +57,7 @@ export default function AbaDocumentos({
 
       {formularioAberto && (
         <FormularioDocumento
-          jornadaId={jornada.id}
+          acompanhamentoId={acompanhamento.id}
           solicitacoes={atendiveis}
           solicitacaoInicial={solicitacaoInicial}
           mostrarDestinatario={ehMedico}
@@ -205,7 +205,7 @@ function ItemDocumento({ documento, solicitacao, podeRevisar, atualizar }) {
 }
 
 function FormularioDocumento({
-  jornadaId,
+  acompanhamentoId,
   solicitacoes,
   solicitacaoInicial,
   mostrarDestinatario,
@@ -230,7 +230,7 @@ function FormularioDocumento({
     setErro('')
     setEnviando(true)
     try {
-      await enviarDocumento(jornadaId, { titulo, categoria, arquivo, solicitacaoId })
+      await enviarDocumento(acompanhamentoId, { titulo, categoria, arquivo, solicitacaoId })
       await aoConcluir()
     } catch (erroEnvio) {
       setErro(mensagemDeErro(erroEnvio))

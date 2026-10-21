@@ -26,7 +26,7 @@ TIPOS_ATENDIDOS_POR_ENVIO = {TipoSolicitacao.exame, TipoSolicitacao.orientacao_p
 
 
 class Solicitacao(Base):
-    """Pedido do médico com prazo, destinado ao paciente ou a um parceiro da jornada.
+    """Pedido do médico com prazo, destinado ao paciente ou a um parceiro do acompanhamento.
 
     Consulta extra é apenas um lembrete para o paciente.
     """
@@ -34,8 +34,8 @@ class Solicitacao(Base):
     __tablename__ = "solicitacoes"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    jornada_id: Mapped[int] = mapped_column(ForeignKey("jornadas.id"), index=True)
-    # Quem deve atender: o paciente da jornada ou um parceiro atribuído a ela
+    acompanhamento_id: Mapped[int] = mapped_column(ForeignKey("acompanhamentos.id"), index=True)
+    # Quem deve atender: o paciente do acompanhamento ou um parceiro atribuído a ele
     destinatario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id"), index=True)
     tipo: Mapped[TipoSolicitacao] = mapped_column(coluna_enum(TipoSolicitacao, "tipo_solicitacao"))
     descricao: Mapped[str] = mapped_column(Text)

@@ -112,7 +112,7 @@ def test_primeiro_acesso_exige_troca_de_senha(cliente, medico):
 
     # Enquanto não trocar a senha, só /auth/me e a própria troca funcionam
     assert cliente.get("/auth/me", headers=acesso["headers"]).status_code == 200
-    for rota in ("/journeys", "/dashboard/pending"):
+    for rota in ("/follow-ups", "/dashboard/pending"):
         bloqueio = cliente.get(rota, headers=acesso["headers"])
         assert bloqueio.status_code == 403
         assert bloqueio.json()["detail"] == "Defina uma nova senha para continuar usando o sistema."
@@ -124,7 +124,7 @@ def test_primeiro_acesso_exige_troca_de_senha(cliente, medico):
     assert troca.json()["deve_trocar_senha"] is False
 
     # O mesmo token passa a funcionar, e a provisória deixa de valer
-    assert cliente.get("/journeys", headers=acesso["headers"]).status_code == 200
+    assert cliente.get("/follow-ups", headers=acesso["headers"]).status_code == 200
     assert cliente.post("/auth/login", json={"email": "carlos@email.com", "senha": provisoria}).status_code == 401
     assert entrar(cliente, "carlos@email.com", "minha-senha-nova")["usuario"]["deve_trocar_senha"] is False
 

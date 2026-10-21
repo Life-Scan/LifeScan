@@ -24,13 +24,13 @@ class StatusDocumento(str, enum.Enum):
 
 
 class Documento(Base):
-    """Arquivo enviado para a jornada pelo médico, pelo paciente ou por um parceiro:
+    """Arquivo enviado para o acompanhamento pelo médico, pelo paciente ou por um parceiro:
     exames, laudos, planos alimentares, planos de treino, orientações etc."""
 
     __tablename__ = "documentos"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    jornada_id: Mapped[int] = mapped_column(ForeignKey("jornadas.id"), index=True)
+    acompanhamento_id: Mapped[int] = mapped_column(ForeignKey("acompanhamentos.id"), index=True)
     solicitacao_id: Mapped[int | None] = mapped_column(ForeignKey("solicitacoes.id"))
     enviado_por_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id"))
     categoria: Mapped[CategoriaDocumento] = mapped_column(

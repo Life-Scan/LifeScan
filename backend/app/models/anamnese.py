@@ -14,14 +14,14 @@ class Sexo(str, enum.Enum):
     outro = "outro"
 
 
-class FichaPaciente(Base):
+class Anamnese(Base):
     """Resumo clínico do paciente, mantido pelo médico.
 
     É o que os parceiros atribuídos enxergam do paciente (eles não veem consultas,
     prescrições nem documentos de outras pessoas). Todos os campos são opcionais.
     """
 
-    __tablename__ = "fichas_paciente"
+    __tablename__ = "anamneses"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     paciente_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id"), unique=True)

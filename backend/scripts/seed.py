@@ -1,4 +1,4 @@
-"""Cria dados de exemplo: médico, paciente, parceiro e uma jornada com histórico.
+"""Cria dados de exemplo: médico, paciente, parceiro e um acompanhamento com histórico.
 
 Uso (na pasta backend, com o venv ativo e o banco migrado):
     python -m scripts.seed
@@ -22,9 +22,9 @@ from app.models import (
     CategoriaDocumento,
     Consulta,
     Documento,
-    FichaPaciente,
-    Jornada,
-    PassoJornada,
+    Anamnese,
+    Acompanhamento,
+    PassoAcompanhamento,
     Prescricao,
     Sexo,
     Solicitacao,
@@ -41,14 +41,14 @@ EMAIL_PACIENTE = "paciente@lifescan.com"
 EMAIL_PARCEIRO = "parceiro@lifescan.com"
 
 
-def _gravar_arquivo_texto(jornada_id: int, usuario_id: int, nome: str, conteudo: str) -> Arquivo:
+def _gravar_arquivo_texto(acompanhamento_id: int, usuario_id: int, nome: str, conteudo: str) -> Arquivo:
     config = obter_configuracoes()
     config.pasta_uploads.mkdir(parents=True, exist_ok=True)
     nome_armazenado = f"{uuid.uuid4().hex}.txt"
     dados = conteudo.encode("utf-8")
     (config.pasta_uploads / nome_armazenado).write_bytes(dados)
     return Arquivo(
-        jornada_id=jornada_id,
+        acompanhamento_id=acompanhamento_id,
         nome_original=nome,
         nome_armazenado=nome_armazenado,
         tipo_mime="text/plain",
@@ -57,20 +57,20 @@ def _gravar_arquivo_texto(jornada_id: int, usuario_id: int, nome: str, conteudo:
     )
 
 
-def _complementar_ficha_e_parceiro(sessao) -> list[str]:
-    """Garante a ficha do paciente de exemplo e o parceiro atribuído à jornada dele.
+def _complementar_anamnese_e_parceiro(sessao) -> list[str]:
+    """Garante a anamnese do paciente de exemplo e o parceiro atribuído ao acompanhamento dele.
 
     Roda também quando os dados de exemplo já existiam, para bancos criados antes
-    de a ficha e os parceiros existirem.
+    de a anamnese e os parceiros existirem.
     """
     paciente = sessao.scalar(select(Usuario).where(Usuario.email == EMAIL_PACIENTE))
     parceiro = sessao.scalar(select(Usuario).where(Usuario.email == EMAIL_PARCEIRO))
-    jornada = sessao.scalar(select(Jornada).where(Jornada.paciente_id == paciente.id))
+    acompanhamento = sessao.scalar(select(Acompanhamento).where(Acompanhamento.paciente_id == paciente.id))
     criados = []
 
-    if not sessao.scalar(select(FichaPaciente.id).where(FichaPaciente.paciente_id == paciente.id)):
+    if not sessao.scalar(select(Anamnese.id).where(Anamnese.paciente_id == paciente.id)):
         sessao.add(
-            FichaPaciente(
+            Anamnese(
                 paciente_id=paciente.id,
                 data_nascimento=date(1978, 3, 14),
                 sexo=Sexo.masculino,
@@ -83,16 +83,16 @@ def _complementar_ficha_e_parceiro(sessao) -> list[str]:
                 objetivos="Manter a pressão abaixo de 13x8 e perder 8 kg em 6 meses.",
             )
         )
-        criados.append("ficha do paciente")
+        criados.append("anamnese do paciente")
 
-    if parceiro and jornada and not sessao.scalar(
+    if parceiro and acompanhamento and not sessao.scalar(
         select(AtribuicaoParceiro.id).where(
-            AtribuicaoParceiro.jornada_id == jornada.id,
+            AtribuicaoParceiro.acompanhamento_id == acompanhamento.id,
             AtribuicaoParceiro.parceiro_id == parceiro.id,
         )
     ):
-        sessao.add(AtribuicaoParceiro(jornada_id=jornada.id, parceiro_id=parceiro.id))
-        criados.append("parceiro atribuído à jornada")
+        sessao.add(AtribuicaoParceiro(acompanhamento_id=acompanhamento.id, parceiro_id=parceiro.id))
+        criados.append("parceiro atribuído ao acompanhamento")
 
     sessao.commit()
     return criados
@@ -101,7 +101,7 @@ def _complementar_ficha_e_parceiro(sessao) -> list[str]:
 def criar_dados_de_exemplo() -> None:
     with SessaoLocal() as sessao:
         if sessao.scalar(select(Usuario.id).where(Usuario.email == EMAIL_PACIENTE)):
-            criados = _complementar_ficha_e_parceiro(sessao)
+            criados = _complementar_anamnese_e_parceiro(sessao)
             if criados:
                 print("Dados de exemplo complementados: " + ", ".join(criados) + ".")
             else:
@@ -140,20 +140,20 @@ def criar_dados_de_exemplo() -> None:
         sessao.add_all([paciente, parceiro])
         sessao.flush()
 
-        jornada = Jornada(
+        acompanhamento = Acompanhamento(
             medico_id=medico.id,
             paciente_id=paciente.id,
             titulo="Controle da hipertensão",
             descricao="Acompanhamento da pressão arterial após o diagnóstico de hipertensão estágio 1.",
-            passo_atual=PassoJornada.exame,
+            passo_atual=PassoAcompanhamento.exame,
             criado_em=agora - timedelta(days=21),
         )
-        sessao.add(jornada)
+        sessao.add(acompanhamento)
         sessao.flush()
 
         sessao.add(
             Consulta(
-                jornada_id=jornada.id,
+                acompanhamento_id=acompanhamento.id,
                 tipo=TipoConsulta.consulta,
                 data=agora - timedelta(days=20),
                 anotacoes="Pressão 145x95. Iniciar medicação e reduzir o sal. Pedir exames de rotina.",
@@ -167,7 +167,7 @@ def criar_dados_de_exemplo() -> None:
         sessao.add_all(
             [
                 Solicitacao(
-                    jornada_id=jornada.id,
+                    acompanhamento_id=acompanhamento.id,
                     destinatario_id=paciente.id,
                     tipo=TipoSolicitacao.exame,
                     descricao="Hemograma completo e perfil lipídico",
@@ -175,8 +175,8 @@ def criar_dados_de_exemplo() -> None:
                     criado_em=agora - timedelta(days=20),
                 ),
                 Solicitacao(
-                    jornada_id=jornada.id,
-                    # Destinada à nutricionista parceira, que é atribuída à jornada logo abaixo
+                    acompanhamento_id=acompanhamento.id,
+                    # Destinada à nutricionista parceira, que é atribuída ao acompanhamento logo abaixo
                     destinatario_id=parceiro.id,
                     tipo=TipoSolicitacao.orientacao_profissional,
                     descricao="Montar e enviar o plano alimentar com redução de sódio",
@@ -184,7 +184,7 @@ def criar_dados_de_exemplo() -> None:
                     criado_em=agora - timedelta(days=20),
                 ),
                 Solicitacao(
-                    jornada_id=jornada.id,
+                    acompanhamento_id=acompanhamento.id,
                     destinatario_id=paciente.id,
                     tipo=TipoSolicitacao.consulta_extra,
                     descricao="Consulta extra para reavaliar a dose da medicação",
@@ -195,7 +195,7 @@ def criar_dados_de_exemplo() -> None:
         )
 
         arquivo = _gravar_arquivo_texto(
-            jornada.id,
+            acompanhamento.id,
             paciente.id,
             "medicoes_pressao.txt",
             "Medições de pressão arterial (em casa)\n"
@@ -206,7 +206,7 @@ def criar_dados_de_exemplo() -> None:
         sessao.flush()
         sessao.add(
             Documento(
-                jornada_id=jornada.id,
+                acompanhamento_id=acompanhamento.id,
                 enviado_por_id=paciente.id,
                 categoria=CategoriaDocumento.outro,
                 titulo="Diário de medições de pressão",
@@ -216,7 +216,7 @@ def criar_dados_de_exemplo() -> None:
         )
 
         sessao.commit()
-        _complementar_ficha_e_parceiro(sessao)
+        _complementar_anamnese_e_parceiro(sessao)
         email_medico = medico.email
 
     print("Dados de exemplo criados:")

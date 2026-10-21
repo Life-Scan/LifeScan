@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
-import { criarJornada, listarContas } from '../api/servicos'
+import { criarAcompanhamento, listarContas } from '../api/servicos'
 import { Alerta, Carregando, EstadoVazio, estilos as ui } from '../components/ui'
 import estilos from './Paginas.module.css'
 
-export default function NovaJornada() {
+export default function NovoAcompanhamento() {
   const navegar = useNavigate()
   const [parametros] = useSearchParams()
 
@@ -21,9 +21,9 @@ export default function NovaJornada() {
 
   useEffect(() => {
     listarContas('paciente')
-      // Cada paciente tem uma única jornada: só aparecem contas ativas ainda sem jornada.
+      // Cada paciente tem um único acompanhamento: só aparecem contas ativas ainda sem acompanhamento.
       // Não importa se o paciente já acessou o sistema.
-      .then((contas) => setDisponiveis(contas.filter((conta) => conta.ativo && !conta.jornada_id)))
+      .then((contas) => setDisponiveis(contas.filter((conta) => conta.ativo && !conta.acompanhamento_id)))
       .catch((erroLista) => {
         setErro(mensagemDeErro(erroLista))
         setDisponiveis([])
@@ -37,12 +37,12 @@ export default function NovaJornada() {
     setErro('')
     setEnviando(true)
     try {
-      const jornada = await criarJornada({
+      const acompanhamento = await criarAcompanhamento({
         paciente_id: Number(formulario.pacienteId),
         titulo: formulario.titulo,
         descricao: formulario.descricao.trim() || null,
       })
-      navegar(`/jornadas/${jornada.id}`, { replace: true })
+      navegar(`/acompanhamentos/${acompanhamento.id}`, { replace: true })
     } catch (erroCriacao) {
       setErro(mensagemDeErro(erroCriacao))
       setEnviando(false)
@@ -53,8 +53,8 @@ export default function NovaJornada() {
     <div className={estilos.pilha}>
       <div className={estilos.cabecalho}>
         <div>
-          <h1>Nova jornada</h1>
-          <p className={estilos.subtitulo}>Abra a jornada de tratamento de um paciente cadastrado.</p>
+          <h1>Novo acompanhamento</h1>
+          <p className={estilos.subtitulo}>Abra o acompanhamento de tratamento de um paciente cadastrado.</p>
         </div>
       </div>
 
@@ -62,7 +62,7 @@ export default function NovaJornada() {
         {disponiveis === null && <Carregando />}
         {disponiveis?.length === 0 && !erro && (
           <EstadoVazio>
-            Todos os seus pacientes já têm jornada, ou você ainda não cadastrou nenhum.{' '}
+            Todos os seus pacientes já têm acompanhamento, ou você ainda não cadastrou nenhum.{' '}
             <Link to="/usuarios">Cadastrar paciente</Link>
           </EstadoVazio>
         )}
@@ -98,9 +98,9 @@ export default function NovaJornada() {
             </div>
             <div className={ui.acoes}>
               <button type="submit" className={ui.botao} disabled={enviando}>
-                {enviando ? 'Abrindo…' : 'Abrir jornada'}
+                {enviando ? 'Abrindo…' : 'Abrir acompanhamento'}
               </button>
-              <Link to="/jornadas" className={ui.botaoSecundario}>
+              <Link to="/acompanhamentos" className={ui.botaoSecundario}>
                 Cancelar
               </Link>
             </div>

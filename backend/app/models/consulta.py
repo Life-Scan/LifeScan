@@ -16,7 +16,7 @@ class Consulta(Base):
     __tablename__ = "consultas"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    jornada_id: Mapped[int] = mapped_column(ForeignKey("jornadas.id"), index=True)
+    acompanhamento_id: Mapped[int] = mapped_column(ForeignKey("acompanhamentos.id"), index=True)
     tipo: Mapped[TipoConsulta] = mapped_column(coluna_enum(TipoConsulta, "tipo_consulta"))
     data: Mapped[datetime] = mapped_column(DataHora)
     anotacoes: Mapped[str | None] = mapped_column(Text)

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import exigir_tipo
 from app.db.sessao import obter_sessao
-from app.models.jornada import Jornada
+from app.models.acompanhamento import Acompanhamento
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.auth import MensagemSaida
 from app.schemas.usuario import ContaAtualizacao, ContaEntrada, ContaSaida
@@ -22,13 +22,13 @@ router = APIRouter(
 
 def _montar_saidas(sessao: Session, usuarios: list[Usuario]) -> list[ContaSaida]:
     ids = [usuario.id for usuario in usuarios]
-    jornadas = dict(
-        sessao.execute(select(Jornada.paciente_id, Jornada.id).where(Jornada.paciente_id.in_(ids))).all()
+    acompanhamentos = dict(
+        sessao.execute(select(Acompanhamento.paciente_id, Acompanhamento.id).where(Acompanhamento.paciente_id.in_(ids))).all()
     )
     saidas = []
     for usuario in usuarios:
         saida = ContaSaida.model_validate(usuario)
-        saida.jornada_id = jornadas.get(usuario.id)
+        saida.acompanhamento_id = acompanhamentos.get(usuario.id)
         saidas.append(saida)
     return saidas
 
@@ -45,7 +45,7 @@ def _obter_conta(sessao: Session, usuario_id: int) -> Usuario:
 def criar_conta(dados: ContaEntrada, sessao: Session = Depends(obter_sessao)) -> ContaSaida:
     """Cria a conta de um paciente ou parceiro e envia os dados de acesso por email.
 
-    A conta já pode ser usada pelo médico (abrir jornada, registrar consultas...)
+    A conta já pode ser usada pelo médico (abrir acompanhamento, registrar consultas...)
     antes de a pessoa entrar pela primeira vez.
     """
     if sessao.scalar(select(Usuario.id).where(Usuario.email == dados.email)):
