@@ -146,6 +146,11 @@ def parceiro(cliente, medico):
     )
 
 
+@pytest.fixture
+def colaborador(cliente, medico):
+    return criar_conta_ativa(cliente, medico, "colaborador", "Juliana Rocha", "juliana@clinica.com")
+
+
 def criar_acompanhamento(cliente, medico: dict, paciente: dict, titulo: str = "Controle da hipertensão") -> dict:
     resposta = cliente.post(
         "/follow-ups",

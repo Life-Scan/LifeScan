@@ -7,12 +7,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.models.usuario import TipoUsuario, Usuario
-from tests.conftest import SENHA, abrir_sessao, criar_conta, criar_conta_ativa, entrar, senha_provisoria_enviada
-
-
-@pytest.fixture
-def colaborador(cliente, medico):
-    return criar_conta_ativa(cliente, medico, "colaborador", "Juliana Rocha", "juliana@clinica.com")
+from tests.conftest import SENHA, abrir_sessao, criar_conta, entrar, senha_provisoria_enviada
 
 
 def test_medico_cria_colaborador_sem_profissao(cliente, medico):
@@ -53,10 +48,10 @@ def test_colaborador_nao_acessa_acompanhamentos(cliente, colaborador, acompanham
         assert cliente.get(base + rota, headers=cabecalhos).status_code == 403, rota
 
 
-def test_painel_do_colaborador_vem_vazio(cliente, colaborador):
+def test_painel_do_colaborador_sem_agendamentos(cliente, colaborador):
     painel = cliente.get("/dashboard/pending", headers=colaborador["headers"])
     assert painel.status_code == 200
-    assert painel.json() == {"tipo_usuario": "colaborador"}
+    assert painel.json() == {"tipo_usuario": "colaborador", "aguardando_desfecho": [], "proximas_consultas": []}
 
 
 def test_medico_edita_e_desativa_colaborador(cliente, medico, colaborador):

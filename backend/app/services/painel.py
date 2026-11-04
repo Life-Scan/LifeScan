@@ -6,13 +6,14 @@ Considera apenas acompanhamentos ativos (não encerrados).
 from datetime import timedelta
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import obter_configuracoes
 from app.db.base import agora_utc
 from app.models.atribuicao import AtribuicaoParceiro
 from app.models.documento import Documento, StatusDocumento
 from app.models.acompanhamento import Acompanhamento, StatusAcompanhamento
+from app.models.agendamento import Agendamento, StatusAgendamento
 from app.models.solicitacao import Solicitacao, StatusSolicitacao, TipoSolicitacao
 from app.models.usuario import TipoUsuario, Usuario
 from app.schemas.documento import DocumentoSaida
@@ -111,6 +112,9 @@ def montar_painel_paciente(sessao: Session, paciente: Usuario) -> PainelPaciente
         consultas_extras=[
             _item_solicitacao(s, acompanhamentos) for s in pendentes if s.tipo == TipoSolicitacao.consulta_extra
         ],
+        proximas_consultas=_agendamentos(
+            Agendamento.acompanhamento_id.in_(acompanhamentos), Agendamento.data_hora >= agora_utc(), sessao=sessao
+        ),
     )
 
 
@@ -121,6 +125,28 @@ def montar_painel_parceiro(sessao: Session, parceiro: Usuario) -> PainelParceiro
     return PainelParceiro(solicitacoes_pendentes=[_item_solicitacao(s, acompanhamentos) for s in pendentes])
 
 
-def montar_painel_colaborador() -> PainelColaborador:
-    """O colaborador ainda não tem pendências: o agendamento de consultas virá depois."""
-    return PainelColaborador()
+# Quantas próximas consultas o painel mostra
+LIMITE_PROXIMAS_CONSULTAS = 10
+
+
+def _agendamentos(*condicoes, sessao: Session, limite: int = LIMITE_PROXIMAS_CONSULTAS) -> list[Agendamento]:
+    """Consultas ainda agendadas, da mais cedo para a mais tarde."""
+    consulta = (
+        select(Agendamento)
+        .options(
+            selectinload(Agendamento.acompanhamento).selectinload(Acompanhamento.paciente),
+            selectinload(Agendamento.criado_por),
+        )
+        .where(Agendamento.status == StatusAgendamento.agendada, *condicoes)
+        .order_by(Agendamento.data_hora, Agendamento.id)
+    )
+    return list(sessao.scalars(consulta.limit(limite)))
+
+
+def montar_painel_colaborador(sessao: Session) -> PainelColaborador:
+    """Consultas a registrar (horário já passou) e as próximas da agenda."""
+    agora = agora_utc()
+    return PainelColaborador(
+        aguardando_desfecho=_agendamentos(Agendamento.data_hora < agora, sessao=sessao, limite=100),
+        proximas_consultas=_agendamentos(Agendamento.data_hora >= agora, sessao=sessao),
+    )
