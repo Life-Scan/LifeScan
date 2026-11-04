@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { consentimentoLgpd, obterPendencias, revogarConsentimentoLgpd } from '../api/servicos'
 import { mensagemDeErro } from '../api/cliente'
 import { useConfirmar } from '../components/Confirmacao'
+import AgendaConsultas from '../components/AgendaConsultas'
 import FormularioConta from '../components/FormularioConta'
 import { Alerta, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
@@ -27,7 +28,7 @@ export default function Painel() {
     : ehPaciente
       ? 'Veja o que você precisa fazer e até quando.'
       : ehColaborador
-        ? 'Aqui você vai cuidar do agendamento de consultas.'
+        ? 'Agende as consultas e registre as que já aconteceram.'
         : 'Acompanhe as solicitações destinadas a você.'
 
   return (
@@ -41,13 +42,13 @@ export default function Painel() {
       </div>
 
       {ehMedico && <FormularioConta aoCriar={atualizar} />}
+      {(ehMedico || ehColaborador) && <AgendaConsultas />}
 
       <ErroCarregamento erro={erro} />
       {carregando && !dados && <Carregando />}
       {dados?.tipo_usuario === 'medico' && <PainelMedico painel={dados} />}
       {dados?.tipo_usuario === 'paciente' && <PainelPaciente painel={dados} />}
       {dados?.tipo_usuario === 'parceiro' && <PainelParceiro painel={dados} />}
-      {dados?.tipo_usuario === 'colaborador' && <PainelColaborador />}
     </div>
   )
 }
@@ -194,7 +195,7 @@ function PainelMedico({ painel }) {
 }
 
 function PainelPaciente({ painel }) {
-  const { solicitacoes_pendentes: pendentes, consultas_extras: consultasExtras } = painel
+  const { solicitacoes_pendentes: pendentes, consultas_extras: consultasExtras, proximas_consultas: proximas } = painel
   const vencidas = pendentes.filter((s) => s.vencida).length
 
   return (
@@ -203,7 +204,12 @@ function PainelPaciente({ painel }) {
         <Resumo icone={ClipboardList} numero={pendentes.length} rotulo="Pendências" destino="#pendencias" tom="alerta" />
         <Resumo icone={TriangleAlert} numero={vencidas} rotulo="Vencidas" destino="#pendencias" tom="perigo" />
         <Resumo icone={CalendarClock} numero={consultasExtras.length} rotulo="Consultas extras marcadas" destino="#consultas-extras" tom="info" />
+        <Resumo icone={CalendarDays} numero={proximas.length} rotulo="Consultas agendadas" destino="#proximas-consultas" tom="info" />
       </div>
+
+      <Secao id="proximas-consultas" titulo="Suas próximas consultas" quantidade={proximas.length}>
+        <ListaAgendamentos agendamentos={proximas} vazio="Nenhuma consulta agendada no momento." />
+      </Secao>
 
       <div className={estilos.grade}>
         <Secao id="pendencias" titulo="O que você precisa fazer" quantidade={pendentes.length}>
@@ -335,13 +341,20 @@ function PainelParceiro({ painel }) {
   )
 }
 
-/** O agendamento de consultas, que é a função do colaborador, ainda não foi implementado. */
-function PainelColaborador() {
+/** Próximas consultas do paciente, com data, distância e observação. */
+function ListaAgendamentos({ agendamentos, vazio }) {
+  if (agendamentos.length === 0) return <EstadoVazio icone={CalendarDays}>{vazio}</EstadoVazio>
   return (
-    <section className={ui.cartao}>
-      <EstadoVazio icone={CalendarDays}>
-        O agendamento de consultas estará disponível em breve. Por enquanto não há nada para você fazer aqui.
-      </EstadoVazio>
-    </section>
+    <ul className={ui.lista}>
+      {agendamentos.map((agendamento) => (
+        <li key={agendamento.id} className={ui.itemLista}>
+          <div className={ui.cabecalhoItem}>
+            <strong>{formatarDataHora(agendamento.data_hora)}</strong>
+            <Etiqueta variante="info">{formatarPrazoRelativo(agendamento.data_hora)}</Etiqueta>
+          </div>
+          {agendamento.observacao && <div className={estilos.meta}><span>{agendamento.observacao}</span></div>}
+        </li>
+      ))}
+    </ul>
   )
 }

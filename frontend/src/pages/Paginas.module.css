@@ -326,3 +326,8 @@
   font-weight: 400;
   color: var(--cor-texto-suave);
 }
+
+/* Lista da agenda, abaixo das abas */
+.painelAgenda {
+  margin-top: 1rem;
+}

@@ -21,6 +21,7 @@ def test_painel_vazio_por_tipo_de_usuario(cliente, medico, paciente, acompanhame
         "tipo_usuario": "paciente",
         "solicitacoes_pendentes": [],
         "consultas_extras": [],
+        "proximas_consultas": [],
     }
 
 

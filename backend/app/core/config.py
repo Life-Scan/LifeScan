@@ -27,6 +27,8 @@ class Configuracoes(BaseSettings):
     pasta_uploads_texto: str = Field("uploads", validation_alias="UPLOAD_DIR")
     tamanho_maximo_upload_mb: int = Field(30, validation_alias="MAX_UPLOAD_MB")
     dias_prazo_proximo: int = Field(3, validation_alias="DUE_SOON_DAYS")
+    # Distância mínima, em horas, entre duas consultas agendadas
+    horas_entre_agendamentos: int = Field(2, ge=0, validation_alias="APPOINTMENT_MIN_GAP_HOURS")
 
     # Email: suporta modo "console" (terminal) e "smtp" (envio real)
     modo_email: str = Field("console", validation_alias="EMAIL_MODE")

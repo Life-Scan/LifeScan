@@ -1,6 +1,7 @@
 """Importa todos os modelos para que fiquem registrados em Base.metadata (usado pelo Alembic)."""
 
 from app.models.acompanhamento import Acompanhamento, PassoAcompanhamento, StatusAcompanhamento
+from app.models.agendamento import Agendamento, StatusAgendamento
 from app.models.anamnese import Anamnese, Sexo
 from app.models.arquivo import Arquivo
 from app.models.atribuicao import AtribuicaoParceiro
@@ -13,6 +14,7 @@ from app.models.usuario import TipoUsuario, Usuario
 
 __all__ = [
     "Acompanhamento",
+    "Agendamento",
     "Anamnese",
     "Arquivo",
     "AtribuicaoParceiro",
@@ -26,6 +28,7 @@ __all__ = [
     "Sexo",
     "Solicitacao",
     "StatusAcompanhamento",
+    "StatusAgendamento",
     "StatusDocumento",
     "StatusSolicitacao",
     "TipoConsulta",
