@@ -18,6 +18,7 @@ EXTENSOES_PERMITIDAS: dict[str, str] = {
     "webp": "image/webp",
     "dcm": "application/dicom",
     "txt": "text/plain",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
 
 TAMANHO_BLOCO = 1024 * 1024

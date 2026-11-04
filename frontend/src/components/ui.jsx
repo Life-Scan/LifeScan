@@ -1,8 +1,10 @@
 /** Componentes pequenos de interface usados em várias páginas. */
 import { CircleAlert, CircleCheck, Download, Eye, Inbox, Info, Paperclip, TriangleAlert } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
+import { textoDeDocx, urlDaPrimeiraPaginaDePdf } from '../utils/previaDocumentos'
 import { mensagemDeErro } from '../api/cliente'
+import { obterArquivo } from '../api/servicos'
 import {
   ACCEPT_ARQUIVOS,
   EXTENSOES_PERMITIDAS,
@@ -113,12 +115,15 @@ export function CampoArquivo({ id, rotulo = 'Arquivo', arquivo, onChange, obriga
         required={obrigatorio}
       />
       {arquivo ? (
-        <span className={estilos.nomeArquivo}>
-          {arquivo.name} ({formatarTamanho(arquivo.size)}){' '}
-          <button type="button" className={estilos.botaoLink} onClick={limpar}>
-            remover
-          </button>
-        </span>
+        <>
+          <span className={estilos.nomeArquivo}>
+            {arquivo.name} ({formatarTamanho(arquivo.size)}){' '}
+            <button type="button" className={estilos.botaoLink} onClick={limpar}>
+              remover
+            </button>
+          </span>
+          <MiniaturaEscolhida arquivo={arquivo} />
+        </>
       ) : (
         <span className={estilos.ajuda}>
           {EXTENSOES_PERMITIDAS.join(', ')} · até {TAMANHO_MAXIMO_MB} MB
@@ -127,6 +132,118 @@ export function CampoArquivo({ id, rotulo = 'Arquivo', arquivo, onChange, obriga
       <Alerta tipo="erro">{erro}</Alerta>
     </div>
   )
+}
+
+const EXTENSOES_IMAGEM = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+const EXTENSOES_TEXTO = ['.txt', '.md']
+const EXTENSOES_PDF = ['.pdf']
+const EXTENSOES_DOCX = ['.docx']
+
+function terminaEm(nome, extensoes) {
+  const minusculo = nome.toLowerCase()
+  return extensoes.some((extensao) => minusculo.endsWith(extensao))
+}
+
+function eImagem(nome) {
+  return terminaEm(nome, EXTENSOES_IMAGEM)
+}
+
+function eTexto(nome) {
+  return terminaEm(nome, EXTENSOES_TEXTO)
+}
+
+function temMiniatura(arquivo) {
+  const nome = arquivo.nome_original
+  return eImagem(nome) || eTexto(nome) || terminaEm(nome, EXTENSOES_PDF) || terminaEm(nome, EXTENSOES_DOCX)
+}
+
+// Blob baixado por id, convertido para miniatura: as remontagens (filtros trocando
+// a lista) reaproveitam em vez de refazer o download
+const conteudosDeAnexos = new Map()
+
+function conteudoDeAnexo(arquivo) {
+  let promessa = conteudosDeAnexos.get(arquivo.id)
+  if (promessa) return promessa
+  const nome = arquivo.nome_original
+  promessa = (async () => {
+    const blob = await obterArquivo(arquivo.id, true)
+    if (eImagem(nome)) return { url: URL.createObjectURL(blob) }
+    if (terminaEm(nome, EXTENSOES_PDF)) return { url: await urlDaPrimeiraPaginaDePdf(blob) }
+    const inteiro = terminaEm(nome, EXTENSOES_DOCX) ? await textoDeDocx(blob) : await blob.text()
+    return { texto: inteiro.slice(0, 300) }
+  })()
+  conteudosDeAnexos.set(arquivo.id, promessa)
+  promessa.catch(() => conteudosDeAnexos.delete(arquivo.id)) // falhou: permitir tentar de novo
+  return promessa
+}
+
+function CorpoMiniatura({ conteudo, nome }) {
+  if (!conteudo) return <Paperclip size={15} aria-hidden="true" />
+  if (conteudo.url) {
+    return <img src={conteudo.url} alt={`Miniatura de ${nome}`} className={estilos.miniaturaAnexo} />
+  }
+  return (
+    <span className={`${estilos.miniaturaAnexo} ${estilos.miniaturaTexto}`} aria-hidden="true">
+      {conteudo.texto}
+    </span>
+  )
+}
+
+/** Miniatura de anexo já enviado: imagem pequena ou começo do texto (baixado com o token). */
+function MiniaturaDeAnexo({ arquivo, aoAbrir }) {
+  const conteudoInicial = conteudosDeAnexos.get(arquivo.id)
+  const [conteudo, definConteudo] = useState(conteudoInicial)
+
+  useEffect(() => {
+    let atual = true
+    conteudoDeAnexo(arquivo)
+      .then((resolvido) => {
+        if (atual) definConteudo(resolvido)
+      })
+      .catch(() => {}) // ficar sem miniatura não atrapalha: os botões de visualizar e baixar continuam
+    return () => {
+      atual = false
+    }
+  }, [arquivo])
+
+  if (!conteudo) return <Paperclip size={15} aria-hidden="true" />
+  return (
+    <button type="button" className={estilos.miniaturaBotao} onClick={aoAbrir} title="Visualizar">
+      <CorpoMiniatura conteudo={conteudo} nome={arquivo.nome_original} />
+    </button>
+  )
+}
+
+/** Miniatura local do arquivo acabado de escolher, antes de enviar. */
+function MiniaturaEscolhida({ arquivo }) {
+  const [conteudo, definConteudo] = useState(null)
+
+  useEffect(() => {
+    let atual = true
+    let urlLocal = null
+    async function preparar() {
+      if (eImagem(arquivo.name)) {
+        urlLocal = URL.createObjectURL(arquivo)
+        if (atual) definConteudo({ url: urlLocal })
+      } else if (terminaEm(arquivo.name, EXTENSOES_PDF)) {
+        const url = await urlDaPrimeiraPaginaDePdf(arquivo)
+        if (atual) definConteudo({ url })
+      } else if (eTexto(arquivo.name) || terminaEm(arquivo.name, EXTENSOES_DOCX)) {
+        const inteiro = eTexto(arquivo.name) ? await arquivo.text() : await textoDeDocx(arquivo)
+        if (atual) definConteudo({ texto: inteiro.slice(0, 300) })
+      } else {
+        definConteudo(null)
+      }
+    }
+    preparar()
+    return () => {
+      atual = false
+      if (urlLocal) URL.revokeObjectURL(urlLocal)
+    }
+  }, [arquivo])
+
+  if (!conteudo) return null
+  return <CorpoMiniatura conteudo={conteudo} nome={arquivo.name} />
 }
 
 /** Nome do arquivo com ações de visualizar e baixar (download autenticado). */
@@ -144,7 +261,11 @@ export function Anexo({ arquivo }) {
 
   return (
     <span className={estilos.anexo}>
-      <Paperclip size={15} aria-hidden="true" />
+      {temMiniatura(arquivo) ? (
+        <MiniaturaDeAnexo arquivo={arquivo} aoAbrir={() => executar(visualizarArquivo)} />
+      ) : (
+        <Paperclip size={15} aria-hidden="true" />
+      )}
       <span className={estilos.anexoNome}>{arquivo.nome_original}</span>
       <span className={estilos.suave}>({formatarTamanho(arquivo.tamanho_bytes)})</span>
       {podeVisualizar(arquivo) && (

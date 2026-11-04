@@ -99,3 +99,10 @@ export function iniciais(nome) {
   const letras = partes.length > 1 ? [partes[0], partes.at(-1)] : [partes[0]]
   return letras.map((parte) => parte[0].toUpperCase()).join('')
 }
+
+/** Nomes e telas de cada tipo de conta administrada pelo médico. */
+export const TIPOS_CONTA = {
+  paciente: { singular: 'paciente', plural: 'Pacientes', rota: '/pacientes' },
+  parceiro: { singular: 'parceiro', plural: 'Parceiros', rota: '/parceiros' },
+  colaborador: { singular: 'colaborador', plural: 'Colaboradores', rota: '/colaboradores' },
+}

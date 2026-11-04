@@ -2,7 +2,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, StringConstraints, model_validator
 
-from app.models.usuario import TipoUsuario
+from app.models.usuario import TIPOS_SEM_PROFISSAO, TipoUsuario
 from app.schemas.auth import Email, Nome
 from app.schemas.base import DataHoraUTC, SchemaSaida
 
@@ -18,9 +18,9 @@ class UsuarioResumo(SchemaSaida):
 
 
 class ContaEntrada(BaseModel):
-    """Conta criada pelo médico. Só existem contas novas de paciente e de parceiro."""
+    """Conta criada pelo médico: paciente, parceiro ou colaborador (nunca outro médico)."""
 
-    tipo_usuario: Literal[TipoUsuario.paciente, TipoUsuario.parceiro]
+    tipo_usuario: Literal[TipoUsuario.paciente, TipoUsuario.parceiro, TipoUsuario.colaborador]
     nome: Nome
     email: Email
     profissao: Profissao | None = None
@@ -29,7 +29,7 @@ class ContaEntrada(BaseModel):
     def validar_profissao(self) -> "ContaEntrada":
         if self.tipo_usuario == TipoUsuario.parceiro and not self.profissao:
             raise ValueError("Informe a profissão do parceiro.")
-        if self.tipo_usuario == TipoUsuario.paciente:
+        if self.tipo_usuario in TIPOS_SEM_PROFISSAO:
             self.profissao = None
         return self
 
@@ -42,7 +42,7 @@ class ContaAtualizacao(BaseModel):
 
 
 class ContaSaida(SchemaSaida):
-    """Visão do médico sobre uma conta de paciente ou parceiro."""
+    """Visão do médico sobre uma conta de paciente, parceiro ou colaborador."""
 
     id: int
     tipo_usuario: TipoUsuario
@@ -54,5 +54,5 @@ class ContaSaida(SchemaSaida):
     primeiro_acesso_pendente: bool
     ultimo_login_em: DataHoraUTC | None
     criado_em: DataHoraUTC
-    # Acompanhamento do paciente, se já foi aberto (sempre nulo para parceiros)
+    # Acompanhamento do paciente, se já foi aberto (sempre nulo para os outros tipos)
     acompanhamento_id: int | None = None
