@@ -31,12 +31,12 @@ def test_medico_tambem_envia_arquivo(cliente, medico, acompanhamento):
     assert resposta.json()["arquivo"]["tipo_mime"] == "image/png"
 
 
-@pytest.mark.parametrize("nome", ["exame.pdf", "FOTO.JPG", "imagem.jpeg", "scan.webp", "tomografia.dcm", "notas.txt"])
+@pytest.mark.parametrize("nome", ["exame.pdf", "FOTO.JPG", "imagem.jpeg", "scan.webp", "tomografia.dcm", "notas.txt", "laudo.docx"])
 def test_extensoes_permitidas(cliente, paciente, acompanhamento, nome):
     assert enviar_documento(cliente, paciente, acompanhamento, nome=nome).status_code == 201
 
 
-@pytest.mark.parametrize("nome", ["virus.exe", "planilha.xlsx", "script.pdf.js", "sem_extensao", "documento.docx"])
+@pytest.mark.parametrize("nome", ["virus.exe", "planilha.xlsx", "script.pdf.js", "sem_extensao"])
 def test_extensoes_proibidas_retornam_415(cliente, paciente, acompanhamento, config_teste, nome):
     resposta = enviar_documento(cliente, paciente, acompanhamento, nome=nome)
     assert resposta.status_code == 415
