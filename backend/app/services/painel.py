@@ -19,6 +19,7 @@ from app.schemas.documento import DocumentoSaida
 from app.schemas.painel import (
     DocumentoPendente,
     AcompanhamentoResumo,
+    PainelColaborador,
     PainelMedico,
     PainelPaciente,
     PainelParceiro,
@@ -33,10 +34,12 @@ def _acompanhamentos_em_andamento(sessao: Session, usuario: Usuario) -> dict[int
         consulta = consulta.where(Acompanhamento.medico_id == usuario.id)
     elif usuario.tipo_usuario == TipoUsuario.paciente:
         consulta = consulta.where(Acompanhamento.paciente_id == usuario.id)
-    else:
+    elif usuario.tipo_usuario == TipoUsuario.parceiro:
         consulta = consulta.join(
             AtribuicaoParceiro, AtribuicaoParceiro.acompanhamento_id == Acompanhamento.id
         ).where(AtribuicaoParceiro.parceiro_id == usuario.id)
+    else:
+        return {}
     return {acompanhamento.id: acompanhamento for acompanhamento in sessao.scalars(consulta)}
 
 
@@ -116,3 +119,8 @@ def montar_painel_parceiro(sessao: Session, parceiro: Usuario) -> PainelParceiro
     acompanhamentos = _acompanhamentos_em_andamento(sessao, parceiro)
     pendentes = _solicitacoes_pendentes(sessao, acompanhamentos, destinatario_id=parceiro.id)
     return PainelParceiro(solicitacoes_pendentes=[_item_solicitacao(s, acompanhamentos) for s in pendentes])
+
+
+def montar_painel_colaborador() -> PainelColaborador:
+    """O colaborador ainda não tem pendências: o agendamento de consultas virá depois."""
+    return PainelColaborador()
