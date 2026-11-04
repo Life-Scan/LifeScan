@@ -2,8 +2,18 @@
 
 import pytest
 
+from sqlalchemy import select
+
+from app.models.consentimento import Consentimento
 from app.services.email import caixa_de_saida
-from tests.conftest import SENHA, criar_conta, criar_conta_ativa, entrar, senha_provisoria_enviada
+from tests.conftest import (
+    SENHA,
+    abrir_sessao,
+    criar_conta,
+    criar_conta_ativa,
+    entrar,
+    senha_provisoria_enviada,
+)
 
 
 def test_excluir_paciente_desativado_libera_email(cliente, medico, paciente):
@@ -15,6 +25,22 @@ def test_excluir_paciente_desativado_libera_email(cliente, medico, paciente):
     assert all(conta['id'] != usuario_id for conta in contas)
     assert cliente.get('/auth/me', headers=paciente['headers']).status_code == 401
     assert criar_conta(cliente, medico, 'paciente', 'Novo paciente', paciente['usuario']['email']).status_code == 201
+
+
+def test_exclusao_apaga_os_consentimentos_do_titular(cliente, medico, paciente):
+    """O aceite do termo aponta para o titular: sai junto na eliminação (LGPD, art. 18, VI)."""
+    usuario_id = paciente['usuario']['id']
+    url = f'/users/{usuario_id}'
+    with abrir_sessao() as sessao:
+        aceites_antes = len(sessao.scalars(select(Consentimento.id).where(Consentimento.usuario_id == usuario_id)).all())
+    assert aceites_antes == 1
+
+    assert cliente.patch(url, json={'ativo': False}, headers=medico['headers']).status_code == 200
+    assert cliente.delete(url, headers=medico['headers']).status_code == 200
+
+    with abrir_sessao() as sessao:
+        restantes = sessao.scalars(select(Consentimento.id).where(Consentimento.usuario_id == usuario_id)).all()
+    assert restantes == []
 
 
 def test_exclusao_exige_medico_e_paciente_desativado(cliente, medico, paciente, parceiro):

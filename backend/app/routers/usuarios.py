@@ -1,7 +1,7 @@
 """Contas de pacientes e parceiros, criadas e administradas pelo médico."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import or_, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -9,6 +9,7 @@ from app.core.deps import exigir_tipo
 from app.db.sessao import obter_sessao
 from app.models.arquivo import Arquivo
 from app.models.atribuicao import AtribuicaoParceiro
+from app.models.consentimento import Consentimento
 from app.models.documento import Documento
 from app.models.anamnese import Anamnese
 from app.models.acompanhamento import Acompanhamento
@@ -147,6 +148,10 @@ def excluir_paciente(usuario_id: int, sessao: Session = Depends(obter_sessao)) -
     mensagem_historico = "Este paciente possui acompanhamento ou histórico vinculado e não pode ser excluído. Reative a conta para reutilizá-la."
     if any(sessao.scalar(select(coluna).where(coluna == usuario_id).limit(1)) is not None for coluna in vinculos):
         raise HTTPException(status.HTTP_409_CONFLICT, mensagem_historico)
+    # O consentimento aponta para o titular por FK: ele morre junto com a conta
+    # (direito de eliminação, art. 18, VI). O histórico de acessos à anamnese é
+    # pseudônimo e sem FK, então sobrevive à exclusão por design.
+    sessao.execute(delete(Consentimento).where(Consentimento.usuario_id == usuario_id))
     sessao.delete(usuario)
     try:
         sessao.commit()
