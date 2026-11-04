@@ -27,7 +27,7 @@ export default function Painel() {
     : ehPaciente
       ? 'Veja o que você precisa fazer e até quando.'
       : ehColaborador
-        ? 'Aqui você vai cuidar do agendamento de consultas.'
+        ? 'Veja as consultas a registrar e as próximas da agenda.'
         : 'Acompanhe as solicitações destinadas a você.'
 
   return (
@@ -47,7 +47,7 @@ export default function Painel() {
       {dados?.tipo_usuario === 'medico' && <PainelMedico painel={dados} />}
       {dados?.tipo_usuario === 'paciente' && <PainelPaciente painel={dados} />}
       {dados?.tipo_usuario === 'parceiro' && <PainelParceiro painel={dados} />}
-      {dados?.tipo_usuario === 'colaborador' && <PainelColaborador />}
+      {dados?.tipo_usuario === 'colaborador' && <PainelColaborador painel={dados} />}
     </div>
   )
 }
@@ -194,7 +194,7 @@ function PainelMedico({ painel }) {
 }
 
 function PainelPaciente({ painel }) {
-  const { solicitacoes_pendentes: pendentes, consultas_extras: consultasExtras } = painel
+  const { solicitacoes_pendentes: pendentes, consultas_extras: consultasExtras, proximas_consultas: proximas } = painel
   const vencidas = pendentes.filter((s) => s.vencida).length
 
   return (
@@ -203,7 +203,12 @@ function PainelPaciente({ painel }) {
         <Resumo icone={ClipboardList} numero={pendentes.length} rotulo="Pendências" destino="#pendencias" tom="alerta" />
         <Resumo icone={TriangleAlert} numero={vencidas} rotulo="Vencidas" destino="#pendencias" tom="perigo" />
         <Resumo icone={CalendarClock} numero={consultasExtras.length} rotulo="Consultas extras marcadas" destino="#consultas-extras" tom="info" />
+        <Resumo icone={CalendarDays} numero={proximas.length} rotulo="Consultas agendadas" destino="#proximas-consultas" tom="info" />
       </div>
+
+      <Secao id="proximas-consultas" titulo="Suas próximas consultas" quantidade={proximas.length}>
+        <ListaAgendamentos agendamentos={proximas} vazio="Nenhuma consulta agendada no momento." />
+      </Secao>
 
       <div className={estilos.grade}>
         <Secao id="pendencias" titulo="O que você precisa fazer" quantidade={pendentes.length}>
@@ -335,13 +340,59 @@ function PainelParceiro({ painel }) {
   )
 }
 
-/** O agendamento de consultas, que é a função do colaborador, ainda não foi implementado. */
-function PainelColaborador() {
+/** Consultas agendadas, com data, distância e observação. `mostrarPaciente` para a equipe. */
+function ListaAgendamentos({ agendamentos, vazio, mostrarPaciente = false, aRegistrar = false }) {
+  if (agendamentos.length === 0) return <EstadoVazio icone={CalendarDays}>{vazio}</EstadoVazio>
   return (
-    <section className={ui.cartao}>
-      <EstadoVazio icone={CalendarDays}>
-        O agendamento de consultas estará disponível em breve. Por enquanto não há nada para você fazer aqui.
-      </EstadoVazio>
-    </section>
+    <ul className={ui.lista}>
+      {agendamentos.map((agendamento) => (
+        <li key={agendamento.id} className={ui.itemLista}>
+          <div className={ui.cabecalhoItem}>
+            <strong>{formatarDataHora(agendamento.data_hora)}</strong>
+            {aRegistrar ? (
+              <Etiqueta variante="alerta">A registrar</Etiqueta>
+            ) : (
+              <Etiqueta variante="info">{formatarPrazoRelativo(agendamento.data_hora)}</Etiqueta>
+            )}
+          </div>
+          {mostrarPaciente && <p className={estilos.textoItem}>{agendamento.paciente.nome}</p>}
+          {agendamento.observacao && <div className={estilos.meta}><span>{agendamento.observacao}</span></div>}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** O colaborador cuida da agenda: o que já passou e falta registrar, e o que vem pela frente. */
+function PainelColaborador({ painel }) {
+  const { aguardando_desfecho: aRegistrar, proximas_consultas: proximas } = painel
+  return (
+    <>
+      <div className={estilos.resumos}>
+        <Resumo icone={TriangleAlert} numero={aRegistrar.length} rotulo="Consultas a registrar" destino="#a-registrar" tom="alerta" />
+        <Resumo icone={CalendarDays} numero={proximas.length} rotulo="Próximas consultas" destino="#proximas" tom="info" />
+      </div>
+
+      <div className={estilos.grade}>
+        <Secao id="a-registrar" titulo="A registrar" quantidade={aRegistrar.length}>
+          <ListaAgendamentos
+            agendamentos={aRegistrar}
+            vazio="Nenhuma consulta a registrar. Depois do horário, marque na Agenda se a consulta foi realizada ou se o paciente faltou."
+            mostrarPaciente
+            aRegistrar
+          />
+        </Secao>
+        <Secao id="proximas" titulo="Próximas consultas" quantidade={proximas.length}>
+          <ListaAgendamentos
+            agendamentos={proximas}
+            vazio="Nenhuma consulta agendada."
+            mostrarPaciente
+          />
+        </Secao>
+      </div>
+      <p className={ui.ajuda}>
+        Para agendar, remarcar, cancelar ou registrar uma consulta, use a <Link to="/agenda">Agenda</Link>.
+      </p>
+    </>
   )
 }
