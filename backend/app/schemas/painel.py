@@ -43,3 +43,8 @@ class PainelParceiro(BaseModel):
     tipo_usuario: Literal["parceiro"] = "parceiro"
     # Solicitações destinadas ao parceiro, vencidas primeiro
     solicitacoes_pendentes: list[SolicitacaoPendente]
+
+
+class PainelColaborador(BaseModel):
+    # Ainda sem conteúdo: o colaborador vai cuidar do agendamento de consultas
+    tipo_usuario: Literal["colaborador"] = "colaborador"
