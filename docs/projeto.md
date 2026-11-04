@@ -11,14 +11,13 @@ com prazo, documentos e uma linha do tempo.
 | **Médico** | Por script, na instalação. Existe um único médico. | Administra tudo: cria contas, abre acompanhamentos, registra consultas, cria solicitações, revisa documentos. |
 | **Paciente** | Pelo médico, com o email informado na consulta. | Vê o próprio acompanhamento e as pendências, envia exames e documentos. |
 | **Parceiro** | Pelo médico, com nome, email e profissão. | Profissional que colabora no tratamento (nutricionista, fisioterapeuta…): envia documentos da sua área. |
-| **Colaborador** | Pelo médico, com nome e email. | Equipe do consultório (secretária, recepção). Vai cuidar só do agendamento de consultas, que ainda será implementado; por enquanto entra no sistema e não acessa nenhum acompanhamento. |
 
 - **Não existe cadastro público.** Os dados de acesso seguem por email, com uma senha
   provisória; no primeiro login a pessoa define a própria senha.
 - **O sistema não depende de o paciente (ou parceiro) aceitar o acesso.** Assim que a conta
   existe, o médico já trabalha no acompanhamento.
 - Uma única tabela `usuarios`, com `tipo_usuario`. A `profissao` é obrigatória para médico
-  (fixa: "Médico") e parceiro, e não se aplica ao paciente nem ao colaborador.
+  (fixa: "Médico") e parceiro, e não se aplica ao paciente.
 
 ## Requisitos funcionais
 
@@ -54,8 +53,6 @@ com prazo, documentos e uma linha do tempo.
 | RF28 | A página do acompanhamento mostra nas abas a quantidade de pendências, contando para paciente e parceiro só o que cabe a eles. | Implementado |
 | RF29 | O parceiro vê a anamnese dos pacientes atribuídos, as solicitações destinadas a ele e os próprios envios. | Implementado |
 | RF30 | O paciente vê o próprio acompanhamento: anamnese, consultas, solicitações (inclusive as destinadas a parceiros), documentos e linha do tempo. | Implementado |
-| RF31 | O médico cria, edita, desativa e reativa contas de colaborador (nome e email), na tela Colaboradores. | Implementado |
-| RF32 | O colaborador agenda consultas. | A fazer |
 
 Removidos em relação à primeira versão: cadastro público, vínculo médico-paciente por busca de
 email e o chat entre médico e paciente.
@@ -66,8 +63,8 @@ email e o chat entre médico e paciente.
 |---|---|
 | RNF01 | Uploads só de `pdf, png, jpg, jpeg, webp, dcm, txt`, até 30 MB (configurável), validados no backend e no frontend. |
 | RNF02 | Persistência em MySQL 8, com migrações Alembic que preservam os dados. |
-| RNF03 | Controle de acesso por `tipo_usuario` (`medico` / `paciente` / `parceiro` / `colaborador`). |
-| RNF04 | O acompanhamento só é acessado pelo médico e pelo paciente dono, com conta ativa; o parceiro atribuído acessa apenas a anamnese, as solicitações destinadas a ele e os próprios envios; o colaborador não acessa acompanhamentos. |
+| RNF03 | Controle de acesso por `tipo_usuario` (`medico` / `paciente` / `parceiro`). |
+| RNF04 | O acompanhamento só é acessado pelo médico e pelo paciente dono, com conta ativa; o parceiro atribuído acessa apenas a anamnese, as solicitações destinadas a ele e os próprios envios. |
 | RNF05 | O download de arquivos é autenticado e verifica o acesso ao acompanhamento. |
 | RNF06 | As páginas se atualizam por polling a cada 30 s, só no conteúdo aberto e com pausa quando a aba do navegador está oculta. |
 | RNF07 | As listas principais são paginadas no servidor: 20 registros por página (até 100), com filtros e contagem aplicados no banco. |

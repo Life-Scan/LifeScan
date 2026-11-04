@@ -50,8 +50,7 @@ def criar_acompanhamento(
 @router.get("", response_model=Pagina[AcompanhamentoSaida] | list[AcompanhamentoSaida])
 def listar_acompanhamentos(
     paginacao: Paginacao = Depends(),
-    # O colaborador não participa dos acompanhamentos
-    usuario: Usuario = Depends(exigir_tipo(TipoUsuario.medico, TipoUsuario.paciente, TipoUsuario.parceiro)),
+    usuario: Usuario = Depends(obter_usuario_atual),
     sessao: Session = Depends(obter_sessao),
 ):
     """Médico: os acompanhamentos que conduz. Paciente: a própria. Parceiro: as que lhe foram atribuídas."""

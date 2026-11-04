@@ -35,16 +35,12 @@ export default function App() {
           <Route path="/" element={<Navigate to="/painel" replace />} />
           <Route path="/painel" element={<Painel />} />
 
-          {/* O colaborador não participa dos acompanhamentos */}
-          <Route element={<RotaProtegida tipos={['medico', 'paciente', 'parceiro']} />}>
-            <Route path="/acompanhamentos" element={<Acompanhamentos />} />
-            <Route path="/acompanhamentos/:id" element={<Acompanhamento />} />
-          </Route>
+          <Route path="/acompanhamentos" element={<Acompanhamentos />} />
+          <Route path="/acompanhamentos/:id" element={<Acompanhamento />} />
 
           <Route element={<RotaProtegida tipos={['medico']} />}>
             <Route path="/pacientes" element={<Usuarios tipo="paciente" />} />
             <Route path="/parceiros" element={<Usuarios tipo="parceiro" />} />
-            <Route path="/colaboradores" element={<Usuarios tipo="colaborador" />} />
             <Route path="/usuarios" element={<Navigate to="/pacientes" replace />} />
             <Route path="/acompanhamentos/novo" element={<NovoAcompanhamento />} />
           </Route>
