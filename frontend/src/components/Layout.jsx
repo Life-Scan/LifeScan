@@ -1,14 +1,14 @@
-import { Handshake, LayoutDashboard, LogOut, Route, Users } from 'lucide-react'
+import { Handshake, IdCard, LayoutDashboard, LogOut, Route, Users } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../context/AuthContext'
 import estilos from './Layout.module.css'
 import { Avatar } from './ui'
 
-const ROTULOS_TIPO = { medico: 'Médico(a)', paciente: 'Paciente' }
+const ROTULOS_TIPO = { medico: 'Médico(a)', paciente: 'Paciente', colaborador: 'Colaborador(a)' }
 
 export default function Layout() {
-  const { usuario, ehMedico, ehParceiro, sair } = useAuth()
+  const { usuario, ehMedico, ehParceiro, ehColaborador, sair } = useAuth()
   const navegar = useNavigate()
 
   function aoSair() {
@@ -41,12 +41,18 @@ export default function Layout() {
                 <Handshake size={18} aria-hidden="true" />
                 Parceiros
               </NavLink>
+              <NavLink to="/colaboradores" className={classeLink}>
+                <IdCard size={18} aria-hidden="true" />
+                Colaboradores
+              </NavLink>
             </>
           )}
-          <NavLink to="/acompanhamentos" className={classeLink}>
-            <Route size={18} aria-hidden="true" />
-            {ehMedico ? 'Acompanhamentos' : ehParceiro ? 'Pacientes' : 'Meu acompanhamento'}
-          </NavLink>
+          {!ehColaborador && (
+            <NavLink to="/acompanhamentos" className={classeLink}>
+              <Route size={18} aria-hidden="true" />
+              {ehMedico ? 'Acompanhamentos' : ehParceiro ? 'Pacientes' : 'Meu acompanhamento'}
+            </NavLink>
+          )}
         </nav>
 
         <div className={estilos.usuario}>
