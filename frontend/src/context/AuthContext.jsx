@@ -45,7 +45,6 @@ export function AuthProvider({ children }) {
       ehMedico: usuario?.tipo_usuario === 'medico',
       ehPaciente: usuario?.tipo_usuario === 'paciente',
       ehParceiro: usuario?.tipo_usuario === 'parceiro',
-      ehColaborador: usuario?.tipo_usuario === 'colaborador',
       entrar,
       definirSenha,
       sair,

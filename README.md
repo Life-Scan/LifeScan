@@ -17,9 +17,8 @@ colaboram com documentos da sua área.
 Não existe cadastro público.
 
 1. O **médico** (único no sistema) é criado por um script, na instalação.
-2. O médico cria as contas de **pacientes**, **parceiros** e **colaboradores**, informando nome e email
-   (e a profissão, no caso do parceiro). O colaborador é a equipe do consultório, que vai cuidar
-   do agendamento de consultas (ainda não implementado).
+2. O médico cria as contas de **pacientes** e **parceiros**, informando nome e email
+   (e a profissão, no caso do parceiro).
 3. O sistema envia por email os dados de acesso, com uma **senha provisória** válida por 7 dias.
 4. No primeiro login, a pessoa é levada a escolher a própria senha (a provisória não é pedida de novo).
 
@@ -97,8 +96,8 @@ uvicorn app.main:app --reload
 python -m scripts.criar_medico --email ana@clinica.com --redefinir-senha
 ```
 
-Pacientes, parceiros e colaboradores usam "Esqueci minha senha" na tela de login, ou o médico
-reenvia o acesso pela tela de cada um (**Pacientes**, **Parceiros** ou **Colaboradores**).
+Pacientes e parceiros usam "Esqueci minha senha" na tela de login, ou o médico reenvia o
+acesso pela tela **Pacientes e parceiros**.
 
 ### Variáveis do `.env`
 
@@ -149,7 +148,6 @@ python -m scripts.seed
 | Médico | `medico@lifescan.com` | `lifescan123` |
 | Paciente | `paciente@lifescan.com` | `lifescan123` |
 | Parceiro | `parceiro@lifescan.com` | `lifescan123` |
-| Colaborador | `colaborador@lifescan.com` | `lifescan123` |
 
 Rodar de novo não duplica nada.
 
@@ -207,8 +205,6 @@ Build de produção: `npm run build` (gera `frontend/dist`).
   paciente ou para um parceiro), documentos por categoria (envio, revisão, visualizar/baixar) e
   parceiros atribuídos.
 - **Visão do parceiro**: só a anamnese do paciente, as solicitações destinadas a ele e os próprios envios.
-- **Colaboradores** (médico): lista, busca, edição, reenviar acesso e desativar/reativar.
-- **Visão do colaborador**: por enquanto só o painel, avisando que o agendamento de consultas chega em breve.
 
 As listas e a página do acompanhamento se atualizam a cada 30 segundos; a atualização pausa quando a
 aba do navegador fica oculta.

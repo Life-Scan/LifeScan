@@ -1,4 +1,4 @@
-"""Contas de pacientes, parceiros e colaboradores, criadas e administradas pelo médico."""
+"""Contas de pacientes e parceiros, criadas e administradas pelo médico."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import delete, or_, select
@@ -51,7 +51,7 @@ def _obter_conta(sessao: Session, usuario_id: int) -> Usuario:
 
 @router.post("", response_model=ContaSaida, status_code=status.HTTP_201_CREATED)
 def criar_conta(dados: ContaEntrada, sessao: Session = Depends(obter_sessao)) -> ContaSaida:
-    """Cria a conta de um paciente, parceiro ou colaborador e envia os dados de acesso por email.
+    """Cria a conta de um paciente ou parceiro e envia os dados de acesso por email.
 
     A conta já pode ser usada pelo médico (abrir acompanhamento, registrar consultas...)
     antes de a pessoa entrar pela primeira vez.
@@ -76,7 +76,7 @@ def criar_conta(dados: ContaEntrada, sessao: Session = Depends(obter_sessao)) ->
 
 @router.get("", response_model=Pagina[ContaSaida] | list[ContaSaida])
 def listar_contas(
-    tipo: TipoUsuario | None = Query(None, description="paciente, parceiro ou colaborador"),
+    tipo: TipoUsuario | None = Query(None, description="paciente ou parceiro"),
     ativo: bool | None = Query(None),
     busca: str | None = Query(None, max_length=255, description="Parte do nome ou email"),
     paginacao: Paginacao = Depends(),

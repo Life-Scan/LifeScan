@@ -11,12 +11,6 @@ class TipoUsuario(str, enum.Enum):
     medico = "medico"
     paciente = "paciente"
     parceiro = "parceiro"
-    # Equipe do consultório: vai cuidar só do agendamento de consultas
-    colaborador = "colaborador"
-
-
-# Tipos que não têm profissão
-TIPOS_SEM_PROFISSAO = (TipoUsuario.paciente, TipoUsuario.colaborador)
 
 
 # O sistema tem um único médico, e a profissão dele é fixa
@@ -24,14 +18,14 @@ PROFISSAO_MEDICO = "Médico"
 
 
 class Usuario(Base):
-    """Médico, paciente, parceiro ou colaborador. Não existe cadastro público: o médico é
-    criado por script e é ele quem cria as demais contas."""
+    """Médico, paciente ou parceiro. Não existe cadastro público: o médico é criado
+    por script e é ele quem cria as contas de pacientes e parceiros."""
 
     __tablename__ = "usuarios"
     __table_args__ = (
-        # A profissão só pode ficar vazia para pacientes e colaboradores
+        # A profissão só pode ficar vazia para pacientes
         CheckConstraint(
-            "tipo_usuario IN ('paciente', 'colaborador') OR profissao IS NOT NULL",
+            "tipo_usuario = 'paciente' OR profissao IS NOT NULL",
             name="ck_usuarios_profissao_obrigatoria",
         ),
     )

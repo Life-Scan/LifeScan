@@ -1,4 +1,4 @@
-"""Cria dados de exemplo: médico, paciente, parceiro, colaborador e um acompanhamento com histórico.
+"""Cria dados de exemplo: médico, paciente, parceiro e um acompanhamento com histórico.
 
 Uso (na pasta backend, com o venv ativo e o banco migrado):
     python -m scripts.seed
@@ -39,7 +39,6 @@ SENHA_EXEMPLO = "lifescan123"
 EMAIL_MEDICO = "medico@lifescan.com"
 EMAIL_PACIENTE = "paciente@lifescan.com"
 EMAIL_PARCEIRO = "parceiro@lifescan.com"
-EMAIL_COLABORADOR = "colaborador@lifescan.com"
 
 
 def _gravar_arquivo_texto(acompanhamento_id: int, usuario_id: int, nome: str, conteudo: str) -> Arquivo:
@@ -59,11 +58,10 @@ def _gravar_arquivo_texto(acompanhamento_id: int, usuario_id: int, nome: str, co
 
 
 def _complementar_anamnese_e_parceiro(sessao) -> list[str]:
-    """Garante a anamnese do paciente de exemplo, o parceiro atribuído ao acompanhamento dele
-    e o colaborador de exemplo.
+    """Garante a anamnese do paciente de exemplo e o parceiro atribuído ao acompanhamento dele.
 
     Roda também quando os dados de exemplo já existiam, para bancos criados antes
-    de a anamnese, os parceiros e os colaboradores existirem.
+    de a anamnese e os parceiros existirem.
     """
     paciente = sessao.scalar(select(Usuario).where(Usuario.email == EMAIL_PACIENTE))
     parceiro = sessao.scalar(select(Usuario).where(Usuario.email == EMAIL_PARCEIRO))
@@ -95,17 +93,6 @@ def _complementar_anamnese_e_parceiro(sessao) -> list[str]:
     ):
         sessao.add(AtribuicaoParceiro(acompanhamento_id=acompanhamento.id, parceiro_id=parceiro.id))
         criados.append("parceiro atribuído ao acompanhamento")
-
-    if not sessao.scalar(select(Usuario.id).where(Usuario.email == EMAIL_COLABORADOR)):
-        sessao.add(
-            Usuario(
-                tipo_usuario=TipoUsuario.colaborador,
-                nome="Juliana Rocha",
-                email=EMAIL_COLABORADOR,
-                senha_hash=gerar_hash_senha(SENHA_EXEMPLO),
-            )
-        )
-        criados.append("colaborador")
 
     sessao.commit()
     return criados
@@ -234,12 +221,11 @@ def criar_dados_de_exemplo() -> None:
 
     print("Dados de exemplo criados:")
     if medico_criado:
-        print(f"  Médico:      {EMAIL_MEDICO} / {SENHA_EXEMPLO}")
+        print(f"  Médico:   {EMAIL_MEDICO} / {SENHA_EXEMPLO}")
     else:
-        print(f"  Médico:      {email_medico} (conta já existente, senha inalterada)")
-    print(f"  Paciente:    {EMAIL_PACIENTE} / {SENHA_EXEMPLO}")
-    print(f"  Parceiro:    {EMAIL_PARCEIRO} / {SENHA_EXEMPLO}")
-    print(f"  Colaborador: {EMAIL_COLABORADOR} / {SENHA_EXEMPLO}")
+        print(f"  Médico:   {email_medico} (conta já existente, senha inalterada)")
+    print(f"  Paciente: {EMAIL_PACIENTE} / {SENHA_EXEMPLO}")
+    print(f"  Parceiro: {EMAIL_PARCEIRO} / {SENHA_EXEMPLO}")
 
 
 if __name__ == "__main__":
