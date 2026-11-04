@@ -209,10 +209,10 @@ Build de produção: `npm run build` (gera `frontend/dist`).
   parceiros atribuídos.
 - **Visão do parceiro**: só a anamnese do paciente, as solicitações destinadas a ele e os próprios envios.
 - **Colaboradores** (médico): lista, busca, edição, reenviar acesso e desativar/reativar.
-- **Agenda** (médico e colaborador): agendar consulta para um paciente que já passou pela primeira consulta,
-  remarcar, cancelar e, depois do horário, marcar como realizada ou falta. Abas: próximas, a registrar,
-  realizadas, faltas e canceladas.
-- **Visão do colaborador**: painel com as consultas a registrar e as próximas, e a Agenda.
+- **Agenda de consultas** (no painel do médico, abaixo do cadastro de usuários, e no painel do colaborador):
+  agendar consulta para um paciente que já passou pela primeira consulta, remarcar, cancelar e, depois do
+  horário, marcar como realizada ou falta. Abas: próximas, a registrar, realizadas, faltas e canceladas.
+- **Visão do colaborador**: só o painel, com a agenda de consultas.
 - **Visão do paciente**: o painel mostra também as próximas consultas agendadas.
 
 As listas e a página do acompanhamento se atualizam a cada 30 segundos; a atualização pausa quando a

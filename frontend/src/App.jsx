@@ -7,7 +7,6 @@ import DefinirSenha from './pages/DefinirSenha'
 import EsqueciSenha from './pages/EsqueciSenha'
 import Acompanhamento from './pages/acompanhamento/Acompanhamento'
 import Acompanhamentos from './pages/Acompanhamentos'
-import Agenda from './pages/Agenda'
 import Login from './pages/Login'
 import NaoEncontrada from './pages/NaoEncontrada'
 import NovoAcompanhamento from './pages/NovoAcompanhamento'
@@ -40,10 +39,6 @@ export default function App() {
           <Route element={<RotaProtegida tipos={['medico', 'paciente', 'parceiro']} />}>
             <Route path="/acompanhamentos" element={<Acompanhamentos />} />
             <Route path="/acompanhamentos/:id" element={<Acompanhamento />} />
-          </Route>
-
-          <Route element={<RotaProtegida tipos={['medico', 'colaborador']} />}>
-            <Route path="/agenda" element={<Agenda />} />
           </Route>
 
           <Route element={<RotaProtegida tipos={['medico']} />}>

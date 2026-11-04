@@ -1,4 +1,4 @@
-import { CalendarDays, Handshake, IdCard, LayoutDashboard, LogOut, Route, Users } from 'lucide-react'
+import { Handshake, IdCard, LayoutDashboard, LogOut, Route, Users } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../context/AuthContext'
@@ -31,12 +31,6 @@ export default function Layout() {
             <LayoutDashboard size={18} aria-hidden="true" />
             Painel
           </NavLink>
-          {(ehMedico || ehColaborador) && (
-            <NavLink to="/agenda" className={classeLink}>
-              <CalendarDays size={18} aria-hidden="true" />
-              Agenda
-            </NavLink>
-          )}
           {ehMedico && (
             <>
               <NavLink to="/pacientes" className={classeLink}>

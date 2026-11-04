@@ -9,9 +9,9 @@ import {
   obterPagina,
   remarcarConsulta,
 } from '../api/servicos'
-import { useConfirmar } from '../components/Confirmacao'
-import Paginacao from '../components/Paginacao'
-import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
+import { useConfirmar } from './Confirmacao'
+import Paginacao from './Paginacao'
+import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from './ui'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import {
   ROTULOS_STATUS_AGENDAMENTO,
@@ -20,7 +20,7 @@ import {
   formatarPrazoRelativo,
   paraCampoDataHora,
 } from '../utils/formatacao'
-import estilos from './Paginas.module.css'
+import estilos from '../pages/Paginas.module.css'
 
 const VARIANTES_STATUS = { agendada: 'info', realizada: 'sucesso', faltou: 'perigo', cancelada: 'neutra' }
 
@@ -43,8 +43,11 @@ const ABAS = [
   { id: 'canceladas', titulo: 'Canceladas', parametros: () => ({ status: 'cancelada', ordem: 'desc' }), vazio: 'Nenhuma consulta cancelada.' },
 ]
 
-/** Agenda do médico: o médico e os colaboradores agendam, remarcam, cancelam e registram as consultas. */
-export default function Agenda() {
+/**
+ * Agenda do médico, mostrada no painel do médico (abaixo do cadastro de usuários) e do colaborador:
+ * os dois agendam, remarcam, cancelam e registram as consultas.
+ */
+export default function AgendaConsultas() {
   const [aba, setAba] = useState('proximas')
   const [pagina, setPagina] = useState(1)
   const selecionada = ABAS.find((item) => item.id === aba)
@@ -69,18 +72,13 @@ export default function Agenda() {
   }
 
   return (
-    <div className={estilos.pilha}>
-      <div className={estilos.cabecalho}>
-        <div>
-          <h1>Agenda</h1>
-          <p className={estilos.subtitulo}>Consultas marcadas com o médico.</p>
-        </div>
-        <span className={estilos.atualizacao}>Atualiza sozinho a cada 30 segundos</span>
-      </div>
-
+    <>
       <FormularioAgendamento aoAgendar={() => (aba === 'proximas' ? atualizar() : mudarAba('proximas'))} />
 
-      <section className={ui.cartao} aria-label="Consultas">
+      <section id="agenda" className={ui.cartao} aria-labelledby="titulo-agenda">
+        <div className={ui.cartaoCabecalho}>
+          <h2 id="titulo-agenda">Agenda de consultas</h2>
+        </div>
         <div className={estilos.abasPacientes} role="tablist" aria-label="Situação das consultas">
           {ABAS.map((item, indice) => (
             <button
@@ -115,7 +113,7 @@ export default function Agenda() {
           <Paginacao dados={dados} aoMudar={setPagina} carregando={carregando} />
         </div>
       </section>
-    </div>
+    </>
   )
 }
 

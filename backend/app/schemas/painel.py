@@ -49,8 +49,5 @@ class PainelParceiro(BaseModel):
 
 
 class PainelColaborador(BaseModel):
+    # O painel do colaborador é a própria agenda, que o frontend busca em /appointments
     tipo_usuario: Literal["colaborador"] = "colaborador"
-    # Consultas cujo horário já passou e que ainda não foram marcadas como realizadas ou falta
-    aguardando_desfecho: list[AgendamentoSaida]
-    # Próximas consultas da agenda
-    proximas_consultas: list[AgendamentoSaida]

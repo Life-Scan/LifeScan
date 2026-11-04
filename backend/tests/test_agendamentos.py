@@ -234,16 +234,12 @@ def test_pacientes_agendaveis(cliente, medico, colaborador, paciente_atendido, o
     assert cliente.get("/appointments/patients", headers=medico["headers"]).json() == []
 
 
-def test_paineis_mostram_as_consultas(cliente, colaborador, paciente_atendido):
+def test_painel_do_paciente_mostra_as_proximas_consultas(cliente, colaborador, paciente_atendido):
     passada = _agendar(cliente, colaborador, paciente_atendido, 24).json()
     _mover_para_o_passado(passada["id"])
     proxima = _agendar(cliente, colaborador, paciente_atendido, 48).json()
     cancelada = _agendar(cliente, colaborador, paciente_atendido, 72).json()
     cliente.patch(f"/appointments/{cancelada['id']}/status", json={"status": "cancelada"}, headers=colaborador["headers"])
-
-    painel = cliente.get("/dashboard/pending", headers=colaborador["headers"]).json()
-    assert [a["id"] for a in painel["aguardando_desfecho"]] == [passada["id"]]
-    assert [a["id"] for a in painel["proximas_consultas"]] == [proxima["id"]]
 
     painel_paciente = cliente.get("/dashboard/pending", headers=paciente_atendido["headers"]).json()
     assert [a["id"] for a in painel_paciente["proximas_consultas"]] == [proxima["id"]]

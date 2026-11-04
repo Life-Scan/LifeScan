@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { consentimentoLgpd, obterPendencias, revogarConsentimentoLgpd } from '../api/servicos'
 import { mensagemDeErro } from '../api/cliente'
 import { useConfirmar } from '../components/Confirmacao'
+import AgendaConsultas from '../components/AgendaConsultas'
 import FormularioConta from '../components/FormularioConta'
 import { Alerta, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
@@ -27,7 +28,7 @@ export default function Painel() {
     : ehPaciente
       ? 'Veja o que você precisa fazer e até quando.'
       : ehColaborador
-        ? 'Veja as consultas a registrar e as próximas da agenda.'
+        ? 'Agende as consultas e registre as que já aconteceram.'
         : 'Acompanhe as solicitações destinadas a você.'
 
   return (
@@ -41,13 +42,13 @@ export default function Painel() {
       </div>
 
       {ehMedico && <FormularioConta aoCriar={atualizar} />}
+      {(ehMedico || ehColaborador) && <AgendaConsultas />}
 
       <ErroCarregamento erro={erro} />
       {carregando && !dados && <Carregando />}
       {dados?.tipo_usuario === 'medico' && <PainelMedico painel={dados} />}
       {dados?.tipo_usuario === 'paciente' && <PainelPaciente painel={dados} />}
       {dados?.tipo_usuario === 'parceiro' && <PainelParceiro painel={dados} />}
-      {dados?.tipo_usuario === 'colaborador' && <PainelColaborador painel={dados} />}
     </div>
   )
 }
@@ -340,8 +341,8 @@ function PainelParceiro({ painel }) {
   )
 }
 
-/** Consultas agendadas, com data, distância e observação. `mostrarPaciente` para a equipe. */
-function ListaAgendamentos({ agendamentos, vazio, mostrarPaciente = false, aRegistrar = false }) {
+/** Próximas consultas do paciente, com data, distância e observação. */
+function ListaAgendamentos({ agendamentos, vazio }) {
   if (agendamentos.length === 0) return <EstadoVazio icone={CalendarDays}>{vazio}</EstadoVazio>
   return (
     <ul className={ui.lista}>
@@ -349,50 +350,11 @@ function ListaAgendamentos({ agendamentos, vazio, mostrarPaciente = false, aRegi
         <li key={agendamento.id} className={ui.itemLista}>
           <div className={ui.cabecalhoItem}>
             <strong>{formatarDataHora(agendamento.data_hora)}</strong>
-            {aRegistrar ? (
-              <Etiqueta variante="alerta">A registrar</Etiqueta>
-            ) : (
-              <Etiqueta variante="info">{formatarPrazoRelativo(agendamento.data_hora)}</Etiqueta>
-            )}
+            <Etiqueta variante="info">{formatarPrazoRelativo(agendamento.data_hora)}</Etiqueta>
           </div>
-          {mostrarPaciente && <p className={estilos.textoItem}>{agendamento.paciente.nome}</p>}
           {agendamento.observacao && <div className={estilos.meta}><span>{agendamento.observacao}</span></div>}
         </li>
       ))}
     </ul>
-  )
-}
-
-/** O colaborador cuida da agenda: o que já passou e falta registrar, e o que vem pela frente. */
-function PainelColaborador({ painel }) {
-  const { aguardando_desfecho: aRegistrar, proximas_consultas: proximas } = painel
-  return (
-    <>
-      <div className={estilos.resumos}>
-        <Resumo icone={TriangleAlert} numero={aRegistrar.length} rotulo="Consultas a registrar" destino="#a-registrar" tom="alerta" />
-        <Resumo icone={CalendarDays} numero={proximas.length} rotulo="Próximas consultas" destino="#proximas" tom="info" />
-      </div>
-
-      <div className={estilos.grade}>
-        <Secao id="a-registrar" titulo="A registrar" quantidade={aRegistrar.length}>
-          <ListaAgendamentos
-            agendamentos={aRegistrar}
-            vazio="Nenhuma consulta a registrar. Depois do horário, marque na Agenda se a consulta foi realizada ou se o paciente faltou."
-            mostrarPaciente
-            aRegistrar
-          />
-        </Secao>
-        <Secao id="proximas" titulo="Próximas consultas" quantidade={proximas.length}>
-          <ListaAgendamentos
-            agendamentos={proximas}
-            vazio="Nenhuma consulta agendada."
-            mostrarPaciente
-          />
-        </Secao>
-      </div>
-      <p className={ui.ajuda}>
-        Para agendar, remarcar, cancelar ou registrar uma consulta, use a <Link to="/agenda">Agenda</Link>.
-      </p>
-    </>
   )
 }

@@ -26,5 +26,5 @@ def obter_pendencias(
     if usuario.tipo_usuario == TipoUsuario.paciente:
         return montar_painel_paciente(sessao, usuario)
     if usuario.tipo_usuario == TipoUsuario.colaborador:
-        return montar_painel_colaborador(sessao)
+        return montar_painel_colaborador()
     return montar_painel_parceiro(sessao, usuario)

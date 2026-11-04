@@ -48,10 +48,11 @@ def test_colaborador_nao_acessa_acompanhamentos(cliente, colaborador, acompanham
         assert cliente.get(base + rota, headers=cabecalhos).status_code == 403, rota
 
 
-def test_painel_do_colaborador_sem_agendamentos(cliente, colaborador):
+def test_painel_do_colaborador(cliente, colaborador):
+    # O conteúdo do painel do colaborador é a agenda, buscada em /appointments
     painel = cliente.get("/dashboard/pending", headers=colaborador["headers"])
     assert painel.status_code == 200
-    assert painel.json() == {"tipo_usuario": "colaborador", "aguardando_desfecho": [], "proximas_consultas": []}
+    assert painel.json() == {"tipo_usuario": "colaborador"}
 
 
 def test_medico_edita_e_desativa_colaborador(cliente, medico, colaborador):
