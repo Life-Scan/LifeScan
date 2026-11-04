@@ -8,13 +8,13 @@ import Paginacao from '../components/Paginacao'
 import { useConfirmar } from '../components/Confirmacao'
 import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
-import { TIPOS_CONTA, formatarData, formatarDataHora } from '../utils/formatacao'
+import { formatarData, formatarDataHora } from '../utils/formatacao'
 import estilos from './Paginas.module.css'
 
 
-/** Listagem de pacientes, parceiros ou colaboradores, conforme a tela acessada pelo médico. */
+/** Listagem de pacientes ou parceiros, conforme a tela acessada pelo médico. */
 export default function Usuarios({ tipo }) {
-  const titulo = TIPOS_CONTA[tipo].plural
+  const titulo = tipo === 'paciente' ? 'Pacientes' : 'Parceiros'
   return (
     <div className={estilos.pilha}>
       <div className={estilos.cabecalho}>
@@ -51,7 +51,7 @@ function SecaoContas({ tipo }) {
     return { ...atual, ativos: aba === 'ativos' ? atual.total : outra.total, desativados: aba === 'desativados' ? atual.total : outra.total }
   }, undefined, [tipo, aba, pagina, busca])
   useEffect(() => { if (dados) setPagina(dados.pagina) }, [dados?.pagina])
-  const titulo = TIPOS_CONTA[tipo].plural
+  const titulo = tipo === 'paciente' ? 'Pacientes' : 'Parceiros'
   const plural = titulo.toLowerCase()
   const abas = [
     { id: 'ativos', titulo, vazio: `Nenhum ${tipo} ativo. Crie uma conta ou reative um ${tipo} na aba ${titulo} desativados.` },
@@ -158,7 +158,8 @@ function ItemConta({ conta, aoAlterar }) {
   const [ocupado, setOcupado] = useState(false)
   const [editando, setEditando] = useState(false)
   const ehPaciente = conta.tipo_usuario === 'paciente'
-  const { singular: tipo, plural: lista } = TIPOS_CONTA[conta.tipo_usuario]
+  const tipo = ehPaciente ? 'paciente' : 'parceiro'
+  const lista = ehPaciente ? 'Pacientes' : 'Parceiros'
 
   async function executar(acao) {
     setErro('')
@@ -306,7 +307,7 @@ function ItemConta({ conta, aoAlterar }) {
 
 function FormularioEdicaoConta({ conta, aoSalvar, aoCancelar }) {
   const ehParceiro = conta.tipo_usuario === 'parceiro'
-  const tipo = TIPOS_CONTA[conta.tipo_usuario].singular
+  const tipo = ehParceiro ? 'parceiro' : 'paciente'
   const [nome, setNome] = useState(conta.nome)
   const [email, setEmail] = useState(conta.email)
   const [profissao, setProfissao] = useState(conta.profissao || '')

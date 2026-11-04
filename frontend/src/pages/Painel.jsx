@@ -1,4 +1,4 @@
-import { CalendarClock, CalendarDays, CircleCheck, ClipboardList, Clock, FileText, TriangleAlert } from 'lucide-react'
+import { CalendarClock, CircleCheck, ClipboardList, Clock, FileText, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -20,15 +20,13 @@ import {
 import estilos from './Paginas.module.css'
 
 export default function Painel() {
-  const { usuario, ehMedico, ehPaciente, ehColaborador } = useAuth()
+  const { usuario, ehMedico, ehPaciente } = useAuth()
   const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(obterPendencias)
   const subtitulo = ehMedico
     ? 'Veja o que precisa da sua atenção.'
     : ehPaciente
       ? 'Veja o que você precisa fazer e até quando.'
-      : ehColaborador
-        ? 'Aqui você vai cuidar do agendamento de consultas.'
-        : 'Acompanhe as solicitações destinadas a você.'
+      : 'Acompanhe as solicitações destinadas a você.'
 
   return (
     <div className={estilos.pilha}>
@@ -47,7 +45,6 @@ export default function Painel() {
       {dados?.tipo_usuario === 'medico' && <PainelMedico painel={dados} />}
       {dados?.tipo_usuario === 'paciente' && <PainelPaciente painel={dados} />}
       {dados?.tipo_usuario === 'parceiro' && <PainelParceiro painel={dados} />}
-      {dados?.tipo_usuario === 'colaborador' && <PainelColaborador />}
     </div>
   )
 }
@@ -332,16 +329,5 @@ function PainelParceiro({ painel }) {
         />
       </Secao>
     </>
-  )
-}
-
-/** O agendamento de consultas, que é a função do colaborador, ainda não foi implementado. */
-function PainelColaborador() {
-  return (
-    <section className={ui.cartao}>
-      <EstadoVazio icone={CalendarDays}>
-        O agendamento de consultas estará disponível em breve. Por enquanto não há nada para você fazer aqui.
-      </EstadoVazio>
-    </section>
   )
 }

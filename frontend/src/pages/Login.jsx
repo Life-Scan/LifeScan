@@ -45,7 +45,7 @@ export default function Login() {
             <h2 id="titulo-apresentacao">Mais perto.{' '}<br />Em cada passo{' '}<br />do seu cuidado.</h2>
             <p>Seu tratamento acompanhado de perto, entre uma consulta e outra.</p>
           </div>
-          <div className={estilos.passos}>
+          <div className={estilos.jornada}>
             <svg className={estilos.batimento} viewBox="0 0 400 100" fill="none" aria-hidden="true">
               <path d="M0 50H105L135 12L185 88L215 50H400" />
             </svg>
@@ -55,14 +55,14 @@ export default function Login() {
               <li><span>03</span>Retorno</li>
             </ol>
           </div>
-          <p className={estilos.nota}>Médico e paciente. Um acompanhamento compartilhado.</p>
+          <p className={estilos.nota}>Médico e paciente. Uma jornada compartilhada.</p>
         </section>
 
         <section className={estilos.acesso} aria-labelledby="titulo-login">
           <div className={estilos.formularioCaixa}>
             <span className={estilos.simbolo} aria-hidden="true"><img src="/favicon.svg" alt="" width="48" height="48" /></span>
             <p className={estilos.sobretitulo}>BEM-VINDO AO LIFESCAN</p>
-            <h1 id="titulo-login" className={estilos.titulo}>Vamos continuar<br />seu acompanhamento?</h1>
+            <h1 id="titulo-login" className={estilos.titulo}>Vamos continuar<br />sua jornada?</h1>
             <p className={estilos.subtitulo}>Entre na sua conta para acompanhar seu cuidado.</p>
             <form className={estilos.formulario} onSubmit={aoEnviar}>
               {parametros.get('sessao') === 'expirada' && !erro && (
