@@ -18,8 +18,8 @@ Não existe cadastro público.
 
 1. O **médico** (único no sistema) é criado por um script, na instalação.
 2. O médico cria as contas de **pacientes**, **parceiros** e **colaboradores**, informando nome e email
-   (e a profissão, no caso do parceiro). O colaborador é a equipe do consultório, que vai cuidar
-   do agendamento de consultas (ainda não implementado).
+   (e a profissão, no caso do parceiro). O colaborador é a equipe do consultório, que cuida
+   da agenda de consultas.
 3. O sistema envia por email os dados de acesso, com uma **senha provisória** válida por 7 dias.
 4. No primeiro login, a pessoa é levada a escolher a própria senha (a provisória não é pedida de novo).
 
@@ -112,6 +112,7 @@ reenvia o acesso pela tela de cada um (**Pacientes**, **Parceiros** ou **Colabor
 | `UPLOAD_DIR` | Pasta dos arquivos enviados (relativa a `backend/`) |
 | `MAX_UPLOAD_MB` | Tamanho máximo de upload (padrão 30) |
 | `DUE_SOON_DAYS` | Dias para uma solicitação ser considerada "próxima do prazo" (padrão 3) |
+| `APPOINTMENT_MIN_GAP_HOURS` | Distância mínima, em horas, entre duas consultas agendadas (padrão 2) |
 | `EMAIL_MODE` | Modo de envio de email: `console` (padrão em dev) ou `smtp` (envio real) |
 | `EMAIL_FROM` | Remetente mostrado nos emails (ex: `LifeScan <contato@clinica.com>`) |
 | `SMTP_HOST` | Host do servidor SMTP (ex: `smtp.gmail.com`, `smtp.office365.com`) |
@@ -208,7 +209,11 @@ Build de produção: `npm run build` (gera `frontend/dist`).
   parceiros atribuídos.
 - **Visão do parceiro**: só a anamnese do paciente, as solicitações destinadas a ele e os próprios envios.
 - **Colaboradores** (médico): lista, busca, edição, reenviar acesso e desativar/reativar.
-- **Visão do colaborador**: por enquanto só o painel, avisando que o agendamento de consultas chega em breve.
+- **Agenda de consultas** (no painel do médico, abaixo do cadastro de usuários, e no painel do colaborador):
+  agendar consulta para um paciente que já passou pela primeira consulta, remarcar, cancelar e, depois do
+  horário, marcar como realizada ou falta. Abas: próximas, a registrar, realizadas, faltas e canceladas.
+- **Visão do colaborador**: só o painel, com a agenda de consultas.
+- **Visão do paciente**: o painel mostra também as próximas consultas agendadas.
 
 As listas e a página do acompanhamento se atualizam a cada 30 segundos; a atualização pausa quando a
 aba do navegador fica oculta.

@@ -55,6 +55,13 @@ export const ROTULOS_STATUS_SOLICITACAO = {
   cancelada: 'Cancelada',
 }
 
+export const ROTULOS_STATUS_AGENDAMENTO = {
+  agendada: 'Agendada',
+  realizada: 'Realizada',
+  cancelada: 'Cancelada',
+  faltou: 'Faltou',
+}
+
 export const ROTULOS_STATUS_DOCUMENTO = { enviado: 'Aguardando revisão', revisado: 'Revisado' }
 
 export const ROTULOS_CATEGORIA = {

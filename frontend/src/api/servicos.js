@@ -66,6 +66,12 @@ export function enviarDocumento(acompanhamentoId, { titulo, categoria, arquivo, 
 export const revisarDocumento = (id, observacao) =>
   dados(api.patch(`/documents/${id}/review`, { observacao_revisao: observacao }))
 
+// Agenda de consultas (médico e colaboradores; o paciente só lista as próprias)
+export const listarPacientesAgendaveis = (parametros) => dados(api.get('/appointments/patients', { params: parametros }))
+export const agendarConsulta = (agendamento) => dados(api.post('/appointments', agendamento))
+export const remarcarConsulta = (id, alteracoes) => dados(api.patch(`/appointments/${id}`, alteracoes))
+export const alterarStatusAgendamento = (id, status) => dados(api.patch(`/appointments/${id}/status`, { status }))
+
 // Linha do tempo e painel
 export const obterLinhaDoTempo = (acompanhamentoId, tipos) =>
   dados(api.get(`/follow-ups/${acompanhamentoId}/timeline`, { params: tipos?.length ? { tipos: tipos.join(',') } : {} }))

@@ -2,6 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from app.schemas.agendamento import AgendamentoSaida
 from app.schemas.base import SchemaSaida
 from app.schemas.documento import DocumentoSaida
 from app.schemas.solicitacao import SolicitacaoSaida
@@ -37,6 +38,8 @@ class PainelPaciente(BaseModel):
     solicitacoes_pendentes: list[SolicitacaoPendente]
     # Lembretes de consultas extras marcadas pelo médico
     consultas_extras: list[SolicitacaoPendente]
+    # Próximas consultas na agenda do médico, da mais próxima para a mais distante
+    proximas_consultas: list[AgendamentoSaida]
 
 
 class PainelParceiro(BaseModel):
@@ -46,5 +49,5 @@ class PainelParceiro(BaseModel):
 
 
 class PainelColaborador(BaseModel):
-    # Ainda sem conteúdo: o colaborador vai cuidar do agendamento de consultas
+    # O painel do colaborador é a própria agenda, que o frontend busca em /appointments
     tipo_usuario: Literal["colaborador"] = "colaborador"

@@ -6,6 +6,7 @@ from app.core.config import obter_configuracoes
 from app.core.erros import registrar_tratadores_erro
 from app.routers import (
     acompanhamentos,
+    agendamentos,
     anamnese,
     arquivos,
     atribuicoes,
@@ -66,6 +67,7 @@ def criar_app() -> FastAPI:
         anamnese,
         atribuicoes,
         consultas,
+        agendamentos,
         solicitacoes,
         documentos,
         arquivos,

@@ -11,7 +11,7 @@ com prazo, documentos e uma linha do tempo.
 | **Médico** | Por script, na instalação. Existe um único médico. | Administra tudo: cria contas, abre acompanhamentos, registra consultas, cria solicitações, revisa documentos. |
 | **Paciente** | Pelo médico, com o email informado na consulta. | Vê o próprio acompanhamento e as pendências, envia exames e documentos. |
 | **Parceiro** | Pelo médico, com nome, email e profissão. | Profissional que colabora no tratamento (nutricionista, fisioterapeuta…): envia documentos da sua área. |
-| **Colaborador** | Pelo médico, com nome e email. | Equipe do consultório (secretária, recepção). Vai cuidar só do agendamento de consultas, que ainda será implementado; por enquanto entra no sistema e não acessa nenhum acompanhamento. |
+| **Colaborador** | Pelo médico, com nome e email. | Equipe do consultório (secretária, recepção). Cuida só da agenda de consultas: agenda, remarca, cancela e registra se a consulta foi realizada ou se o paciente faltou. Não acessa nenhum acompanhamento. |
 
 - **Não existe cadastro público.** Os dados de acesso seguem por email, com uma senha
   provisória; no primeiro login a pessoa define a própria senha.
@@ -55,7 +55,8 @@ com prazo, documentos e uma linha do tempo.
 | RF29 | O parceiro vê a anamnese dos pacientes atribuídos, as solicitações destinadas a ele e os próprios envios. | Implementado |
 | RF30 | O paciente vê o próprio acompanhamento: anamnese, consultas, solicitações (inclusive as destinadas a parceiros), documentos e linha do tempo. | Implementado |
 | RF31 | O médico cria, edita, desativa e reativa contas de colaborador (nome e email), na tela Colaboradores. | Implementado |
-| RF32 | O colaborador agenda consultas. | A fazer |
+| RF32 | O médico e o colaborador agendam, remarcam e cancelam consultas e, depois do horário, registram se ela foi realizada ou se o paciente faltou. | Implementado |
+| RF33 | O paciente vê no painel as próximas consultas agendadas para ele. | Implementado |
 
 Removidos em relação à primeira versão: cadastro público, vínculo médico-paciente por busca de
 email e o chat entre médico e paciente.
@@ -156,6 +157,19 @@ email e o chat entre médico e paciente.
   A data de uma consulta é a data em que ela aconteceu; dos demais eventos, o momento da criação.
 - O painel considera só acompanhamentos ativos. Documentos enviados pelo próprio médico não entram como
   "aguardando revisão". No painel do paciente, consultas extras aparecem em uma lista separada.
+
+### Agenda de consultas
+- O **agendamento** (`agendamentos`) é o horário marcado; a **consulta** (`consultas`) continua sendo o registro
+  clínico que o médico faz depois do atendimento. Os dois não são ligados automaticamente.
+- Só pode ser agendado o paciente que **já passou pela primeira consulta**: conta ativa, acompanhamento ativo e
+  ao menos uma consulta registrada. Ele não precisa ter entrado no sistema.
+- Não há duração nem grade de horários: a data e a hora são livres, mas duas consultas agendadas precisam ficar
+  a pelo menos **2 horas** uma da outra (`APPOINTMENT_MIN_GAP_HOURS`). Exatamente 2 horas é aceito; consultas
+  canceladas, realizadas ou com falta não ocupam o horário.
+- Situações: `agendada`, `realizada`, `cancelada`, `faltou`. Só a consulta agendada pode ser remarcada ou mudar
+  de situação; cancelar vale a qualquer momento, realizada e falta só depois do horário. As demais são finais.
+- O colaborador vê do paciente só o nome e o email. O paciente vê as próprias consultas no painel; o parceiro
+  não acessa a agenda.
 
 ### Frontend
 - React + Vite em JavaScript, React Router, Axios; estilos com CSS Modules; ícones `lucide-react`.
