@@ -369,6 +369,40 @@
   word-break: break-all;
 }
 
+/* Miniaturas de imagens (anexo enviado e arquivo escolhido no envio) */
+
+.miniaturaBotao {
+  padding: 0;
+  border: none;
+  background: none;
+  line-height: 0;
+  cursor: zoom-in;
+}
+
+.miniaturaAnexo {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  background: var(--cor-superficie);
+}
+
+/* NÃO-imagem (.txt/.md): começo do conteúdo dentro do mesmo quadro */
+.miniaturaTexto {
+  box-sizing: border-box;
+  display: block;
+  padding: 7px;
+  font-family: var(--fonte-mono, monospace);
+  font-size: 0.6rem;
+  line-height: 1.35;
+  color: var(--cor-texto-suave);
+  overflow: hidden;
+  word-break: break-word;
+  white-space: pre-wrap;
+  cursor: zoom-in;
+}
+
 /* Janela de confirmação */
 
 .dialogo {

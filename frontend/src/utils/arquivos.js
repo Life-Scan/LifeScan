@@ -1,7 +1,7 @@
 import { obterArquivo } from '../api/servicos'
 
 // Mesmas regras do backend (RNF01); o backend continua sendo quem decide
-export const EXTENSOES_PERMITIDAS = ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'dcm', 'txt']
+export const EXTENSOES_PERMITIDAS = ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'dcm', 'txt', 'docx']
 export const TAMANHO_MAXIMO_MB = Number(import.meta.env.VITE_MAX_UPLOAD_MB) || 30
 export const ACCEPT_ARQUIVOS = EXTENSOES_PERMITIDAS.map((extensao) => `.${extensao}`).join(',')
 
