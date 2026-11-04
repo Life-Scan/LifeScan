@@ -63,7 +63,7 @@ export default function NovoAcompanhamento() {
         {disponiveis?.length === 0 && !erro && (
           <EstadoVazio>
             Todos os seus pacientes já têm acompanhamento, ou você ainda não cadastrou nenhum.{' '}
-            <Link to="/usuarios">Cadastrar paciente</Link>
+            <Link to="/painel">Cadastrar paciente no painel</Link>
           </EstadoVazio>
         )}
         {disponiveis?.length > 0 && (

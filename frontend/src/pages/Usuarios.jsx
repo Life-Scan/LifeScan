@@ -1,9 +1,9 @@
-import { ChevronDown, ChevronUp, MailCheck, Pencil, Route, Trash2, UserCheck, UserPlus, Users, UserX } from 'lucide-react'
+import { ChevronDown, ChevronUp, MailCheck, Pencil, Route, Search, Trash2, UserCheck, Users, UserX } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
-import { atualizarConta, criarConta, excluirPaciente, obterPagina, reenviarAcesso } from '../api/servicos'
+import { atualizarConta, excluirPaciente, obterPagina, reenviarAcesso } from '../api/servicos'
 import Paginacao from '../components/Paginacao'
 import { useConfirmar } from '../components/Confirmacao'
 import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
@@ -11,46 +11,45 @@ import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import { formatarData, formatarDataHora } from '../utils/formatacao'
 import estilos from './Paginas.module.css'
 
-const TIPOS = [
-  { valor: 'paciente', rotulo: 'Paciente', descricao: 'Pessoa em tratamento' },
-  { valor: 'parceiro', rotulo: 'Parceiro', descricao: 'Profissional que colabora' },
-]
 
-/** Pacientes e parceiros em uma única tela: o médico cria as contas e as administra. */
-export default function Usuarios() {
-  const [versao, setVersao] = useState(0)
-  const atualizar = () => setVersao((atual) => atual + 1)
-
+/** Listagem de pacientes ou parceiros, conforme a tela acessada pelo médico. */
+export default function Usuarios({ tipo }) {
+  const titulo = tipo === 'paciente' ? 'Pacientes' : 'Parceiros'
   return (
     <div className={estilos.pilha}>
       <div className={estilos.cabecalho}>
         <div>
-          <h1>Pacientes e parceiros</h1>
+          <h1>{titulo}</h1>
           <p className={estilos.subtitulo}>
-            Crie o acesso de quem participa dos tratamentos. Os dados de acesso seguem por email.
+            Busque {titulo.toLowerCase()} e gerencie seus acessos.
           </p>
         </div>
       </div>
 
-      <FormularioConta aoCriar={atualizar} />
-
-      <SecaoContas tipo="paciente" versao={versao} />
-      <SecaoContas tipo="parceiro" versao={versao} />
+      <SecaoContas key={tipo} tipo={tipo} />
     </div>
   )
 }
 
-function SecaoContas({ tipo, versao }) {
+function SecaoContas({ tipo }) {
+  const [textoBusca, setTextoBusca] = useState('')
+  const [busca, setBusca] = useState('')
   const [aba, setAba] = useState('ativos')
   const [recolhida, setRecolhida] = useState(false)
-  const [pagina, setPagina] = useState(1)
+  useEffect(() => {
+    const temporizador = setTimeout(() => setBusca(textoBusca.trim()), 200)
+    return () => clearTimeout(temporizador)
+  }, [textoBusca])
+  const [paginacao, setPaginacao] = useState({ numero: 1, busca })
+  const pagina = paginacao.busca === busca ? paginacao.numero : 1
+  const setPagina = (numero) => setPaginacao({ numero, busca })
   const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(async () => {
     const [atual, outra] = await Promise.all([
-      obterPagina('/users', { tipo, ativo: aba === 'ativos', pagina }),
-      obterPagina('/users', { tipo, ativo: aba !== 'ativos', tamanho: 1 }),
+      obterPagina('/users', { tipo, ativo: aba === 'ativos', pagina, busca }),
+      obterPagina('/users', { tipo, ativo: aba !== 'ativos', tamanho: 1, busca }),
     ])
     return { ...atual, ativos: aba === 'ativos' ? atual.total : outra.total, desativados: aba === 'desativados' ? atual.total : outra.total }
-  }, undefined, [tipo, aba, pagina, versao])
+  }, undefined, [tipo, aba, pagina, busca])
   useEffect(() => { if (dados) setPagina(dados.pagina) }, [dados?.pagina])
   const titulo = tipo === 'paciente' ? 'Pacientes' : 'Parceiros'
   const plural = titulo.toLowerCase()
@@ -98,6 +97,23 @@ function SecaoContas({ tipo, versao }) {
             </button>
           ))}
         </div>
+        <div role="search" aria-label={`Buscar ${plural}`} className={estilos.buscaContas}>
+          <label className="visualmente-oculto" htmlFor={`busca-${tipo}`}>Buscar {plural} por nome ou e-mail</label>
+          <input
+            id={`busca-${tipo}`}
+            type="text"
+            role="searchbox"
+            placeholder="Buscar por nome ou e-mail"
+            value={textoBusca}
+            onChange={(evento) => {
+              setTextoBusca(evento.target.value)
+              setRecolhida(false)
+              if (!evento.target.value.trim()) setBusca('')
+            }}
+            maxLength={255}
+          />
+          <Search className={estilos.iconeBuscaContas} size={18} aria-hidden="true" />
+        </div>
         <button
           type="button"
           className={estilos.recolherContas}
@@ -113,7 +129,7 @@ function SecaoContas({ tipo, versao }) {
       <div role="tabpanel" id={`painel-${plural}`} aria-labelledby={`aba-${plural}-${aba}`} tabIndex={0} hidden={recolhida}>
         <ErroCarregamento erro={erro} />
         {carregando && !dados && <Carregando />}
-        {dados && <ListaContas contas={dados.itens} vazio={selecionada.vazio} aoAlterar={atualizar} />}
+        {dados && <ListaContas contas={dados.itens} vazio={busca ? `Nenhum ${tipo} ${aba === 'ativos' ? 'ativo' : 'desativado'} encontrado para “${busca}”.` : selecionada.vazio} aoAlterar={atualizar} />}
         <Paginacao dados={dados} aoMudar={setPagina} carregando={carregando} />
       </div>
     </section>
@@ -126,101 +142,6 @@ function ListaContas({ contas, vazio, aoAlterar }) {
     <ul className={ui.lista}>
       {contas.map((conta) => <ItemConta key={conta.id} conta={conta} aoAlterar={aoAlterar} />)}
     </ul>
-  )
-}
-
-function FormularioConta({ aoCriar }) {
-  const [tipo, setTipo] = useState('paciente')
-  const [formulario, setFormulario] = useState({ nome: '', email: '', profissao: '' })
-  const [erro, setErro] = useState('')
-  const [sucesso, setSucesso] = useState('')
-  const [enviando, setEnviando] = useState(false)
-  const ehParceiro = tipo === 'parceiro'
-
-  const alterar = (campo) => (evento) => setFormulario((atual) => ({ ...atual, [campo]: evento.target.value }))
-
-  async function aoEnviar(evento) {
-    evento.preventDefault()
-    setErro('')
-    setSucesso('')
-    setEnviando(true)
-    try {
-      const conta = await criarConta({
-        tipo_usuario: tipo,
-        nome: formulario.nome,
-        email: formulario.email,
-        ...(ehParceiro ? { profissao: formulario.profissao } : {}),
-      })
-      setSucesso(`Conta de ${conta.nome} criada. Os dados de acesso foram enviados para ${conta.email}.`)
-      setFormulario({ nome: '', email: '', profissao: '' })
-      aoCriar()
-    } catch (erroCriacao) {
-      setErro(mensagemDeErro(erroCriacao))
-    } finally {
-      setEnviando(false)
-    }
-  }
-
-  return (
-    <section className={ui.cartao}>
-      <div className={ui.cartaoCabecalho}>
-        <h2>Novo usuário</h2>
-      </div>
-      <form className={ui.formulario} onSubmit={aoEnviar}>
-        <fieldset className={estilos.escolha}>
-          <legend>Quem você está cadastrando?</legend>
-          {TIPOS.map(({ valor, rotulo, descricao }) => (
-            <label key={valor} className={tipo === valor ? estilos.opcaoSelecionada : estilos.opcao}>
-              <input
-                type="radio"
-                name="tipo-usuario"
-                value={valor}
-                checked={tipo === valor}
-                onChange={() => setTipo(valor)}
-              />
-              <span className={estilos.opcaoRotulo}>{rotulo}</span>
-              <span className={estilos.opcaoDescricao}>{descricao}</span>
-            </label>
-          ))}
-        </fieldset>
-
-        <div className={ui.linhaCampos}>
-          <div>
-            <label htmlFor="conta-nome">Nome completo</label>
-            <input id="conta-nome" value={formulario.nome} onChange={alterar('nome')} required minLength={2} maxLength={120} />
-          </div>
-          <div>
-            <label htmlFor="conta-email">Email</label>
-            <input id="conta-email" type="email" value={formulario.email} onChange={alterar('email')} required />
-          </div>
-          {ehParceiro && (
-            <div>
-              <label htmlFor="conta-profissao">Profissão</label>
-              <input
-                id="conta-profissao"
-                value={formulario.profissao}
-                onChange={alterar('profissao')}
-                placeholder="Ex.: Nutricionista"
-                required
-                minLength={2}
-                maxLength={100}
-              />
-            </div>
-          )}
-        </div>
-        <Alerta tipo="erro">{erro}</Alerta>
-        <Alerta tipo="sucesso">{sucesso}</Alerta>
-        <div className={ui.acoes}>
-          <button type="submit" className={ui.botao} disabled={enviando}>
-            <UserPlus size={16} aria-hidden="true" />
-            {enviando ? 'Criando…' : `Criar ${ehParceiro ? 'parceiro' : 'paciente'} e enviar acesso`}
-          </button>
-          <span className={ui.ajuda}>
-            A pessoa recebe uma senha provisória por email e define a própria senha no primeiro acesso.
-          </span>
-        </div>
-      </form>
-    </section>
   )
 }
 

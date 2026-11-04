@@ -1,7 +1,7 @@
 """Contas de pacientes e parceiros, criadas e administradas pelo médico."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -77,6 +77,7 @@ def criar_conta(dados: ContaEntrada, sessao: Session = Depends(obter_sessao)) ->
 def listar_contas(
     tipo: TipoUsuario | None = Query(None, description="paciente ou parceiro"),
     ativo: bool | None = Query(None),
+    busca: str | None = Query(None, max_length=255, description="Parte do nome ou email"),
     paginacao: Paginacao = Depends(),
     sessao: Session = Depends(obter_sessao),
 ):
@@ -85,6 +86,12 @@ def listar_contas(
         consulta = consulta.where(Usuario.tipo_usuario == tipo)
     if ativo is not None:
         consulta = consulta.where(Usuario.ativo == ativo)
+    termo = busca.strip() if busca else ""
+    if termo:
+        consulta = consulta.where(or_(
+            Usuario.nome.icontains(termo, autoescape=True),
+            Usuario.email.icontains(termo, autoescape=True),
+        ))
     resultado = paginar(sessao, consulta.order_by(Usuario.nome, Usuario.id), paginacao)
     if isinstance(resultado, dict):
         resultado["itens"] = _montar_saidas(sessao, resultado["itens"])

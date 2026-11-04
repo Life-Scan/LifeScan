@@ -39,7 +39,9 @@ export default function App() {
           <Route path="/acompanhamentos/:id" element={<Acompanhamento />} />
 
           <Route element={<RotaProtegida tipos={['medico']} />}>
-            <Route path="/usuarios" element={<Usuarios />} />
+            <Route path="/pacientes" element={<Usuarios tipo="paciente" />} />
+            <Route path="/parceiros" element={<Usuarios tipo="parceiro" />} />
+            <Route path="/usuarios" element={<Navigate to="/pacientes" replace />} />
             <Route path="/acompanhamentos/novo" element={<NovoAcompanhamento />} />
           </Route>
 

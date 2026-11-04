@@ -125,7 +125,7 @@ function FormularioAtribuicao({ acompanhamentoId, atribuidos, aoAtribuir }) {
           {contas.length === 0
             ? 'Você ainda não cadastrou parceiros. '
             : 'Todos os parceiros ativos já estão neste acompanhamento. '}
-          <Link to="/usuarios">Cadastrar parceiro</Link>
+          <Link to="/painel">Cadastrar parceiro no painel</Link>
         </p>
         <Alerta tipo="erro">{erro}</Alerta>
       </div>

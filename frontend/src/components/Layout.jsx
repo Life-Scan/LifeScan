@@ -1,4 +1,4 @@
-import { LayoutDashboard, LogOut, Route, Users } from 'lucide-react'
+import { Handshake, LayoutDashboard, LogOut, Route, Users } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../context/AuthContext'
@@ -32,10 +32,16 @@ export default function Layout() {
             Painel
           </NavLink>
           {ehMedico && (
-            <NavLink to="/usuarios" className={classeLink}>
-              <Users size={18} aria-hidden="true" />
-              Pacientes e parceiros
-            </NavLink>
+            <>
+              <NavLink to="/pacientes" className={classeLink}>
+                <Users size={18} aria-hidden="true" />
+                Pacientes
+              </NavLink>
+              <NavLink to="/parceiros" className={classeLink}>
+                <Handshake size={18} aria-hidden="true" />
+                Parceiros
+              </NavLink>
+            </>
           )}
           <NavLink to="/acompanhamentos" className={classeLink}>
             <Route size={18} aria-hidden="true" />

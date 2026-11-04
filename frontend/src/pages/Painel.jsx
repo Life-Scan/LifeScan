@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { consentimentoLgpd, obterPendencias, revogarConsentimentoLgpd } from '../api/servicos'
 import { mensagemDeErro } from '../api/cliente'
 import { useConfirmar } from '../components/Confirmacao'
+import FormularioConta from '../components/FormularioConta'
 import { Alerta, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
@@ -20,7 +21,7 @@ import estilos from './Paginas.module.css'
 
 export default function Painel() {
   const { usuario, ehMedico, ehPaciente } = useAuth()
-  const { dados, erro, carregando } = useAtualizacaoPeriodica(obterPendencias)
+  const { dados, erro, carregando, atualizar } = useAtualizacaoPeriodica(obterPendencias)
   const subtitulo = ehMedico
     ? 'Veja o que precisa da sua atenção.'
     : ehPaciente
@@ -36,6 +37,8 @@ export default function Painel() {
         </div>
         <span className={estilos.atualizacao}>Atualiza sozinho a cada 30 segundos</span>
       </div>
+
+      {ehMedico && <FormularioConta aoCriar={atualizar} />}
 
       <ErroCarregamento erro={erro} />
       {carregando && !dados && <Carregando />}

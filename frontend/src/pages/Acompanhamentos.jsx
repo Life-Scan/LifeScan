@@ -44,8 +44,8 @@ export default function Acompanhamentos() {
         <EstadoVazio icone={Route}>
           {ehMedico ? (
             <>
-              Nenhum acompanhamento aberto. Cadastre um paciente em <Link to="/usuarios">Pacientes e parceiros</Link> e abra a
-              acompanhamento dele.
+              Nenhum acompanhamento aberto. Cadastre um paciente no <Link to="/painel">Painel</Link> e abra o
+              acompanhamento dele em <Link to="/pacientes">Pacientes</Link>.
             </>
           ) : ehParceiro ? (
             'Nenhum paciente atribuído a você no momento.'
