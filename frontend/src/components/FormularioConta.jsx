@@ -4,12 +4,14 @@ import { Link } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
 import { criarConta } from '../api/servicos'
+import { TIPOS_CONTA } from '../utils/formatacao'
 import { Alerta, estilos as ui } from './ui'
 import estilos from '../pages/Paginas.module.css'
 
 const TIPOS = [
   { valor: 'paciente', rotulo: 'Paciente', descricao: 'Pessoa em tratamento' },
   { valor: 'parceiro', rotulo: 'Parceiro', descricao: 'Profissional que colabora' },
+  { valor: 'colaborador', rotulo: 'Colaborador', descricao: 'Equipe do consultório' },
 ]
 
 export default function FormularioConta({ aoCriar }) {
@@ -97,16 +99,14 @@ export default function FormularioConta({ aoCriar }) {
             <>
               Conta de {sucesso.nome} criada com sucesso. Os dados de acesso foram enviados para {sucesso.email}.{' '}
               Consulte e gerencie esse cadastro na tela de{' '}
-              <Link to={sucesso.tipo === 'paciente' ? '/pacientes' : '/parceiros'}>
-                {sucesso.tipo === 'paciente' ? 'Pacientes' : 'Parceiros'}
-              </Link>.
+              <Link to={TIPOS_CONTA[sucesso.tipo].rota}>{TIPOS_CONTA[sucesso.tipo].plural}</Link>.
             </>
           )}
         </Alerta>
         <div className={ui.acoes}>
           <button type="submit" className={ui.botao} disabled={enviando}>
             <UserPlus size={16} aria-hidden="true" />
-            {enviando ? 'Criando…' : `Criar ${ehParceiro ? 'parceiro' : 'paciente'} e enviar acesso`}
+            {enviando ? 'Criando…' : `Criar ${TIPOS_CONTA[tipo].singular} e enviar acesso`}
           </button>
           <span className={ui.ajuda}>
             A pessoa recebe uma senha provisória por email e define a própria senha no primeiro acesso.

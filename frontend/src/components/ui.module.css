@@ -192,6 +192,11 @@
   color: var(--cor-info);
 }
 
+.avatar_colaborador {
+  background: var(--cor-alerta-clara);
+  color: var(--cor-alerta);
+}
+
 .avatar_medico {
   background: var(--cor-primaria);
   color: #fff;

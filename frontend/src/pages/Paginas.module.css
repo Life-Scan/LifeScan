@@ -272,7 +272,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.6rem;
-  max-width: 520px;
+  max-width: 780px;
   border: none;
   margin: 0;
   padding: 0;
