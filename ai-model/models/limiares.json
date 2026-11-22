@@ -1,0 +1,14 @@
+{
+  "versao": "1.0",
+  "semente": 42,
+  "gerado_em": "2026-11-22T21:02:40+00:00",
+  "nitidez_minima": 96.01961698692811,
+  "brilho_minimo": 132.08144674999994,
+  "brilho_maximo": 231.45391212962963,
+  "metricas": {
+    "acuracia_teste": 0.9722,
+    "f1_macro_teste": 0.9722,
+    "acuracia_baseline": 0.3333,
+    "f1_macro_baseline": 0.1667
+  }
+}

@@ -1,0 +1,9 @@
+# Dependências do componente de IA (pasta ai-model).
+# Instale em um ambiente virtual próprio, separado do backend:
+#   python -m venv ai-model/.venv
+#   ai-model/.venv/Scripts/python -m pip install -r ai-model/requirements.txt
+numpy>=1.26
+opencv-python-headless>=4.9
+Pillow>=10.0
+scikit-learn>=1.4
+matplotlib>=3.8
