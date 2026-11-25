@@ -132,6 +132,25 @@ lista atual continua para os outros dias e no celular.
 Ordem sugerida: 1 a 4 primeiro (mudam o sistema inteiro quase só com `index.css` e
 `Layout`), depois 5 a 7, tela por tela.
 
+## Tailwind e shadcn/ui
+
+O projeto está migrando de CSS Modules para Tailwind v4 + shadcn/ui, componente por componente. Os
+dois convivem: ao migrar um componente, apague o `.module.css` dele.
+
+- **Tokens:** as variáveis de `:root` continuam sendo a fonte da verdade. O `@theme inline` de
+  `index.css` gera classes com o nome delas (`bg-primaria`, `text-texto-suave`, `border-borda`,
+  `rounded-raio`, `shadow-sombra`) e aponta as variáveis do shadcn (`--primary`, `--border`,
+  `--muted-foreground`...) para elas. Não use a paleta padrão do Tailwind (`bg-teal-700`).
+- **Componentes do shadcn:** `npx shadcn@latest add <nome>`. Vão para `src/components/ui/`
+  (pasta) e não se confundem com `src/components/ui.jsx` (arquivo, componentes próprios), mas
+  importe sempre pelo caminho completo: `@/components/ui/button`.
+- **Sem preflight por enquanto:** o reset do Tailwind não está ligado, porque as telas em CSS
+  Modules dependem dos padrões do navegador (`dl`, `fieldset`, listas, `dialog`). As regras
+  globais de formulário e foco de `index.css` deixam de fora os elementos com `data-slot` (todos
+  os componentes do shadcn têm), e a base do shadcn vale só para eles. Quando a migração terminar,
+  ligue o preflight e mova as regras globais para `@layer base`.
+- Classes condicionais com `cn()` (`@/lib/utils`).
+
 ## Tokens
 
 Valores **atuais** do código. Os novos estão em [Direção visual](#direção-visual) e substituem

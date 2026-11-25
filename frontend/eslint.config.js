@@ -31,6 +31,11 @@ export default defineConfig([
     },
   },
   {
+    // Componentes gerados pelo shadcn (npx shadcn add) exportam as variantes junto (ex.: buttonVariants).
+    files: ['src/components/ui/**/*.jsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
+  {
     files: ['vite.config.js', 'eslint.config.js'],
     languageOptions: { globals: globals.node },
   },
