@@ -173,6 +173,8 @@ email e o chat entre médico e paciente.
 
 ### Frontend
 - React + Vite em JavaScript, React Router, Axios; estilos com CSS Modules; ícones `lucide-react`.
+- O sistema visual (variáveis, componentes, status → cor, regras para telas novas) está em
+  [frontend/DESIGN.md](../frontend/DESIGN.md).
 - Menu lateral em telas largas e barra no topo em telas estreitas.
 - **Pacientes e parceiros ficam em uma única tela** (`/usuarios`): o tipo é escolhido no formulário
   e as listas aparecem em seções separadas.
