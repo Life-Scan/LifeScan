@@ -6,17 +6,136 @@ das páginas. Quem criar uma tela nova (pessoa ou agente de IA) deve seguir este
 criar um estilo novo, reaproveite um existente. Se o código e este arquivo divergirem, corrija
 um dos dois no mesmo PR.
 
+O visual está mudando: a seção [Direção visual](#direção-visual) descreve para onde ele vai, e
+as seções seguintes descrevem o que está no código hoje. Telas novas já devem seguir a direção
+nova. Ao implantar cada item, atualize a tabela de implantação e as seções de tokens e layout.
+
 ## Princípios
 
-- **Clínico e calmo.** Fundo cinza bem claro, superfícies brancas, uma única cor de marca
-  (verde-azulado). A cor serve para informar estado, não para decorar.
+- **Identidade da marca em todo o sistema.** O verde-escuro, o gradiente e a linha de batimento
+  da tela de login aparecem também nas telas internas (menu, cabeçalhos, destaques), não só na
+  entrada. O conteúdo de trabalho continua em superfícies claras, para leitura confortável.
+- **Cor com função.** Além do estado (etiquetas, alertas), a cor identifica o tipo de
+  informação: consulta, solicitação e documento têm cor própria e sempre a mesma.
 - **Densidade de ferramenta de trabalho.** O médico usa o sistema todos os dias: listas
   compactas, informação secundária em texto suave, ações sempre à vista.
 - **Estado sempre com texto.** Cor nunca é o único sinal: etiquetas e alertas têm rótulo e,
   quando cabe, ícone.
 - **Português em tudo**, inclusive nomes de classes CSS, variáveis e textos da interface.
 
+## Direção visual
+
+O diagnóstico: depois do login, o sistema vira um fundo branco com texto e detalhes verdes. A
+marca existe, mas só aparece na tela de entrada. A direção é levar essa identidade para dentro,
+sem perder a leitura confortável das listas e formulários.
+
+### 1. Menu lateral escuro
+
+O menu usa o fundo da apresentação do login. O conteúdo continua claro.
+
+| Variável nova | Valor | Uso |
+|---|---|---|
+| `--cor-menu` | `#0b514d` | Fundo do menu |
+| `--gradiente-menu` | `radial-gradient(ellipse at 0% 100%, #218c7b 0, transparent 60%)` | Luz sutil no pé do menu, sobre `--cor-menu` |
+| `--cor-menu-texto` | `#c4e0da` | Links e textos do menu |
+| `--cor-menu-texto-forte` | `#ffffff` | Marca, link ativo, nome do usuário |
+| `--cor-menu-hover` | `rgb(255 255 255 / 8%)` | Fundo do link no hover |
+| `--cor-menu-ativo` | `rgb(255 255 255 / 14%)` | Fundo do link ativo, com barra de `3px` em `#a7e3cc` à esquerda |
+| `--cor-menu-borda` | `rgb(255 255 255 / 15%)` | Divisória acima do usuário |
+
+Na barra do topo (abaixo de 900px) vale o mesmo fundo escuro.
+
+### 2. Cabeçalho com presença
+
+- **Painel:** faixa de destaque no topo, com o gradiente do login
+  (`radial-gradient(ellipse at 100% 100%, #218c7b 0, transparent 65%), #0b514d`), texto claro,
+  saudação, data de hoje e o resumo do dia ("3 consultas hoje · 2 solicitações vencidas"). A
+  linha de batimento do login entra como detalhe decorativo à direita, com `aria-hidden`. Raio
+  `--raio-grande` (`20px`).
+- **Demais telas:** `.sobretitulo` acima do `h1` (o nome da área: "Pacientes", "Agenda"),
+  `h1` maior e subtítulo em texto suave. Sem faixa escura: ela é exclusiva do Painel e do
+  cabeçalho do acompanhamento.
+- `.sobretitulo`: `0.72rem`, peso `700`, caixa alta, `letter-spacing: 0.12em`,
+  cor `--cor-primaria`. É o mesmo padrão já usado no login.
+
+### 3. Tipografia
+
+- Fonte **Manrope**, hospedada no projeto via `@fontsource-variable/manrope` (sem depender do
+  Google Fonts). `--fonte: 'Manrope Variable', 'Segoe UI', system-ui, sans-serif`.
+- Escala com mais contraste:
+
+  | Elemento | Tamanho | Peso | `letter-spacing` |
+  |---|---|---|---|
+  | Título da faixa do Painel | `2rem` | `700` | `-0.03em` |
+  | `h1` | `1.85rem` (`1.45rem` abaixo de 720px) | `700` | `-0.025em` |
+  | `h2` | `1.15rem` | `700` | `-0.015em` |
+  | `h3` | `1rem` | `650` | `-0.01em` |
+  | Número de resumo | `2rem` | `750` | `-0.03em` |
+
+- Números que se comparam (resumos, horários, datas em lista, contadores) usam
+  `font-variant-numeric: tabular-nums`.
+
+### 4. Fundo e profundidade
+
+| Variável | Valor atual | Valor novo |
+|---|---|---|
+| `--cor-fundo` | `#f3f5f7` | `#edf3f1` (o mesmo tom esverdeado do fundo do login) |
+| `--cor-borda` | `#e2e7eb` | `#dfe8e4` |
+| `--sombra` | `0 1px 2px rgb(16 24 40 / 5%)` | `0 1px 2px rgb(11 81 77 / 6%), 0 4px 12px rgb(11 81 77 / 4%)` |
+| `--sombra-hover` (nova) | — | `0 2px 4px rgb(11 81 77 / 8%), 0 12px 28px rgb(11 81 77 / 10%)` |
+| `--raio-grande` (nova) | — | `20px` |
+
+Cartões clicáveis (resumos, itens com link) sobem `1px` e trocam para `--sombra-hover` no
+hover. Cartões estáticos não se movem.
+
+### 5. Cor por tipo de informação
+
+| Variável nova | Aponta para | Tipo |
+|---|---|---|
+| `--cor-consulta` / `--cor-consulta-clara` | `--cor-primaria` / `--cor-primaria-clara` | Consultas e agenda |
+| `--cor-solicitacao` / `--cor-solicitacao-clara` | `--cor-alerta` / `--cor-alerta-clara` | Solicitações |
+| `--cor-documento` / `--cor-documento-clara` | `--cor-info` / `--cor-info-clara` | Documentos |
+
+Onde aplicar: ícone da linha do tempo (já é assim), ícone dos resumos do Painel (sempre
+colorido, não só quando há itens), faixa lateral de `3px` nos itens de lista e ícone ao lado
+do título dos cartões. O estado (vencida, cancelada…) continua nas etiquetas: a cor do tipo não
+substitui a do estado.
+
+### 6. Agenda visual
+
+As consultas do dia aparecem numa faixa de horários (coluna de horas à esquerda, blocos de
+consulta coloridos pelo status), com a hora atual marcada por uma linha em `--cor-perigo`. A
+lista atual continua para os outros dias e no celular.
+
+### 7. Acabamento
+
+- **Carregamento:** esqueleto (blocos cinza com brilho passando) com o formato do conteúdo, no
+  lugar do spinner nas listas e cartões. O spinner fica para ações em botões.
+- **Estados vazios:** ícone dentro de um círculo em `--cor-primaria-clara`, título curto e uma
+  frase explicando o que vai aparecer ali; quando houver, botão para a ação que preenche a lista.
+- **Transições:** `150ms` para hover e cor; `200ms` com `ease-out` para troca de aba e
+  entrada de conteúdo (opacidade + `4px` de deslocamento). Tudo respeita
+  `prefers-reduced-motion`.
+
+### Implantação
+
+| Item | Situação |
+|---|---|
+| 1. Menu lateral escuro | Planejado |
+| 2. Cabeçalho com presença | Planejado |
+| 3. Tipografia | Planejado |
+| 4. Fundo e profundidade | Planejado |
+| 5. Cor por tipo de informação | Planejado (já existe só na linha do tempo) |
+| 6. Agenda visual | Planejado |
+| 7. Acabamento | Planejado |
+
+Ordem sugerida: 1 a 4 primeiro (mudam o sistema inteiro quase só com `index.css` e
+`Layout`), depois 5 a 7, tela por tela.
+
 ## Tokens
+
+Valores **atuais** do código. Os novos estão em [Direção visual](#direção-visual) e substituem
+estes à medida que forem implantados.
 
 Todos ficam em `:root`, em `src/index.css`. **Não use cores em hexadecimal nos módulos**. Use as
 variáveis. Se faltar uma, crie a variável em `index.css` primeiro.
