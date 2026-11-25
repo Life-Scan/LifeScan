@@ -89,7 +89,7 @@ export const estilos = {
   // Ações à direita sem quebrar em telas largas; abaixo de 860px empilha
   linhaComAcoes:
     'flex justify-between items-center gap-4 [&>.ui-acoes]:shrink-0 [&>.ui-acoes]:flex-nowrap ' +
-    'max-[860px]:flex-col max-[860px]:items-stretch max-[860px]:gap-[0.7rem] max-[860px]:[&>.ui-acoes]:flex-wrap',
+    'ate-860:flex-col ate-860:items-stretch ate-860:gap-[0.7rem] ate-860:[&>.ui-acoes]:flex-wrap',
 }
 
 const ETIQUETAS = {

@@ -147,8 +147,11 @@ dois convivem: ao migrar um componente, apague o `.module.css` dele.
 - **Estilos globais em `@layer base`:** as classes do Tailwind vencem as regras de `index.css`
   (`button`, `input`, `label`, `h1`...), e os `.module.css`, fora de camada, vencem tudo. A ordem
   das camadas está declarada no topo de `index.css`.
-- **Migrados:** `ui.jsx` (o antigo `ui.module.css`), `Confirmacao.jsx` e as telas de acesso
-  (`TelaAcesso.jsx`, no lugar do antigo `Auth.module.css`).
+- **Migrados:** `ui.jsx` (o antigo `ui.module.css`), `Confirmacao.jsx`, as telas de acesso
+  (`TelaAcesso.jsx`, no lugar do antigo `Auth.module.css`) e o `Login.jsx`.
+- **Pontos de quebra:** use `ate-900:`, `ate-860:` e `ate-680:` (definidos em `index.css`, com
+  `width <= N`, iguais ao `max-width` dos módulos). O `max-[900px]:` do Tailwind usa `width < 900px`
+  e muda o layout com 1px de diferença.
 - **Sem preflight por enquanto:** o reset do Tailwind não está ligado, porque as telas em CSS
   Modules dependem dos padrões do navegador (`dl`, `fieldset`, listas, `dialog`). As regras
   globais de formulário e foco de `index.css` deixam de fora os elementos com `data-slot` (todos
@@ -240,7 +243,7 @@ Em `rem`. Use os passos que já existem, sem valores soltos:
   - `.resumos` / `.resumo`: números do painel. O tom (`resumo_perigo`, `_alerta`, `_info`) só é
     aplicado quando o número é maior que zero.
 - Breakpoints usados: `900px` (menu), `860px` (linha com ações empilha), `720px` (tamanho do
-  `h1`). Prefira `auto-fit`/`minmax` a criar breakpoints novos.
+  `h1`), `680px` (login em uma coluna). Prefira `auto-fit`/`minmax` a criar breakpoints novos.
 
 ## Componentes
 
@@ -337,11 +340,12 @@ alguém → `alerta`; problema → `perigo`; futuro/informativo → `info`; ence
 
 ## Exceções conhecidas
 
-- **Login** (`Login.module.css`) tem visual próprio de
-  "porta de entrada": painel de apresentação verde-escuro com gradiente, caixa de `28px` de
-  raio, campos de `52px` e valores em `px`/hex direto. É intencional, mas os hex repetem tons da
-  marca (`#0f766e`, `#0b5d57`); ao mexer nesse arquivo, troque-os pelas variáveis. As outras telas
-  de acesso (esqueci a senha, definir senha) usam a moldura `TelaAcesso.jsx`, só com tokens.
+- **Login** (`Login.jsx`) tem visual próprio de "porta de entrada": painel de apresentação
+  verde-escuro com gradiente, caixa de `28px` de raio, campos de `52px` e valores em `px`/hex
+  direto (classes arbitrárias do Tailwind). É intencional. Os hex do painel verde (`#0b514d`,
+  `#218c7b`) viram variáveis com o item 1 da Direção visual (`--cor-menu`, `--gradiente-menu`); o
+  verde principal já usa `primaria`. As outras telas de acesso (esqueci a senha, definir senha)
+  usam a moldura `TelaAcesso.jsx`, só com tokens.
 - Alguns tons derivados estão em hex dentro de `ui.jsx` (bordas dos alertas, hover do
   `botaoPerigoSolido`, fundo e borda do `itemListaDestaque`, ícone do estado vazio) e no
   placeholder de `index.css` (`#94a0ab`). São candidatos a

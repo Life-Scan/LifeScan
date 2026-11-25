@@ -17,6 +17,14 @@
 /* dark: só com a classe .dark (que não existe). Sem isso, segue o modo escuro do sistema operacional. */
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Pontos de quebra do projeto, inclusivos como o max-width dos módulos (o max-[900px]: do Tailwind
+ * gera width < 900px e erra por 1px). A ordem importa: do maior para o menor, para o menor vencer.
+ */
+@custom-variant ate-900 (@media (width <= 900px));
+@custom-variant ate-860 (@media (width <= 860px));
+@custom-variant ate-680 (@media (width <= 680px));
+
 /* Estilos globais e variáveis de tema. Os componentes usam CSS Modules ou classes do Tailwind. */
 
 :root {
