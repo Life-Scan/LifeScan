@@ -147,7 +147,8 @@ dois convivem: ao migrar um componente, apague o `.module.css` dele.
 - **Estilos globais em `@layer base`:** as classes do Tailwind vencem as regras de `index.css`
   (`button`, `input`, `label`, `h1`...), e os `.module.css`, fora de camada, vencem tudo. A ordem
   das camadas está declarada no topo de `index.css`.
-- **Migrados:** `ui.jsx` (o antigo `ui.module.css`) e `Confirmacao.jsx`.
+- **Migrados:** `ui.jsx` (o antigo `ui.module.css`), `Confirmacao.jsx` e as telas de acesso
+  (`TelaAcesso.jsx`, no lugar do antigo `Auth.module.css`).
 - **Sem preflight por enquanto:** o reset do Tailwind não está ligado, porque as telas em CSS
   Modules dependem dos padrões do navegador (`dl`, `fieldset`, listas, `dialog`). As regras
   globais de formulário e foco de `index.css` deixam de fora os elementos com `data-slot` (todos
@@ -336,10 +337,11 @@ alguém → `alerta`; problema → `perigo`; futuro/informativo → `info`; ence
 
 ## Exceções conhecidas
 
-- **Login e telas de acesso** (`Login.module.css`, `Auth.module.css`) têm visual próprio de
+- **Login** (`Login.module.css`) tem visual próprio de
   "porta de entrada": painel de apresentação verde-escuro com gradiente, caixa de `28px` de
   raio, campos de `52px` e valores em `px`/hex direto. É intencional, mas os hex repetem tons da
-  marca (`#0f766e`, `#0b5d57`); ao mexer nesses arquivos, troque-os pelas variáveis.
+  marca (`#0f766e`, `#0b5d57`); ao mexer nesse arquivo, troque-os pelas variáveis. As outras telas
+  de acesso (esqueci a senha, definir senha) usam a moldura `TelaAcesso.jsx`, só com tokens.
 - Alguns tons derivados estão em hex dentro de `ui.jsx` (bordas dos alertas, hover do
   `botaoPerigoSolido`, fundo e borda do `itemListaDestaque`, ícone do estado vazio) e no
   placeholder de `index.css` (`#94a0ab`). São candidatos a
