@@ -1,6 +1,5 @@
-import { ChevronDown, ChevronUp, MailCheck, Pencil, Route, Search, Trash2, UserCheck, Users, UserX } from 'lucide-react'
+import { ChevronDown, ChevronUp, MailCheck, Pencil, Search, Trash2, UserCheck, Users, UserX } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
 import { atualizarConta, excluirPaciente, obterPagina, reenviarAcesso } from '../api/servicos'
@@ -257,18 +256,6 @@ function ItemConta({ conta, aoAlterar }) {
           </div>
         </div>
         <div className={ui.acoes}>
-          {ehPaciente && conta.acompanhamento_id && (
-            <Link to={`/acompanhamentos/${conta.acompanhamento_id}`} className={`${ui.botao} ${ui.botaoPequeno}`}>
-              <Route size={14} aria-hidden="true" />
-              Abrir acompanhamento
-            </Link>
-          )}
-          {ehPaciente && !conta.acompanhamento_id && conta.ativo && (
-            <Link to={`/acompanhamentos/novo?paciente=${conta.id}`} className={`${ui.botao} ${ui.botaoPequeno}`}>
-              <Route size={14} aria-hidden="true" />
-              Abrir novo acompanhamento
-            </Link>
-          )}
           {conta.ativo && (
             <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={reenviar} disabled={ocupado}>
               <MailCheck size={14} aria-hidden="true" />
