@@ -6,7 +6,7 @@ import { mensagemDeErro } from '../api/cliente'
 import { criarConta } from '../api/servicos'
 import { TIPOS_CONTA } from '../utils/formatacao'
 import { Alerta, estilos as ui } from './ui'
-import estilos from '../pages/Paginas.module.css'
+import { estilos } from '../pages/estilosPaginas'
 
 const TIPOS = [
   { valor: 'paciente', rotulo: 'Paciente', descricao: 'Pessoa em tratamento' },

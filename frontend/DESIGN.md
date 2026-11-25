@@ -148,8 +148,10 @@ dois convivem: ao migrar um componente, apague o `.module.css` dele.
   (`button`, `input`, `label`, `h1`...), e os `.module.css`, fora de camada, vencem tudo. A ordem
   das camadas está declarada no topo de `index.css`.
 - **Migrados:** `ui.jsx` (o antigo `ui.module.css`), `Confirmacao.jsx`, as telas de acesso
-  (`TelaAcesso.jsx`, no lugar do antigo `Auth.module.css`) e o `Login.jsx`.
-- **Pontos de quebra:** use `ate-900:`, `ate-860:` e `ate-680:` (definidos em `index.css`, com
+  (`TelaAcesso.jsx`, no lugar do antigo `Auth.module.css`), o `Login.jsx`, o `Layout.jsx` e as
+  classes de página (`pages/estilosPaginas.js`, no lugar do antigo `Paginas.module.css`). Falta o
+  `Acompanhamento.module.css`.
+- **Pontos de quebra:** use `ate-900:`, `ate-860:`, `ate-760:` e `ate-680:` (definidos em `index.css`, com
   `width <= N`, iguais ao `max-width` dos módulos). O `max-[900px]:` do Tailwind usa `width < 900px`
   e muda o layout com 1px de diferença.
 - **Sem preflight por enquanto:** o reset do Tailwind não está ligado, porque as telas em CSS
@@ -233,17 +235,18 @@ Em `rem`. Use os passos que já existem, sem valores soltos:
 
 ## Layout
 
-- `Layout.jsx`: menu lateral fixo de `--largura-menu` (248px). **Abaixo de 900px** vira barra no
-  topo, com a navegação rolando na horizontal.
-- O conteúdo fica centralizado com `max-width: 1040px` (`.miolo`).
-- Estrutura de página (`Paginas.module.css`):
-  - `.cabecalho`: `h1` + `.subtitulo` à esquerda, ação principal à direita.
-  - `.pilha`: cartões empilhados com `1.25rem` entre eles.
-  - `.grade`: cartões lado a lado, com no mínimo 280px cada.
-  - `.resumos` / `.resumo`: números do painel. O tom (`resumo_perigo`, `_alerta`, `_info`) só é
+- `Layout.jsx`: menu lateral fixo de `--largura-menu` (248px). **Até 900px** (`ate-900:`) vira barra
+  no topo, com a navegação rolando na horizontal. As classes dos links ficam nas constantes
+  `LINK_ATIVO` / `LINK_INATIVO` (o ativo não muda no hover).
+- O conteúdo fica centralizado com `max-width: 1040px` (o `div` dentro do `main` do `Layout.jsx`).
+- Estrutura de página (`estilos` de `pages/estilosPaginas.js`):
+  - `cabecalho`: `h1` + `subtitulo` à esquerda, ação principal à direita.
+  - `pilha`: cartões empilhados com `1.25rem` entre eles.
+  - `grade`: cartões lado a lado, com no mínimo 280px cada.
+  - `resumos` / `resumo`: números do painel. O tom (`tonsResumo`: `perigo`, `alerta`, `info`) só é
     aplicado quando o número é maior que zero.
 - Breakpoints usados: `900px` (menu), `860px` (linha com ações empilha), `720px` (tamanho do
-  `h1`), `680px` (login em uma coluna). Prefira `auto-fit`/`minmax` a criar breakpoints novos.
+  `h1`), `760px` (busca da lista de contas em linha própria), `680px` (login em uma coluna). Prefira `auto-fit`/`minmax` a criar breakpoints novos.
 
 ## Componentes
 
@@ -331,8 +334,7 @@ alguém → `alerta`; problema → `perigo`; futuro/informativo → `info`; ence
 
 ## Ao criar ou alterar uma tela
 
-1. Comece por `ui.jsx` e `Paginas.module.css`. Só crie classe nova em módulo
-   da página quando o padrão não existir.
+1. Comece por `ui.jsx` e `pages/estilosPaginas.js`. Só crie classe nova quando o padrão não existir.
 2. Uma peça usada em duas ou mais páginas deve ir para o `estilos` de `ui.jsx` (e, se tiver lógica,
    virar componente lá).
 3. Cores, raios e sombras só por variável. Espaçamento pelos passos da tabela.

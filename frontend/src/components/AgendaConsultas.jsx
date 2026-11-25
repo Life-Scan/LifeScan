@@ -22,7 +22,7 @@ import {
   formatarPrazoRelativo,
   paraCampoDataHora,
 } from '../utils/formatacao'
-import estilos from '../pages/Paginas.module.css'
+import { estilos } from '../pages/estilosPaginas'
 
 const VARIANTES_STATUS = { agendada: 'info', realizada: 'sucesso', faltou: 'perigo', cancelada: 'neutra' }
 

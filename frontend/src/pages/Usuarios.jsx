@@ -10,7 +10,7 @@ import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, es
 import { cn } from '@/lib/utils'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import { TIPOS_CONTA, formatarData, formatarDataHora } from '../utils/formatacao'
-import estilos from './Paginas.module.css'
+import { estilos } from './estilosPaginas'
 
 
 /** Listagem de pacientes, parceiros ou colaboradores, conforme a tela acessada pelo médico. */

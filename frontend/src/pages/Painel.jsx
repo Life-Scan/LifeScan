@@ -19,7 +19,7 @@ import {
   formatarPrazoRelativo,
   primeiroNome,
 } from '../utils/formatacao'
-import estilos from './Paginas.module.css'
+import { estilos, tonsResumo } from './estilosPaginas'
 
 export default function Painel() {
   const { usuario, ehMedico, ehPaciente, ehColaborador } = useAuth()
@@ -60,14 +60,14 @@ function linkAcompanhamento(acompanhamentoId, aba) {
 
 /** Cartão de resumo: número grande com ícone. tom: perigo | alerta | info (aplicado só se houver itens). */
 function Resumo({ icone: Icone, numero, rotulo, destino, tom }) {
-  const classes = [estilos.resumo, numero > 0 && tom ? estilos[`resumo_${tom}`] : ''].filter(Boolean).join(' ')
+  const cores = numero > 0 && tom ? tonsResumo[tom] : tonsResumo.neutro
   return (
-    <a href={destino} className={classes}>
-      <span className={estilos.resumoIcone}>
+    <a href={destino} className={estilos.resumo}>
+      <span className={`${estilos.resumoIcone} ${cores.icone}`}>
         <Icone size={20} aria-hidden="true" />
       </span>
       <span>
-        <span className={estilos.resumoNumero}>{numero}</span>
+        <span className={`${estilos.resumoNumero} ${cores.numero}`}>{numero}</span>
         <span className={estilos.resumoRotulo}>{rotulo}</span>
       </span>
     </a>

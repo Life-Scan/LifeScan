@@ -23,6 +23,7 @@
  */
 @custom-variant ate-900 (@media (width <= 900px));
 @custom-variant ate-860 (@media (width <= 860px));
+@custom-variant ate-760 (@media (width <= 760px));
 @custom-variant ate-680 (@media (width <= 680px));
 
 /* Estilos globais e variáveis de tema. Os componentes usam CSS Modules ou classes do Tailwind. */
