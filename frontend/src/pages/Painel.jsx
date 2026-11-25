@@ -9,6 +9,7 @@ import AgendaConsultas from '../components/AgendaConsultas'
 import FormularioConta from '../components/FormularioConta'
 import { Alerta, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
+import { useAgora } from '../hooks/useAgora'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import {
   ROTULOS_CATEGORIA,
@@ -88,10 +89,11 @@ function Secao({ id, titulo, quantidade, children }) {
 }
 
 function PrazoSolicitacao({ solicitacao }) {
+  const agora = useAgora()
   return solicitacao.vencida ? (
-    <Etiqueta variante="perigo">Venceu {formatarPrazoRelativo(solicitacao.prazo)}</Etiqueta>
+    <Etiqueta variante="perigo">Venceu {formatarPrazoRelativo(solicitacao.prazo, agora)}</Etiqueta>
   ) : (
-    <Etiqueta variante="alerta">Vence {formatarPrazoRelativo(solicitacao.prazo)}</Etiqueta>
+    <Etiqueta variante="alerta">Vence {formatarPrazoRelativo(solicitacao.prazo, agora)}</Etiqueta>
   )
 }
 
@@ -195,6 +197,7 @@ function PainelMedico({ painel }) {
 }
 
 function PainelPaciente({ painel }) {
+  const agora = useAgora()
   const { solicitacoes_pendentes: pendentes, consultas_extras: consultasExtras, proximas_consultas: proximas } = painel
   const vencidas = pendentes.filter((s) => s.vencida).length
 
@@ -225,7 +228,7 @@ function PainelPaciente({ painel }) {
                 <li key={s.id} className={ui.itemLista}>
                   <div className={ui.cabecalhoItem}>
                     <strong>{formatarDataHora(s.prazo)}</strong>
-                    <Etiqueta variante="info">{formatarPrazoRelativo(s.prazo)}</Etiqueta>
+                    <Etiqueta variante="info">{formatarPrazoRelativo(s.prazo, agora)}</Etiqueta>
                   </div>
                   <p className={estilos.textoItem}>{s.descricao}</p>
                 </li>
@@ -343,6 +346,7 @@ function PainelParceiro({ painel }) {
 
 /** Próximas consultas do paciente, com data, distância e observação. */
 function ListaAgendamentos({ agendamentos, vazio }) {
+  const agora = useAgora()
   if (agendamentos.length === 0) return <EstadoVazio icone={CalendarDays}>{vazio}</EstadoVazio>
   return (
     <ul className={ui.lista}>
@@ -350,7 +354,7 @@ function ListaAgendamentos({ agendamentos, vazio }) {
         <li key={agendamento.id} className={ui.itemLista}>
           <div className={ui.cabecalhoItem}>
             <strong>{formatarDataHora(agendamento.data_hora)}</strong>
-            <Etiqueta variante="info">{formatarPrazoRelativo(agendamento.data_hora)}</Etiqueta>
+            <Etiqueta variante="info">{formatarPrazoRelativo(agendamento.data_hora, agora)}</Etiqueta>
           </div>
           {agendamento.observacao && <div className={estilos.meta}><span>{agendamento.observacao}</span></div>}
         </li>

@@ -12,10 +12,13 @@ export const formatarData = (iso) => (iso ? formatoData.format(new Date(iso)) : 
 export const formatarDataHora = (iso) => (iso ? formatoDataHora.format(new Date(iso)) : '')
 export const formatarHora = (iso) => (iso ? formatoHora.format(new Date(iso)) : '')
 
-/** "hoje", "amanhã", "em 3 dias", "há 2 dias" etc., contando dias do calendário local. */
-export function formatarPrazoRelativo(iso) {
+/**
+ * "hoje", "amanhã", "em 3 dias", "há 2 dias" etc., contando dias do calendário local.
+ * `agora` vem de `useAgora()`: ler a hora aqui deixaria o render impuro.
+ */
+export function formatarPrazoRelativo(iso, agora) {
   const inicioDoDia = (data) => new Date(data.getFullYear(), data.getMonth(), data.getDate())
-  const dias = Math.round((inicioDoDia(new Date(iso)) - inicioDoDia(new Date())) / 86_400_000)
+  const dias = Math.round((inicioDoDia(new Date(iso)) - inicioDoDia(agora)) / 86_400_000)
   if (dias === 0) return 'hoje'
   if (dias === 1) return 'amanhã'
   if (dias === -1) return 'ontem'

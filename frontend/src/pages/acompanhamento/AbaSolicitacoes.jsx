@@ -5,6 +5,7 @@ import { mensagemDeErro } from '../../api/cliente'
 import { cancelarSolicitacao, concluirSolicitacao, criarSolicitacao } from '../../api/servicos'
 import { useConfirmar } from '../../components/Confirmacao'
 import { Alerta, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
+import { useAgora } from '../../hooks/useAgora'
 import {
   ROTULOS_STATUS_SOLICITACAO,
   ROTULOS_TIPO_SOLICITACAO,
@@ -42,6 +43,7 @@ export default function AbaSolicitacoes({
   atualizar,
   irParaAba,
 }) {
+  const agora = useAgora()
   const confirmar = useConfirmar()
   const [formularioAberto, setFormularioAberto] = useState(false)
   const [erro, setErro] = useState('')
@@ -113,7 +115,7 @@ export default function AbaSolicitacoes({
                   <span>
                     {solicitacao.tipo === 'consulta_extra' ? 'Marcada para' : 'Prazo'}:{' '}
                     {formatarDataHora(solicitacao.prazo)}
-                    {pendente && ` (${formatarPrazoRelativo(solicitacao.prazo)})`}
+                    {pendente && ` (${formatarPrazoRelativo(solicitacao.prazo, agora)})`}
                   </span>
                   {solicitacao.atendida_em && <span>Atendida em {formatarDataHora(solicitacao.atendida_em)}</span>}
                 </div>
@@ -178,6 +180,7 @@ export default function AbaSolicitacoes({
 }
 
 function FormularioSolicitacao({ acompanhamento, parceiros, aoConcluir, aoCancelar }) {
+  const agora = useAgora()
   const [tipo, setTipo] = useState('exame')
   const [destinatarioId, setDestinatarioId] = useState(String(acompanhamento.paciente.id))
   const [descricao, setDescricao] = useState('')
@@ -248,7 +251,7 @@ function FormularioSolicitacao({ acompanhamento, parceiros, aoConcluir, aoCancel
             id="solicitacao-prazo"
             type="datetime-local"
             value={prazo}
-            min={paraCampoDataHora(new Date())}
+            min={paraCampoDataHora(agora)}
             onChange={(e) => setPrazo(e.target.value)}
             required
           />
