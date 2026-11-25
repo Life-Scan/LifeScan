@@ -7,6 +7,7 @@ import { atualizarConta, excluirPaciente, obterPagina, reenviarAcesso } from '..
 import Paginacao from '../components/Paginacao'
 import { useConfirmar } from '../components/Confirmacao'
 import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
+import { cn } from '@/lib/utils'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import { TIPOS_CONTA, formatarData, formatarDataHora } from '../utils/formatacao'
 import estilos from './Paginas.module.css'
@@ -258,32 +259,32 @@ function ItemConta({ conta, aoAlterar }) {
         </div>
         <div className={ui.acoes}>
           {ehPaciente && conta.acompanhamento_id && (
-            <Link to={`/acompanhamentos/${conta.acompanhamento_id}`} className={`${ui.botao} ${ui.botaoPequeno}`}>
+            <Link to={`/acompanhamentos/${conta.acompanhamento_id}`} className={cn(ui.botao, ui.botaoPequeno)}>
               <Route size={14} aria-hidden="true" />
               Abrir acompanhamento
             </Link>
           )}
           {ehPaciente && !conta.acompanhamento_id && conta.ativo && (
-            <Link to={`/acompanhamentos/novo?paciente=${conta.id}`} className={`${ui.botao} ${ui.botaoPequeno}`}>
+            <Link to={`/acompanhamentos/novo?paciente=${conta.id}`} className={cn(ui.botao, ui.botaoPequeno)}>
               <Route size={14} aria-hidden="true" />
               Abrir novo acompanhamento
             </Link>
           )}
           {conta.ativo && (
-            <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={reenviar} disabled={ocupado}>
+            <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={reenviar} disabled={ocupado}>
               <MailCheck size={14} aria-hidden="true" />
               Reenviar acesso
             </button>
           )}
           {conta.ativo && (
-            <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={() => setEditando(true)} disabled={ocupado}>
+            <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={() => setEditando(true)} disabled={ocupado}>
               <Pencil size={14} aria-hidden="true" />
               Editar
             </button>
           )}
           <button
             type="button"
-            className={`${conta.ativo ? ui.botaoPerigo : ui.botaoSecundario} ${ui.botaoPequeno}`}
+            className={cn(conta.ativo ? ui.botaoPerigo : ui.botaoSecundario, ui.botaoPequeno)}
             onClick={alternarAtivo}
             disabled={ocupado}
           >
@@ -291,7 +292,7 @@ function ItemConta({ conta, aoAlterar }) {
             {conta.ativo ? 'Desativar' : 'Reativar'}
           </button>
           {ehPaciente && !conta.ativo && (
-            <button type="button" className={`${ui.botaoPerigo} ${ui.botaoPequeno}`} onClick={excluir} disabled={ocupado}>
+            <button type="button" className={cn(ui.botaoPerigo, ui.botaoPequeno)} onClick={excluir} disabled={ocupado}>
               <Trash2 size={14} aria-hidden="true" />
               Excluir
             </button>

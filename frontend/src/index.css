@@ -1,9 +1,14 @@
 /*
- * Tailwind v4 sem o preflight (reset): theme + utilities apenas. As telas ainda usam CSS Modules e
+ * Tailwind v4 sem o preflight (reset): theme + utilities apenas. As telas em CSS Modules ainda
  * dependem dos estilos padrão do navegador (margens de lista, dl, fieldset, img, dialog); o reset
- * entra quando a migração chegar a esses pontos. As regras globais abaixo ficam fora de camada de
- * propósito: colocá-las em @layer base mudaria telas atuais (ver Login.module.css).
+ * entra quando a migração terminar.
+ *
+ * Camadas, da mais fraca para a mais forte: theme < base < components < utilities < CSS sem camada
+ * (os .module.css). Os estilos globais ficam em base, então as classes do Tailwind vencem eles, e
+ * os módulos que ainda existem vencem tudo.
  */
+@layer theme, base, components, utilities;
+
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 @import "tw-animate-css";
@@ -83,125 +88,146 @@
   color-scheme: light;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+/* Estilos globais (elementos HTML). */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    font-family: var(--fonte);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    margin: 0;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 650;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 650;
+  }
+
+  h3 {
+    font-size: 0.98rem;
+    font-weight: 650;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  a {
+    color: var(--cor-primaria);
+  }
+
+  button:where(:not([data-slot])),
+  input:where(:not([data-slot])),
+  select:where(:not([data-slot])),
+  textarea:where(:not([data-slot])) {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* Ícones (lucide) alinhados ao texto */
+  svg {
+    flex-shrink: 0;
+  }
+
+  :focus-visible:where(:not([data-slot])) {
+    outline: 2px solid var(--cor-primaria);
+    outline-offset: 2px;
+  }
+
+  /*
+   * Formulários: aparência base compartilhada. O :where(:not([data-slot])) deixa de fora os componentes
+   * do shadcn sem mudar a especificidade (os módulos continuam vencendo como antes).
+   */
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):where(:not([data-slot])),
+  select:where(:not([data-slot])),
+  textarea:where(:not([data-slot])) {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--cor-borda-forte);
+    border-radius: var(--raio-pequeno);
+    background: var(--cor-superficie);
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+  }
+
+  input:focus:where(:not([data-slot])),
+  select:focus:where(:not([data-slot])),
+  textarea:focus:where(:not([data-slot])) {
+    border-color: var(--cor-primaria);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--cor-primaria-clara);
+  }
+
+  input:where(:not([data-slot]))::placeholder,
+  textarea:where(:not([data-slot]))::placeholder {
+    color: #94a0ab;
+  }
+
+  select:disabled:where(:not([data-slot])),
+  input:disabled:where(:not([data-slot])) {
+    background: var(--cor-superficie-suave);
+    color: var(--cor-texto-suave);
+  }
+
+  textarea:where(:not([data-slot])) {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  label:where(:not([data-slot])) {
+    display: block;
+    font-weight: 600;
+    font-size: 0.86rem;
+    margin-bottom: 0.3rem;
+  }
+
+  @media (max-width: 720px) {
+    h1 {
+      font-size: 1.35rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
-  scroll-behavior: smooth;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--cor-fundo);
-  color: var(--cor-texto);
-  font-family: var(--fonte);
-  font-size: 15px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-h1,
-h2,
-h3 {
-  margin: 0;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-}
-
-h1 {
-  font-size: 1.6rem;
-  font-weight: 650;
-}
-
-h2 {
-  font-size: 1.1rem;
-  font-weight: 650;
-}
-
-h3 {
-  font-size: 0.98rem;
-  font-weight: 650;
-}
-
-p {
-  margin: 0;
-}
-
-a {
-  color: var(--cor-primaria);
-}
-
-button:where(:not([data-slot])),
-input:where(:not([data-slot])),
-select:where(:not([data-slot])),
-textarea:where(:not([data-slot])) {
-  font: inherit;
-  color: inherit;
-}
-
-/* Ícones (lucide) alinhados ao texto */
-svg {
-  flex-shrink: 0;
-}
-
-:focus-visible:where(:not([data-slot])) {
-  outline: 2px solid var(--cor-primaria);
-  outline-offset: 2px;
-}
-
-/*
- * Formulários: aparência base compartilhada. O :where(:not([data-slot])) deixa de fora os componentes
- * do shadcn sem mudar a especificidade (os módulos continuam vencendo como antes).
- */
-input:not([type='checkbox']):not([type='radio']):not([type='file']):where(:not([data-slot])),
-select:where(:not([data-slot])),
-textarea:where(:not([data-slot])) {
-  width: 100%;
-  padding: 0.55rem 0.7rem;
-  border: 1px solid var(--cor-borda-forte);
-  border-radius: var(--raio-pequeno);
-  background: var(--cor-superficie);
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-}
-
-input:focus:where(:not([data-slot])),
-select:focus:where(:not([data-slot])),
-textarea:focus:where(:not([data-slot])) {
-  border-color: var(--cor-primaria);
-  outline: none;
-  box-shadow: 0 0 0 3px var(--cor-primaria-clara);
-}
-
-input:where(:not([data-slot]))::placeholder,
-textarea:where(:not([data-slot]))::placeholder {
-  color: #94a0ab;
-}
-
-select:disabled:where(:not([data-slot])),
-input:disabled:where(:not([data-slot])) {
-  background: var(--cor-superficie-suave);
-  color: var(--cor-texto-suave);
-}
-
-textarea:where(:not([data-slot])) {
-  resize: vertical;
-  min-height: 80px;
-}
-
-label:where(:not([data-slot])) {
-  display: block;
-  font-weight: 600;
-  font-size: 0.86rem;
-  margin-bottom: 0.3rem;
-}
-
+/* Texto só para leitores de tela. */
 .visualmente-oculto {
   position: absolute;
   width: 1px;
@@ -211,20 +237,14 @@ label:where(:not([data-slot])) {
   white-space: nowrap;
 }
 
-@media (max-width: 720px) {
-  h1 {
-    font-size: 1.35rem;
-  }
-}
+/* Animações próprias: animate-girar (spinner do <Carregando>). */
+@theme {
+  --animate-girar: girar 0.8s linear infinite;
 
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+  @keyframes girar {
+    to {
+      transform: rotate(360deg);
+    }
   }
 }
 
@@ -303,7 +323,7 @@ label:where(:not([data-slot])) {
 
 /*
  * Base do shadcn, restrita aos componentes dele (todos têm data-slot) para não alterar as telas que
- * ainda usam CSS Modules. Quando o preflight entrar, o seletor volta a ser "*".
+ * ainda usam CSS Modules. Vem depois da base acima, então vence ela. Quando o preflight entrar, o seletor volta a ser "*".
  * Sem tema escuro: o projeto usa color-scheme light (ver DESIGN.md).
  */
 @layer base {

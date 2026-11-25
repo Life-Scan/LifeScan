@@ -5,6 +5,7 @@ import { mensagemDeErro } from '../../api/cliente'
 import { cancelarSolicitacao, concluirSolicitacao, criarSolicitacao } from '../../api/servicos'
 import { useConfirmar } from '../../components/Confirmacao'
 import { Alerta, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
+import { cn } from '@/lib/utils'
 import { useAgora } from '../../hooks/useAgora'
 import {
   ROTULOS_STATUS_SOLICITACAO,
@@ -125,7 +126,7 @@ export default function AbaSolicitacoes({
                     {!ehMedico && paraMim && TIPOS_COM_ENVIO.includes(solicitacao.tipo) && (
                       <button
                         type="button"
-                        className={`${ui.botao} ${ui.botaoPequeno}`}
+                        className={cn(ui.botao, ui.botaoPequeno)}
                         onClick={() => irParaAba('documentos', { solicitacao: String(solicitacao.id) })}
                       >
                         <Upload size={14} aria-hidden="true" />
@@ -144,7 +145,7 @@ export default function AbaSolicitacoes({
                       <>
                         <button
                           type="button"
-                          className={`${ui.botaoSecundario} ${ui.botaoPequeno}`}
+                          className={cn(ui.botaoSecundario, ui.botaoPequeno)}
                           onClick={() => executar(() => concluirSolicitacao(solicitacao.id))}
                         >
                           <Check size={14} aria-hidden="true" />
@@ -152,7 +153,7 @@ export default function AbaSolicitacoes({
                         </button>
                         <button
                           type="button"
-                          className={`${ui.botaoPerigo} ${ui.botaoPequeno}`}
+                          className={cn(ui.botaoPerigo, ui.botaoPequeno)}
                           onClick={() =>
                             executar(() => cancelarSolicitacao(solicitacao.id), {
                               titulo: 'Cancelar esta solicitação?',

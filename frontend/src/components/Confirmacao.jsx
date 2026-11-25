@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
-import estilos from './ui.module.css'
+import { estilos } from './ui'
 
 const ContextoConfirmacao = createContext(null)
 

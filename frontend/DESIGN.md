@@ -1,7 +1,7 @@
 # LifeScan: sistema visual
 
 Guia para escrever e revisar telas do frontend. Descreve o que **já existe** no código: as
-variáveis de `src/index.css`, as peças de `src/components/ui.module.css` e `ui.jsx` e os padrões
+variáveis de `src/index.css`, as peças de `src/components/ui.jsx` e os padrões
 das páginas. Quem criar uma tela nova (pessoa ou agente de IA) deve seguir este guia. Antes de
 criar um estilo novo, reaproveite um existente. Se o código e este arquivo divergirem, corrija
 um dos dois no mesmo PR.
@@ -144,11 +144,15 @@ dois convivem: ao migrar um componente, apague o `.module.css` dele.
 - **Componentes do shadcn:** `npx shadcn@latest add <nome>`. Vão para `src/components/ui/`
   (pasta) e não se confundem com `src/components/ui.jsx` (arquivo, componentes próprios), mas
   importe sempre pelo caminho completo: `@/components/ui/button`.
+- **Estilos globais em `@layer base`:** as classes do Tailwind vencem as regras de `index.css`
+  (`button`, `input`, `label`, `h1`...), e os `.module.css`, fora de camada, vencem tudo. A ordem
+  das camadas está declarada no topo de `index.css`.
+- **Migrados:** `ui.jsx` (o antigo `ui.module.css`) e `Confirmacao.jsx`.
 - **Sem preflight por enquanto:** o reset do Tailwind não está ligado, porque as telas em CSS
   Modules dependem dos padrões do navegador (`dl`, `fieldset`, listas, `dialog`). As regras
   globais de formulário e foco de `index.css` deixam de fora os elementos com `data-slot` (todos
   os componentes do shadcn têm), e a base do shadcn vale só para eles. Quando a migração terminar,
-  ligue o preflight e mova as regras globais para `@layer base`.
+  ligue o preflight.
 - Classes condicionais com `cn()` (`@/lib/utils`).
 
 ## Tokens
@@ -239,8 +243,8 @@ Em `rem`. Use os passos que já existem, sem valores soltos:
 
 ## Componentes
 
-Importe de `src/components/ui.jsx` (`estilos` também é exportado de lá). Não recrie essas peças
-em módulos de página.
+Importe de `src/components/ui.jsx` (`estilos` também é exportado de lá: são strings de classes do
+Tailwind, usadas como `className={ui.cartao}`). Não recrie essas peças em módulos de página.
 
 | Peça | Como usar | Observações |
 |---|---|---|
@@ -248,7 +252,7 @@ em módulos de página.
 | Botão primário | `estilos.botao` | Uma ação principal por área |
 | Botão secundário | `estilos.botaoSecundario` | Cancelar, voltar, ações neutras |
 | Botão de perigo | `estilos.botaoPerigo` (contorno) / `botaoPerigoSolido` | O sólido só aparece no diálogo de confirmação |
-| Botão pequeno | some `estilos.botaoPequeno` a qualquer botão | Ações dentro de itens de lista |
+| Botão pequeno | `cn(estilos.botaoSecundario, estilos.botaoPequeno)` | Ações dentro de itens de lista. Use `cn()` (`@/lib/utils`), não template string: ele resolve o conflito de padding e fonte |
 | Botão-link | `estilos.botaoLink` | Ações discretas no meio do texto (visualizar, baixar, remover) |
 | Grupo de ações | `estilos.acoes` | Botões lado a lado com quebra |
 | Formulário | `estilos.formulario`, `estilos.linhaCampos` | Campos já têm o estilo global; não estilize `input` no módulo |
@@ -323,10 +327,10 @@ alguém → `alerta`; problema → `perigo`; futuro/informativo → `info`; ence
 
 ## Ao criar ou alterar uma tela
 
-1. Comece por `ui.jsx` / `ui.module.css` e `Paginas.module.css`. Só crie classe nova em módulo
+1. Comece por `ui.jsx` e `Paginas.module.css`. Só crie classe nova em módulo
    da página quando o padrão não existir.
-2. Uma peça usada em duas ou mais páginas deve ir para `ui.module.css` (e, se tiver lógica, para
-   `ui.jsx`).
+2. Uma peça usada em duas ou mais páginas deve ir para o `estilos` de `ui.jsx` (e, se tiver lógica,
+   virar componente lá).
 3. Cores, raios e sombras só por variável. Espaçamento pelos passos da tabela.
 4. Confira em tela larga e abaixo de 900px. Veja a tela de verdade, não só o `npm run build`.
 
@@ -336,10 +340,9 @@ alguém → `alerta`; problema → `perigo`; futuro/informativo → `info`; ence
   "porta de entrada": painel de apresentação verde-escuro com gradiente, caixa de `28px` de
   raio, campos de `52px` e valores em `px`/hex direto. É intencional, mas os hex repetem tons da
   marca (`#0f766e`, `#0b5d57`); ao mexer nesses arquivos, troque-os pelas variáveis.
-- `.miniaturaTexto` usa `var(--fonte-mono, monospace)`, mas `--fonte-mono` não está definida.
-  Hoje cai no `monospace` do navegador.
-- Alguns tons derivados estão em hex dentro de `ui.module.css` (bordas dos alertas, hover do
-  `botaoPerigoSolido`, fundo do `itemListaDestaque`, placeholder `#94a0ab`). São candidatos a
+- Alguns tons derivados estão em hex dentro de `ui.jsx` (bordas dos alertas, hover do
+  `botaoPerigoSolido`, fundo e borda do `itemListaDestaque`, ícone do estado vazio) e no
+  placeholder de `index.css` (`#94a0ab`). São candidatos a
   virar variáveis.
 - Não há tema escuro (`color-scheme: light`). Se for criado, ele deve sair só da troca das
   variáveis de `:root`.

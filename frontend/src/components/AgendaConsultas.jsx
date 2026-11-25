@@ -12,6 +12,7 @@ import {
 import { useConfirmar } from './Confirmacao'
 import Paginacao from './Paginacao'
 import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from './ui'
+import { cn } from '@/lib/utils'
 import { useAgora } from '../hooks/useAgora'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import {
@@ -328,23 +329,23 @@ function ItemAgendamento({ agendamento, aoAlterar }) {
           <div className={ui.acoes}>
             {passou && (
               <>
-                <button type="button" className={`${ui.botao} ${ui.botaoPequeno}`} onClick={() => mudarStatus('realizada')} disabled={ocupado}>
+                <button type="button" className={cn(ui.botao, ui.botaoPequeno)} onClick={() => mudarStatus('realizada')} disabled={ocupado}>
                   <Check size={14} aria-hidden="true" />
                   Realizada
                 </button>
-                <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={() => mudarStatus('faltou')} disabled={ocupado}>
+                <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={() => mudarStatus('faltou')} disabled={ocupado}>
                   <CalendarX size={14} aria-hidden="true" />
                   Faltou
                 </button>
               </>
             )}
             {!passou && (
-              <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={() => setEditando(true)} disabled={ocupado}>
+              <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={() => setEditando(true)} disabled={ocupado}>
                 <Pencil size={14} aria-hidden="true" />
                 Remarcar
               </button>
             )}
-            <button type="button" className={`${ui.botaoPerigo} ${ui.botaoPequeno}`} onClick={cancelar} disabled={ocupado}>
+            <button type="button" className={cn(ui.botaoPerigo, ui.botaoPequeno)} onClick={cancelar} disabled={ocupado}>
               <Ban size={14} aria-hidden="true" />
               Cancelar
             </button>

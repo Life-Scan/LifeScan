@@ -5,6 +5,7 @@ import { mensagemDeErro } from '../../api/cliente'
 import { alterarPasso, alterarStatusAcompanhamento } from '../../api/servicos'
 import { useConfirmar } from '../../components/Confirmacao'
 import { Alerta, Avatar, Etiqueta, estilos as ui } from '../../components/ui'
+import { cn } from '@/lib/utils'
 import { PASSOS, ROTULOS_PASSO, formatarData } from '../../utils/formatacao'
 import estilos from './Acompanhamento.module.css'
 
@@ -78,7 +79,7 @@ export default function CabecalhoAcompanhamento({ acompanhamento, ehMedico, edit
         {ehMedico && (
           <button
             type="button"
-            className={`${ativo ? ui.botaoPerigo : ui.botaoSecundario} ${ui.botaoPequeno}`}
+            className={cn(ativo ? ui.botaoPerigo : ui.botaoSecundario, ui.botaoPequeno)}
             onClick={alternarStatus}
             disabled={ocupado}
           >

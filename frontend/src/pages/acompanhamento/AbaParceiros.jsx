@@ -6,6 +6,7 @@ import { mensagemDeErro } from '../../api/cliente'
 import { atribuirParceiro, listarContas, removerParceiro } from '../../api/servicos'
 import { useConfirmar } from '../../components/Confirmacao'
 import { Alerta, Avatar, EstadoVazio, estilos as ui } from '../../components/ui'
+import { cn } from '@/lib/utils'
 import { formatarData } from '../../utils/formatacao'
 import estilos from './Acompanhamento.module.css'
 
@@ -67,7 +68,7 @@ export default function AbaParceiros({ parceiros, acompanhamento, ehMedico, edit
                 {ehMedico && (
                   <button
                     type="button"
-                    className={`${ui.botaoPerigo} ${ui.botaoPequeno}`}
+                    className={cn(ui.botaoPerigo, ui.botaoPequeno)}
                     onClick={() => remover(atribuicao)}
                   >
                     <UserX size={14} aria-hidden="true" />
