@@ -7,7 +7,7 @@ import { Alerta, EstadoVazio, estilos as ui } from '../../components/ui'
 import { useAgora } from '../../hooks/useAgora'
 import { baixarBlob } from '../../utils/arquivos'
 import { ROTULOS_SEXO, formatarDataHora, formatarDataSemHora, paraCampoDataHora } from '../../utils/formatacao'
-import estilos from './Acompanhamento.module.css'
+import { estilos } from './estilosAcompanhamento'
 
 const CAMPOS_DE_TEXTO = [
   { campo: 'diagnosticos', rotulo: 'Diagnósticos e condições', exemplo: 'Ex.: Hipertensão estágio 1' },
@@ -264,16 +264,16 @@ function VisualizacaoAnamnese({ anamnese, ehParceiro }) {
       <dl className={estilos.anamneseBasicos}>
         {basicos.map(({ rotulo, valor }) => (
           <div key={rotulo} className={estilos.anamneseItem}>
-            <dt>{rotulo}</dt>
-            <dd>{valor || <span className={ui.suave}>Não informado</span>}</dd>
+            <dt className={estilos.anamneseRotulo}>{rotulo}</dt>
+            <dd className={estilos.anamneseValor}>{valor || <span className={ui.suave}>Não informado</span>}</dd>
           </div>
         ))}
       </dl>
       <dl className={estilos.anamneseTextos}>
         {CAMPOS_DE_TEXTO.filter(({ campo }) => anamnese[campo]).map(({ campo, rotulo }) => (
           <div key={campo} className={estilos.anamneseItem}>
-            <dt>{rotulo}</dt>
-            <dd className={estilos.texto}>{anamnese[campo]}</dd>
+            <dt className={estilos.anamneseRotulo}>{rotulo}</dt>
+            <dd className={estilos.anamneseValorTexto}>{anamnese[campo]}</dd>
           </div>
         ))}
       </dl>

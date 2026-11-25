@@ -1,11 +1,10 @@
 /*
- * Tailwind v4 sem o preflight (reset): theme + utilities apenas. As telas em CSS Modules ainda
- * dependem dos estilos padrão do navegador (margens de lista, dl, fieldset, img, dialog); o reset
- * entra quando a migração terminar.
+ * Tailwind v4 sem o preflight (reset): theme + utilities apenas. As telas foram migradas dos CSS
+ * Modules sobre os estilos padrão do navegador (margens de lista, dl, fieldset, img, dialog); ligar
+ * o reset muda o visual e é uma mudança à parte (ver DESIGN.md).
  *
- * Camadas, da mais fraca para a mais forte: theme < base < components < utilities < CSS sem camada
- * (os .module.css). Os estilos globais ficam em base, então as classes do Tailwind vencem eles, e
- * os módulos que ainda existem vencem tudo.
+ * Camadas, da mais fraca para a mais forte: theme < base < components < utilities. Os estilos
+ * globais ficam em base, então as classes do Tailwind vencem eles.
  */
 @layer theme, base, components, utilities;
 
@@ -24,6 +23,7 @@
 @custom-variant ate-900 (@media (width <= 900px));
 @custom-variant ate-860 (@media (width <= 860px));
 @custom-variant ate-760 (@media (width <= 760px));
+@custom-variant ate-720 (@media (width <= 720px));
 @custom-variant ate-680 (@media (width <= 680px));
 
 /* Estilos globais e variáveis de tema. Os componentes usam CSS Modules ou classes do Tailwind. */

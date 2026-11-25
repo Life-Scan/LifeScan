@@ -11,7 +11,7 @@ import {
   formatarDataHora,
   paraCampoDataHora,
 } from '../../utils/formatacao'
-import estilos from './Acompanhamento.module.css'
+import { estilos } from './estilosAcompanhamento'
 
 const prescricaoVazia = () => ({ descricao: '', dosagem: '', instrucoes: '' })
 

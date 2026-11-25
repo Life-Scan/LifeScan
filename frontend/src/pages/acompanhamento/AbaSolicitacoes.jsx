@@ -15,7 +15,7 @@ import {
   formatarPrazoRelativo,
   paraCampoDataHora,
 } from '../../utils/formatacao'
-import estilos from './Acompanhamento.module.css'
+import { estilos } from './estilosAcompanhamento'
 
 // Solicitações que o destinatário atende enviando um documento
 const TIPOS_COM_ENVIO = ['exame', 'orientacao_profissional']

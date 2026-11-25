@@ -134,8 +134,10 @@ Ordem sugerida: 1 a 4 primeiro (mudam o sistema inteiro quase só com `index.css
 
 ## Tailwind e shadcn/ui
 
-O projeto está migrando de CSS Modules para Tailwind v4 + shadcn/ui, componente por componente. Os
-dois convivem: ao migrar um componente, apague o `.module.css` dele.
+O frontend usa Tailwind v4 + shadcn/ui. Não há mais CSS Modules: não crie `.module.css` novo.
+As classes compartilhadas ficam em objetos `estilos` (strings de classes), um por área:
+`components/ui.jsx` (peças do app inteiro), `pages/estilosPaginas.js` (páginas internas) e
+`pages/acompanhamento/estilosAcompanhamento.js` (página do acompanhamento e abas).
 
 - **Tokens:** as variáveis de `:root` continuam sendo a fonte da verdade. O `@theme inline` de
   `index.css` gera classes com o nome delas (`bg-primaria`, `text-texto-suave`, `border-borda`,
@@ -145,20 +147,18 @@ dois convivem: ao migrar um componente, apague o `.module.css` dele.
   (pasta) e não se confundem com `src/components/ui.jsx` (arquivo, componentes próprios), mas
   importe sempre pelo caminho completo: `@/components/ui/button`.
 - **Estilos globais em `@layer base`:** as classes do Tailwind vencem as regras de `index.css`
-  (`button`, `input`, `label`, `h1`...), e os `.module.css`, fora de camada, vencem tudo. A ordem
-  das camadas está declarada no topo de `index.css`.
-- **Migrados:** `ui.jsx` (o antigo `ui.module.css`), `Confirmacao.jsx`, as telas de acesso
-  (`TelaAcesso.jsx`, no lugar do antigo `Auth.module.css`), o `Login.jsx`, o `Layout.jsx` e as
-  classes de página (`pages/estilosPaginas.js`, no lugar do antigo `Paginas.module.css`). Falta o
-  `Acompanhamento.module.css`.
-- **Pontos de quebra:** use `ate-900:`, `ate-860:`, `ate-760:` e `ate-680:` (definidos em `index.css`, com
-  `width <= N`, iguais ao `max-width` dos módulos). O `max-[900px]:` do Tailwind usa `width < 900px`
+  (`button`, `input`, `label`, `h1`...). A ordem das camadas está declarada no topo de `index.css`.
+- **Pontos de quebra:** use `ate-900:`, `ate-860:`, `ate-760:`, `ate-720:` e `ate-680:` (definidos em
+  `index.css`, com `width <= N`, iguais ao `max-width` dos antigos módulos). O `max-[900px]:` do Tailwind usa `width < 900px`
   e muda o layout com 1px de diferença.
-- **Sem preflight por enquanto:** o reset do Tailwind não está ligado, porque as telas em CSS
-  Modules dependem dos padrões do navegador (`dl`, `fieldset`, listas, `dialog`). As regras
-  globais de formulário e foco de `index.css` deixam de fora os elementos com `data-slot` (todos
-  os componentes do shadcn têm), e a base do shadcn vale só para eles. Quando a migração terminar,
-  ligue o preflight.
+- **Sem preflight:** o reset do Tailwind não está ligado. As telas foram migradas pixel a pixel
+  sobre os padrões do navegador (`dl`, `fieldset`, listas, `dialog`), e ligar o reset muda o visual:
+  é uma mudança à parte, com revisão de tela por tela. Enquanto isso:
+  - **Borda de um lado só, tracejada ou pontilhada:** use o atalho (`[border-top:1px_dashed_var(--cor-borda)]`),
+    não `border-t border-dashed`. Sem o reset, `border-dashed` vale para os quatro lados, e os lados
+    sem largura definida ficam com a largura padrão do navegador (3px).
+  - As regras globais de formulário e foco de `index.css` deixam de fora os elementos com
+    `data-slot` (todos os componentes do shadcn têm), e a base do shadcn vale só para eles.
 - Classes condicionais com `cn()` (`@/lib/utils`).
 
 ## Tokens
@@ -276,13 +276,15 @@ Tailwind, usadas como `className={ui.cartao}`). Não recrie essas peças em mód
 | `useConfirmar()` | `await confirmar({ titulo, mensagem, rotuloConfirmar, perigo })` | **Nunca** use `window.confirm` |
 | `<Paginacao>` | | Listas paginadas no servidor (20 por página) |
 
-Padrões do acompanhamento (`Acompanhamento.module.css`):
+Padrões do acompanhamento (`pages/acompanhamento/estilosAcompanhamento.js`):
 
-- **Abas** (`.aba`, `.abaAtiva`): sublinhado primário; `.contador` em tom de alerta para pendências.
+- **Abas** (`aba`, `abaAtiva`): sublinhado primário; `contador` em tom de alerta para pendências.
   A aba ativa fica na URL (`?aba=`).
-- **Filtros** (`.filtro`, `.filtroAtivo`): pílulas; a ativa usa `--cor-primaria-clara`.
-- **Linha do tempo**: ícone redondo por tipo: consulta → primária, solicitação → alerta,
-  documento → info.
+- **Filtros** (`filtro`, `filtroAtivo`): pílulas; a ativa usa `--cor-primaria-clara`.
+- **Linha do tempo**: ícone redondo por tipo (`iconesEvento`): consulta → primária,
+  solicitação → alerta, documento → info.
+- **Passo atual** (`passo`): cada etapa tem um estado (`pendente`, `concluido`, `atual`) que define
+  as cores do botão e do número; o traço antes da etapa fica verde quando a anterior foi concluída.
 
 ### Status → variante
 

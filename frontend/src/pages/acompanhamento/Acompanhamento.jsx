@@ -15,7 +15,7 @@ import AbaLinhaDoTempo from './AbaLinhaDoTempo'
 import AbaParceiros from './AbaParceiros'
 import AbaSolicitacoes from './AbaSolicitacoes'
 import CabecalhoAcompanhamento from './CabecalhoAcompanhamento'
-import estilos from './Acompanhamento.module.css'
+import { estilos } from './estilosAcompanhamento'
 
 const ABAS = [
   { id: 'linha', rotulo: 'Linha do tempo' },
@@ -103,7 +103,7 @@ export default function Acompanhamento() {
             id={`aba-${aba.id}`}
             aria-selected={abaAtual === aba.id}
             aria-controls={`painel-${aba.id}`}
-            className={abaAtual === aba.id ? `${estilos.aba} ${estilos.abaAtiva}` : estilos.aba}
+            className={abaAtual === aba.id ? estilos.abaAtiva : estilos.aba}
             onClick={() => irParaAba(aba.id)}
           >
             {aba.rotulo}

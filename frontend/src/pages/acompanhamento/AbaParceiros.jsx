@@ -8,7 +8,7 @@ import { useConfirmar } from '../../components/Confirmacao'
 import { Alerta, Avatar, EstadoVazio, estilos as ui } from '../../components/ui'
 import { cn } from '@/lib/utils'
 import { formatarData } from '../../utils/formatacao'
-import estilos from './Acompanhamento.module.css'
+import { estilos } from './estilosAcompanhamento'
 
 export default function AbaParceiros({ parceiros, acompanhamento, ehMedico, editavel, atualizar }) {
   const confirmar = useConfirmar()
