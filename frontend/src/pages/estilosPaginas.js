@@ -19,7 +19,9 @@ export const estilos = {
   resumos: 'grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3',
   resumo:
     'flex items-center gap-[0.85rem] rounded-raio border border-borda bg-superficie px-[1.1rem] py-4 text-inherit ' +
-    'no-underline shadow-sombra transition-[border-color] duration-150 ease-[ease] hover:border-borda-forte',
+    'no-underline shadow-sombra transition-[border-color,box-shadow,translate] duration-150 ease-[ease] ' +
+    // Cartão clicável: sobe 1px e ganha a sombra de hover (cartões estáticos não se movem)
+    'hover:-translate-y-px hover:border-borda-forte hover:shadow-sombra-hover',
   resumoIcone: 'grid size-[2.6rem] place-items-center rounded-[10px]',
   resumoNumero: 'block text-[1.65rem] leading-[1.1] font-bold',
   resumoRotulo: 'block text-[0.86rem] text-texto-suave',

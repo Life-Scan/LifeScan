@@ -77,7 +77,7 @@ Na barra do topo (abaixo de 900px) vale o mesmo fundo escuro.
 
 ### 4. Fundo e profundidade
 
-| Variável | Valor atual | Valor novo |
+| Variável | Valor anterior | Valor |
 |---|---|---|
 | `--cor-fundo` | `#f3f5f7` | `#edf3f1` (o mesmo tom esverdeado do fundo do login) |
 | `--cor-borda` | `#e2e7eb` | `#dfe8e4` |
@@ -124,7 +124,7 @@ lista atual continua para os outros dias e no celular.
 | 1. Menu lateral escuro | Planejado |
 | 2. Cabeçalho com presença | Planejado |
 | 3. Tipografia | Planejado |
-| 4. Fundo e profundidade | Planejado |
+| 4. Fundo e profundidade | Implantado (as variáveis dos itens 1 e 5 já existem em `index.css`) |
 | 5. Cor por tipo de informação | Planejado (já existe só na linha do tempo) |
 | 6. Agenda visual | Planejado |
 | 7. Acabamento | Planejado |
@@ -174,16 +174,22 @@ variáveis. Se faltar uma, crie a variável em `index.css` primeiro.
 
 | Variável | Valor | Uso |
 |---|---|---|
-| `--cor-fundo` | `#f3f5f7` | Fundo da página |
+| `--cor-fundo` | `#edf3f1` | Fundo da página |
 | `--cor-superficie` | `#ffffff` | Cartões, menu, campos, diálogos |
 | `--cor-superficie-suave` | `#f7f9fa` | Hover de itens neutros, estado vazio, campos desabilitados |
-| `--cor-borda` | `#e2e7eb` | Bordas de cartões, listas, divisórias |
+| `--cor-borda` | `#dfe8e4` | Bordas de cartões, listas, divisórias |
 | `--cor-borda-forte` | `#cfd6dc` | Bordas de campos e botões secundários |
 | `--cor-texto` | `#17212b` | Texto principal |
 | `--cor-texto-suave` | `#5d6b78` | Metadados, ajuda, rótulos secundários |
+| `--cor-texto-apagado` | `#94a0ab` | Placeholder dos campos |
+| `--cor-icone-apagado` | `#9aa7b3` | Ícone do estado vazio |
+| `--cor-veu` | `rgb(15 23 32 / 45%)` | Fundo atrás dos diálogos (`backdrop:bg-veu`) |
 | `--cor-primaria` | `#0f766e` | Marca, botão principal, links, foco |
 | `--cor-primaria-escura` | `#0b5d57` | Hover do primário, texto sobre `--cor-primaria-clara` |
 | `--cor-primaria-clara` | `#e2f3f0` | Item de menu ativo, seleção, anel de foco dos campos |
+| `--cor-primaria-suave` | `#f4fbf9` | Dia com compromissos no calendário |
+| `--cor-primaria-borda` | `#b7dfd7` | Borda do dia com compromissos |
+| `--cor-primaria-anel` | `rgb(15 118 110 / 12%)` | Anel do dia de hoje no calendário |
 
 Cores de estado: cada uma tem o tom forte (texto e ícone) e o `-clara` (fundo).
 
@@ -195,7 +201,13 @@ Cores de estado: cada uma tem o tom forte (texto e ícone) e o `-clara` (fundo).
 | `info` | `#1d5fa8` | `#e5effb` | Agendada, categoria, informação neutra relevante |
 
 Use sempre o par: texto `--cor-x` sobre fundo `--cor-x-clara`. O contraste já foi pensado para
-essa combinação.
+essa combinação. O contorno dos alertas usa `--cor-x-borda` (`#f5c2bc`, `#f0d68f`, `#b9e2c5`,
+`#bcd5f2`). O perigo tem ainda `--cor-perigo-escura` (`#8f1c13`, hover do botão sólido),
+`--cor-perigo-suave` (`#fff8f7`) e `--cor-perigo-borda-suave` (`#f3c0ba`), do `itemListaDestaque`.
+
+As variáveis do menu escuro (`--cor-menu`, `--gradiente-menu`, `--cor-menu-*`) e da cor por tipo
+(`--cor-consulta`, `--cor-solicitacao`, `--cor-documento` e os `-clara`) já existem, com os valores
+da [Direção visual](#direção-visual). A barra do link ativo usa `--cor-menu-destaque` (`#a7e3cc`).
 
 ### Tipografia
 
@@ -228,10 +240,12 @@ Em `rem`. Use os passos que já existem, sem valores soltos:
 
 | Variável | Valor | Uso |
 |---|---|---|
+| `--raio-grande` | `20px` | Faixa de destaque do Painel e do acompanhamento |
 | `--raio` | `12px` | Cartões, resumos, diálogos |
 | `--raio-pequeno` | `8px` | Botões, campos, itens de lista, alertas |
 | `999px` | — | Pílulas: etiquetas, filtros, contadores |
-| `--sombra` | sutil | Cartões e resumos |
+| `--sombra` | sutil, com o tom do verde | Cartões e resumos |
+| `--sombra-hover` | média | Hover de cartão clicável (sobe `1px`); cartão estático não se move |
 | `--sombra-elevada` | forte | Só para o que flutua (diálogos) |
 
 ## Layout
@@ -351,9 +365,5 @@ alguém → `alerta`; problema → `perigo`; futuro/informativo → `info`; ence
   `#218c7b`) viram variáveis com o item 1 da Direção visual (`--cor-menu`, `--gradiente-menu`); o
   verde principal já usa `primaria`. As outras telas de acesso (esqueci a senha, definir senha)
   usam a moldura `TelaAcesso.jsx`, só com tokens.
-- Alguns tons derivados estão em hex dentro de `ui.jsx` (bordas dos alertas, hover do
-  `botaoPerigoSolido`, fundo e borda do `itemListaDestaque`, ícone do estado vazio) e no
-  placeholder de `index.css` (`#94a0ab`). São candidatos a
-  virar variáveis.
 - Não há tema escuro (`color-scheme: light`). Se for criado, ele deve sair só da troca das
   variáveis de `:root`.
