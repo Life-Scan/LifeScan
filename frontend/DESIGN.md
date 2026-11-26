@@ -136,8 +136,9 @@ Ordem sugerida: 1 a 4 primeiro (mudam o sistema inteiro quase só com `index.css
 
 O frontend usa Tailwind v4 + shadcn/ui. Não há mais CSS Modules: não crie `.module.css` novo.
 As classes compartilhadas ficam em objetos `estilos` (strings de classes), um por área:
-`components/ui.jsx` (peças do app inteiro), `pages/estilosPaginas.js` (páginas internas) e
-`pages/acompanhamento/estilosAcompanhamento.js` (página do acompanhamento e abas).
+`components/ui.jsx` (peças do app inteiro), `pages/estilosPaginas.js` (páginas internas),
+`pages/acompanhamento/estilosAcompanhamento.js` (página do acompanhamento e abas) e
+`components/estilosAgenda.js` (calendário e modal da agenda).
 
 - **Tokens:** as variáveis de `:root` continuam sendo a fonte da verdade. O `@theme inline` de
   `index.css` gera classes com o nome delas (`bg-primaria`, `text-texto-suave`, `border-borda`,
