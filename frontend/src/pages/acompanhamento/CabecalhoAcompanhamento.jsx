@@ -5,8 +5,9 @@ import { mensagemDeErro } from '../../api/cliente'
 import { alterarPasso, alterarStatusAcompanhamento } from '../../api/servicos'
 import { useConfirmar } from '../../components/Confirmacao'
 import { Alerta, Avatar, Etiqueta, estilos as ui } from '../../components/ui'
+import { cn } from '@/lib/utils'
 import { PASSOS, ROTULOS_PASSO, formatarData } from '../../utils/formatacao'
-import estilos from './Acompanhamento.module.css'
+import { estilos, passo as estilosPasso } from './estilosAcompanhamento'
 
 export default function CabecalhoAcompanhamento({ acompanhamento, ehMedico, editavel, atualizar }) {
   const confirmar = useConfirmar()
@@ -78,7 +79,7 @@ export default function CabecalhoAcompanhamento({ acompanhamento, ehMedico, edit
         {ehMedico && (
           <button
             type="button"
-            className={`${ativo ? ui.botaoPerigo : ui.botaoSecundario} ${ui.botaoPequeno}`}
+            className={cn(ativo ? ui.botaoPerigo : ui.botaoSecundario, ui.botaoPequeno)}
             onClick={alternarStatus}
             disabled={ocupado}
           >
@@ -94,23 +95,26 @@ export default function CabecalhoAcompanhamento({ acompanhamento, ehMedico, edit
           {PASSOS.map((passo, indice) => {
             const concluido = indice < indiceAtual
             const atual = indice === indiceAtual
-            const classe = [estilos.passo, concluido ? estilos.passoConcluido : '', atual ? estilos.passoAtual : '']
-              .filter(Boolean)
-              .join(' ')
+            const estado = atual ? 'atual' : concluido ? 'concluido' : 'pendente'
+            // Traço antes da etapa (menos na primeira): verde se a etapa anterior já foi concluída
+            const traco =
+              indice === 0
+                ? ''
+                : `${estilosPasso.traco} ${indice <= indiceAtual ? estilosPasso.tracoCor.feito : estilosPasso.tracoCor.pendente}`
             const conteudo = (
               <>
-                <span className={estilos.numeroPasso}>
+                <span className={estilosPasso.numero[estado]}>
                   {concluido ? <Check size={12} strokeWidth={3} aria-hidden="true" /> : indice + 1}
                 </span>
                 {ROTULOS_PASSO[passo]}
               </>
             )
             return (
-              <li key={passo} className={classe}>
+              <li key={passo} className={`${estilosPasso.item} ${traco}`}>
                 {podeMudarPasso ? (
                   <button
                     type="button"
-                    className={estilos.botaoPasso}
+                    className={`${estilosPasso.botao[estado]} ${estilosPasso.clicavel[estado]}`}
                     onClick={() => mudarPasso(passo)}
                     disabled={ocupado}
                     aria-current={atual ? 'step' : undefined}
@@ -119,7 +123,7 @@ export default function CabecalhoAcompanhamento({ acompanhamento, ehMedico, edit
                     {conteudo}
                   </button>
                 ) : (
-                  <span className={estilos.botaoPasso} aria-current={atual ? 'step' : undefined}>
+                  <span className={estilosPasso.botao[estado]} aria-current={atual ? 'step' : undefined}>
                     {conteudo}
                   </span>
                 )}

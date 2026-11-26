@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { mensagemDeErro } from '../../api/cliente'
 import { enviarDocumento, revisarDocumento } from '../../api/servicos'
 import { Alerta, Anexo, CampoArquivo, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
+import { cn } from '@/lib/utils'
 import {
   ROTULOS_CATEGORIA,
   ROTULOS_STATUS_DOCUMENTO,
@@ -11,7 +12,7 @@ import {
   formatarData,
   formatarDataHora,
 } from '../../utils/formatacao'
-import estilos from './Acompanhamento.module.css'
+import { estilos } from './estilosAcompanhamento'
 
 const TIPOS_COM_ENVIO = ['exame', 'orientacao_profissional']
 
@@ -164,7 +165,7 @@ function ItemDocumento({ documento, solicitacao, podeRevisar, atualizar }) {
 
       {podeRevisar && !revisando && (
         <div className={estilos.acoesItem}>
-          <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={() => setRevisando(true)}>
+          <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={() => setRevisando(true)}>
             <Pencil size={14} aria-hidden="true" />
             {revisado ? 'Editar revisão' : 'Revisar documento'}
           </button>
@@ -184,12 +185,12 @@ function ItemDocumento({ documento, solicitacao, podeRevisar, atualizar }) {
           </div>
           <Alerta tipo="erro">{erro}</Alerta>
           <div className={ui.acoes}>
-            <button type="submit" className={`${ui.botao} ${ui.botaoPequeno}`} disabled={enviando}>
+            <button type="submit" className={cn(ui.botao, ui.botaoPequeno)} disabled={enviando}>
               {enviando ? 'Salvando…' : 'Marcar como revisado'}
             </button>
             <button
               type="button"
-              className={`${ui.botaoSecundario} ${ui.botaoPequeno}`}
+              className={cn(ui.botaoSecundario, ui.botaoPequeno)}
               onClick={() => setRevisando(false)}
               disabled={enviando}
             >

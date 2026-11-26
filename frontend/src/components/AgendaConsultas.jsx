@@ -12,6 +12,8 @@ import {
 import { useConfirmar } from './Confirmacao'
 import Paginacao from './Paginacao'
 import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from './ui'
+import { cn } from '@/lib/utils'
+import { useAgora } from '../hooks/useAgora'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import {
   ROTULOS_STATUS_AGENDAMENTO,
@@ -20,7 +22,7 @@ import {
   formatarPrazoRelativo,
   paraCampoDataHora,
 } from '../utils/formatacao'
-import estilos from '../pages/Paginas.module.css'
+import { estilos } from '../pages/estilosPaginas'
 
 const VARIANTES_STATUS = { agendada: 'info', realizada: 'sucesso', faltou: 'perigo', cancelada: 'neutra' }
 
@@ -118,6 +120,7 @@ export default function AgendaConsultas() {
 }
 
 function FormularioAgendamento({ aoAgendar }) {
+  const agora = useAgora()
   const [textoBusca, setTextoBusca] = useState('')
   const [busca, setBusca] = useState('')
   const [pacientes, setPacientes] = useState(null)
@@ -216,7 +219,7 @@ function FormularioAgendamento({ aoAgendar }) {
               id="agenda-data"
               type="datetime-local"
               value={dataHora}
-              min={paraCampoDataHora(new Date())}
+              min={paraCampoDataHora(agora)}
               onChange={(evento) => setDataHora(evento.target.value)}
               required
             />
@@ -256,13 +259,14 @@ function FormularioAgendamento({ aoAgendar }) {
 }
 
 function ItemAgendamento({ agendamento, aoAlterar }) {
+  const agora = useAgora()
   const confirmar = useConfirmar()
   const [editando, setEditando] = useState(false)
   const [erro, setErro] = useState('')
   const [ocupado, setOcupado] = useState(false)
   const { paciente } = agendamento
   const agendada = agendamento.status === 'agendada'
-  const passou = new Date(agendamento.data_hora) <= new Date()
+  const passou = new Date(agendamento.data_hora) <= agora
 
   async function mudarStatus(status) {
     setErro('')
@@ -308,7 +312,7 @@ function ItemAgendamento({ agendamento, aoAlterar }) {
           <div>
             <div className={ui.pessoaNome}>
               {formatarDataHora(agendamento.data_hora)} · {paciente.nome}{' '}
-              {agendada && !passou && <Etiqueta variante="info">{formatarPrazoRelativo(agendamento.data_hora)}</Etiqueta>}
+              {agendada && !passou && <Etiqueta variante="info">{formatarPrazoRelativo(agendamento.data_hora, agora)}</Etiqueta>}
               {agendada && passou && <Etiqueta variante="alerta">A registrar</Etiqueta>}
               {!agendada && (
                 <Etiqueta variante={VARIANTES_STATUS[agendamento.status]}>{ROTULOS_STATUS_AGENDAMENTO[agendamento.status]}</Etiqueta>
@@ -325,23 +329,23 @@ function ItemAgendamento({ agendamento, aoAlterar }) {
           <div className={ui.acoes}>
             {passou && (
               <>
-                <button type="button" className={`${ui.botao} ${ui.botaoPequeno}`} onClick={() => mudarStatus('realizada')} disabled={ocupado}>
+                <button type="button" className={cn(ui.botao, ui.botaoPequeno)} onClick={() => mudarStatus('realizada')} disabled={ocupado}>
                   <Check size={14} aria-hidden="true" />
                   Realizada
                 </button>
-                <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={() => mudarStatus('faltou')} disabled={ocupado}>
+                <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={() => mudarStatus('faltou')} disabled={ocupado}>
                   <CalendarX size={14} aria-hidden="true" />
                   Faltou
                 </button>
               </>
             )}
             {!passou && (
-              <button type="button" className={`${ui.botaoSecundario} ${ui.botaoPequeno}`} onClick={() => setEditando(true)} disabled={ocupado}>
+              <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={() => setEditando(true)} disabled={ocupado}>
                 <Pencil size={14} aria-hidden="true" />
                 Remarcar
               </button>
             )}
-            <button type="button" className={`${ui.botaoPerigo} ${ui.botaoPequeno}`} onClick={cancelar} disabled={ocupado}>
+            <button type="button" className={cn(ui.botaoPerigo, ui.botaoPequeno)} onClick={cancelar} disabled={ocupado}>
               <Ban size={14} aria-hidden="true" />
               Cancelar
             </button>
@@ -354,6 +358,7 @@ function ItemAgendamento({ agendamento, aoAlterar }) {
 }
 
 function FormularioRemarcacao({ agendamento, aoSalvar, aoCancelar }) {
+  const agora = useAgora()
   const [dataHora, setDataHora] = useState(paraCampoDataHora(new Date(agendamento.data_hora)))
   const [observacao, setObservacao] = useState(agendamento.observacao || '')
   const [erro, setErro] = useState('')
@@ -384,7 +389,7 @@ function FormularioRemarcacao({ agendamento, aoSalvar, aoCancelar }) {
               id={`remarcar-data-${agendamento.id}`}
               type="datetime-local"
               value={dataHora}
-              min={paraCampoDataHora(new Date())}
+              min={paraCampoDataHora(agora)}
               onChange={(evento) => setDataHora(evento.target.value)}
               required
               autoFocus

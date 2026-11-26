@@ -8,7 +8,7 @@ import { Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as
 import { useAuth } from '../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import { ROTULOS_PASSO, formatarData } from '../utils/formatacao'
-import estilos from './Paginas.module.css'
+import { estilos } from './estilosPaginas'
 
 export default function Acompanhamentos() {
   const { ehMedico, ehParceiro } = useAuth()

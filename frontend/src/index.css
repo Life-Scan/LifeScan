@@ -1,4 +1,32 @@
-/* Estilos globais e variáveis de tema. Os componentes usam CSS Modules. */
+/*
+ * Tailwind v4 sem o preflight (reset): theme + utilities apenas. As telas foram migradas dos CSS
+ * Modules sobre os estilos padrão do navegador (margens de lista, dl, fieldset, img, dialog); ligar
+ * o reset muda o visual e é uma mudança à parte (ver DESIGN.md).
+ *
+ * Camadas, da mais fraca para a mais forte: theme < base < components < utilities. Os estilos
+ * globais ficam em base, então as classes do Tailwind vencem eles.
+ */
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* dark: só com a classe .dark (que não existe). Sem isso, segue o modo escuro do sistema operacional. */
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Pontos de quebra do projeto, inclusivos como o max-width dos módulos (o max-[900px]: do Tailwind
+ * gera width < 900px e erra por 1px). A ordem importa: do maior para o menor, para o menor vencer.
+ */
+@custom-variant ate-900 (@media (width <= 900px));
+@custom-variant ate-860 (@media (width <= 860px));
+@custom-variant ate-760 (@media (width <= 760px));
+@custom-variant ate-720 (@media (width <= 720px));
+@custom-variant ate-680 (@media (width <= 680px));
+
+/* Estilos globais e variáveis de tema. Os componentes usam CSS Modules ou classes do Tailwind. */
 
 :root {
   --cor-fundo: #f3f5f7;
@@ -32,125 +60,183 @@
   --fonte: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial,
     sans-serif;
 
+  /* Variáveis do shadcn/ui: apontam para os tokens acima, que continuam sendo a fonte da verdade. */
+  --background: var(--cor-fundo);
+  --foreground: var(--cor-texto);
+  --card: var(--cor-superficie);
+  --card-foreground: var(--cor-texto);
+  --popover: var(--cor-superficie);
+  --popover-foreground: var(--cor-texto);
+  --primary: var(--cor-primaria);
+  --primary-foreground: #ffffff;
+  --secondary: var(--cor-superficie-suave);
+  --secondary-foreground: var(--cor-texto);
+  --muted: var(--cor-superficie-suave);
+  --muted-foreground: var(--cor-texto-suave);
+  --accent: var(--cor-primaria-clara);
+  --accent-foreground: var(--cor-primaria-escura);
+  --destructive: var(--cor-perigo);
+  --border: var(--cor-borda);
+  --input: var(--cor-borda-forte);
+  --ring: var(--cor-primaria);
+  --radius: var(--raio-pequeno);
+  --chart-1: var(--cor-primaria);
+  --chart-2: var(--cor-info);
+  --chart-3: var(--cor-alerta);
+  --chart-4: var(--cor-sucesso);
+  --chart-5: var(--cor-perigo);
+  --sidebar: var(--cor-superficie);
+  --sidebar-foreground: var(--cor-texto);
+  --sidebar-primary: var(--cor-primaria);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--cor-primaria-clara);
+  --sidebar-accent-foreground: var(--cor-primaria-escura);
+  --sidebar-border: var(--cor-borda);
+  --sidebar-ring: var(--cor-primaria);
+
   color-scheme: light;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+/* Estilos globais (elementos HTML). */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    font-family: var(--fonte);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    margin: 0;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 650;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 650;
+  }
+
+  h3 {
+    font-size: 0.98rem;
+    font-weight: 650;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  a {
+    color: var(--cor-primaria);
+  }
+
+  button:where(:not([data-slot])),
+  input:where(:not([data-slot])),
+  select:where(:not([data-slot])),
+  textarea:where(:not([data-slot])) {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* Ícones (lucide) alinhados ao texto */
+  svg {
+    flex-shrink: 0;
+  }
+
+  :focus-visible:where(:not([data-slot])) {
+    outline: 2px solid var(--cor-primaria);
+    outline-offset: 2px;
+  }
+
+  /*
+   * Formulários: aparência base compartilhada. O :where(:not([data-slot])) deixa de fora os componentes
+   * do shadcn sem mudar a especificidade (os módulos continuam vencendo como antes).
+   */
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):where(:not([data-slot])),
+  select:where(:not([data-slot])),
+  textarea:where(:not([data-slot])) {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--cor-borda-forte);
+    border-radius: var(--raio-pequeno);
+    background: var(--cor-superficie);
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+  }
+
+  input:focus:where(:not([data-slot])),
+  select:focus:where(:not([data-slot])),
+  textarea:focus:where(:not([data-slot])) {
+    border-color: var(--cor-primaria);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--cor-primaria-clara);
+  }
+
+  input:where(:not([data-slot]))::placeholder,
+  textarea:where(:not([data-slot]))::placeholder {
+    color: #94a0ab;
+  }
+
+  select:disabled:where(:not([data-slot])),
+  input:disabled:where(:not([data-slot])) {
+    background: var(--cor-superficie-suave);
+    color: var(--cor-texto-suave);
+  }
+
+  textarea:where(:not([data-slot])) {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  label:where(:not([data-slot])) {
+    display: block;
+    font-weight: 600;
+    font-size: 0.86rem;
+    margin-bottom: 0.3rem;
+  }
+
+  @media (max-width: 720px) {
+    h1 {
+      font-size: 1.35rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
-  scroll-behavior: smooth;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--cor-fundo);
-  color: var(--cor-texto);
-  font-family: var(--fonte);
-  font-size: 15px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-h1,
-h2,
-h3 {
-  margin: 0;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-}
-
-h1 {
-  font-size: 1.6rem;
-  font-weight: 650;
-}
-
-h2 {
-  font-size: 1.1rem;
-  font-weight: 650;
-}
-
-h3 {
-  font-size: 0.98rem;
-  font-weight: 650;
-}
-
-p {
-  margin: 0;
-}
-
-a {
-  color: var(--cor-primaria);
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-  color: inherit;
-}
-
-/* Ícones (lucide) alinhados ao texto */
-svg {
-  flex-shrink: 0;
-}
-
-:focus-visible {
-  outline: 2px solid var(--cor-primaria);
-  outline-offset: 2px;
-}
-
-/* Formulários: aparência base compartilhada */
-input:not([type='checkbox']):not([type='radio']):not([type='file']),
-select,
-textarea {
-  width: 100%;
-  padding: 0.55rem 0.7rem;
-  border: 1px solid var(--cor-borda-forte);
-  border-radius: var(--raio-pequeno);
-  background: var(--cor-superficie);
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: var(--cor-primaria);
-  outline: none;
-  box-shadow: 0 0 0 3px var(--cor-primaria-clara);
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #94a0ab;
-}
-
-select:disabled,
-input:disabled {
-  background: var(--cor-superficie-suave);
-  color: var(--cor-texto-suave);
-}
-
-textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-label {
-  display: block;
-  font-weight: 600;
-  font-size: 0.86rem;
-  margin-bottom: 0.3rem;
-}
-
+/* Texto só para leitores de tela. */
 .visualmente-oculto {
   position: absolute;
   width: 1px;
@@ -160,19 +246,108 @@ label {
   white-space: nowrap;
 }
 
-@media (max-width: 720px) {
-  h1 {
-    font-size: 1.35rem;
+/* Animações próprias: animate-girar (spinner do <Carregando>). */
+@theme {
+  --animate-girar: girar 0.8s linear infinite;
+
+  @keyframes girar {
+    to {
+      transform: rotate(360deg);
+    }
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
+/*
+ * Classes do Tailwind geradas a partir das variáveis: as do projeto (bg-primaria, text-texto-suave,
+ * border-borda, rounded-raio, shadow-sombra...) e as que os componentes do shadcn usam
+ * (bg-primary, text-muted-foreground, border-input...). "inline" faz a classe usar a variável,
+ * então mudar o valor em :root muda tudo.
+ */
+@theme inline {
+  --font-sans: var(--fonte);
+  --font-heading: var(--fonte);
+
+  --color-fundo: var(--cor-fundo);
+  --color-superficie: var(--cor-superficie);
+  --color-superficie-suave: var(--cor-superficie-suave);
+  --color-borda: var(--cor-borda);
+  --color-borda-forte: var(--cor-borda-forte);
+  --color-texto: var(--cor-texto);
+  --color-texto-suave: var(--cor-texto-suave);
+  --color-primaria: var(--cor-primaria);
+  --color-primaria-escura: var(--cor-primaria-escura);
+  --color-primaria-clara: var(--cor-primaria-clara);
+  --color-perigo: var(--cor-perigo);
+  --color-perigo-clara: var(--cor-perigo-clara);
+  --color-alerta: var(--cor-alerta);
+  --color-alerta-clara: var(--cor-alerta-clara);
+  --color-sucesso: var(--cor-sucesso);
+  --color-sucesso-clara: var(--cor-sucesso-clara);
+  --color-info: var(--cor-info);
+  --color-info-clara: var(--cor-info-clara);
+  --radius-raio: var(--raio);
+  --radius-raio-pequeno: var(--raio-pequeno);
+  --shadow-sombra: var(--sombra);
+  --shadow-sombra-elevada: var(--sombra-elevada);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * Base do shadcn, restrita aos componentes dele (todos têm data-slot) para não alterar as telas que
+ * ainda usam CSS Modules. Vem depois da base acima, então vence ela. Quando o preflight entrar, o seletor volta a ser "*".
+ * Sem tema escuro: o projeto usa color-scheme light (ver DESIGN.md).
+ */
+@layer base {
+  [data-slot],
+  [data-slot] * {
+    @apply border-border outline-ring/50;
   }
 
-  * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+  button[data-slot] {
+    margin: 0;
+    background-color: transparent;
+  }
+
+  button[data-slot]:not(:disabled),
+  [role='button'][data-slot]:not(:disabled) {
+    cursor: pointer;
   }
 }
