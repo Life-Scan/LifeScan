@@ -23,10 +23,10 @@ export const estilos = {
     // Cartão clicável: sobe 1px e ganha a sombra de hover (cartões estáticos não se movem)
     'hover:-translate-y-px hover:border-borda-forte hover:shadow-sombra-hover',
   resumoIcone: 'grid size-[2.6rem] place-items-center rounded-[10px]',
-  resumoNumero: 'block text-[1.65rem] leading-[1.1] font-bold',
+  resumoNumero: 'block text-[2rem] leading-[1.1] font-[750] tracking-[-0.03em] tabular-nums',
   resumoRotulo: 'block text-[0.86rem] text-texto-suave',
 
-  meta: 'mt-[0.3rem] flex flex-wrap gap-x-[0.9rem] gap-y-[0.2rem] text-[0.84rem] text-texto-suave',
+  meta: 'tabular-nums mt-[0.3rem] flex flex-wrap gap-x-[0.9rem] gap-y-[0.2rem] text-[0.84rem] text-texto-suave',
   textoItem: 'mt-[0.35rem] whitespace-pre-wrap [word-break:break-word]',
   linkItem: 'font-semibold text-texto no-underline hover:text-primaria hover:underline',
   atualizacao: 'text-[0.8rem] text-texto-suave',
@@ -53,7 +53,7 @@ export const estilos = {
     'border-borda bg-superficie text-primaria hover:bg-primaria-clara',
   contagem:
     'ml-1 inline-grid h-6 min-w-6 place-items-center rounded-full border border-borda bg-superficie-suave ' +
-    'px-[0.4rem] align-middle text-[0.8rem] font-semibold text-texto-suave',
+    'px-[0.4rem] align-middle text-[0.8rem] font-semibold text-texto-suave tabular-nums',
 
   escolha:
     'm-0 grid max-w-[780px] grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-[0.6rem] border-0 p-0 ' +

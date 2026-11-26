@@ -20,7 +20,7 @@ export const estilos = {
     'inline-flex w-fit items-center gap-[0.3rem] text-[0.88rem] font-semibold text-texto-suave no-underline ' +
     'hover:text-primaria',
   texto: `mt-[0.35rem] ${TEXTO_LONGO}`,
-  meta: 'mt-[0.3rem] flex flex-wrap gap-x-[0.9rem] gap-y-[0.2rem] text-[0.84rem] text-texto-suave',
+  meta: 'tabular-nums mt-[0.3rem] flex flex-wrap gap-x-[0.9rem] gap-y-[0.2rem] text-[0.84rem] text-texto-suave',
   acoesItem: 'mt-[0.65rem]',
   formularioDestaque: 'rounded-raio-pequeno border border-borda-forte bg-superficie-suave p-[1.1rem]',
 
@@ -46,7 +46,7 @@ export const estilos = {
   abaAtiva: `${ABA} border-b-primaria text-primaria-escura`,
   contador:
     'inline-grid h-[1.3rem] min-w-[1.3rem] place-items-center rounded-full bg-alerta-clara px-[0.3rem] ' +
-    'text-[0.74rem] font-bold text-alerta',
+    'text-[0.74rem] font-bold text-alerta tabular-nums',
 
   // Filtros em forma de pílula (linha do tempo e documentos)
   filtros: 'flex flex-wrap gap-[0.4rem]',
@@ -64,7 +64,7 @@ export const estilos = {
   topoEvento: 'flex flex-wrap items-center gap-2',
   tituloEvento:
     'cursor-pointer border-0 bg-transparent p-0 text-left font-[650] hover:text-primaria hover:underline hover:underline-offset-2',
-  dataEvento: 'ml-auto text-[0.82rem] whitespace-nowrap text-texto-suave ate-720:ml-0 ate-720:basis-full',
+  dataEvento: 'ml-auto text-[0.82rem] tabular-nums whitespace-nowrap text-texto-suave ate-720:ml-0 ate-720:basis-full',
   textoEvento: `mt-[0.2rem] ${TEXTO_LONGO}`,
 
   // Consultas

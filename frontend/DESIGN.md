@@ -123,7 +123,7 @@ lista atual continua para os outros dias e no celular.
 |---|---|
 | 1. Menu lateral escuro | Implantado |
 | 2. Cabeçalho com presença | Planejado |
-| 3. Tipografia | Planejado |
+| 3. Tipografia | Implantado (o título da faixa do Painel entra com o item 2) |
 | 4. Fundo e profundidade | Implantado (as variáveis dos itens 1 e 5 já existem em `index.css`) |
 | 5. Cor por tipo de informação | Planejado (já existe só na linha do tempo) |
 | 6. Agenda visual | Planejado |
@@ -211,16 +211,21 @@ da [Direção visual](#direção-visual). A barra do link ativo usa `--cor-menu-
 
 ### Tipografia
 
-- Fonte: `--fonte` (Segoe UI Variable / system-ui). Não carregamos fontes externas.
+- Fonte: `--fonte` (Manrope Variable, importada em `main.jsx` de `@fontsource-variable/manrope`).
+  Ela vem do próprio bundle, sem Google Fonts nem outro serviço externo. O navegador só baixa o
+  subconjunto de caracteres usado (latino, cerca de 25 KB).
 - Corpo: `15px`, `line-height: 1.5`.
-- Títulos com peso `650` e `letter-spacing: -0.01em`:
-  - `h1` `1.6rem` (`1.35rem` abaixo de 720px), título da página. Um por tela.
-  - `h2` `1.1rem`, título de cartão ou seção.
-  - `h3` `0.98rem`, subtítulo dentro de cartão.
+- Títulos:
+  - `h1` `1.85rem` (`1.45rem` abaixo de 720px), peso `700`, `-0.025em`. Título da página, um por tela.
+  - `h2` `1.15rem`, peso `700`, `-0.015em`. Título de cartão ou seção.
+  - `h3` `1rem`, peso `650`, `-0.01em`. Subtítulo dentro de cartão.
+- Número de resumo do Painel: `2rem`, peso `750`, `-0.03em`.
+- Números que se comparam usam `tabular-nums`: resumos, contadores (`contagem`, `contador`,
+  `contagemEventos`), `meta` das listas, data da linha do tempo, dia e hora do calendário.
 - Escala de texto menor, em `rem`: `0.92` (botões, alertas), `0.86` (rótulos, ajuda),
   `0.84` (metadados), `0.76` (etiquetas).
-- Pesos usados: `400`, `600` (rótulos, botões, nomes), `650` (títulos), `700` (números de
-  resumo, avatar).
+- Pesos usados: `400`, `600` (rótulos, botões, nomes), `650` (`h3`, destaques), `700` (`h1`,
+  `h2`, avatar), `750` (número de resumo).
 
 ### Espaçamento
 

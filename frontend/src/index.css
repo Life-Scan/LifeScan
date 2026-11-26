@@ -94,8 +94,7 @@
 
   --largura-menu: 248px;
 
-  --fonte: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial,
-    sans-serif;
+  --fonte: 'Manrope Variable', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif;
 
   /* Variáveis do shadcn/ui: apontam para os tokens acima, que continuam sendo a fonte da verdade. */
   --background: var(--cor-fundo);
@@ -163,22 +162,24 @@
   h3 {
     margin: 0;
     line-height: 1.25;
-    letter-spacing: -0.01em;
   }
 
   h1 {
-    font-size: 1.6rem;
-    font-weight: 650;
+    font-size: 1.85rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
 
   h2 {
-    font-size: 1.1rem;
-    font-weight: 650;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
   }
 
   h3 {
-    font-size: 0.98rem;
+    font-size: 1rem;
     font-weight: 650;
+    letter-spacing: -0.01em;
   }
 
   p {
@@ -257,7 +258,7 @@
 
   @media (max-width: 720px) {
     h1 {
-      font-size: 1.35rem;
+      font-size: 1.45rem;
     }
   }
 

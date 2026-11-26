@@ -33,11 +33,11 @@ export const agendaEstilos = {
   diaSemana: 'py-1 text-center text-[0.78rem] font-[650] tracking-[0.03em] text-texto-suave uppercase',
   gradeDias: 'grid grid-cols-[repeat(7,minmax(0,1fr))] gap-[0.35rem]',
   cabecalhoDia: 'flex items-center justify-between gap-1',
-  numeroDia: 'text-[0.84rem] leading-[1.2] font-[650]',
+  numeroDia: 'text-[0.84rem] leading-[1.2] font-[650] tabular-nums',
   numeroDiaHoje:
     'inline-flex h-[1.45rem] min-w-[1.45rem] items-center justify-center rounded-full bg-primaria px-1 text-white',
   contagemEventos:
-    'rounded-full bg-primaria-clara px-[0.38rem] py-[0.05rem] text-[0.7rem] font-bold text-primaria-escura',
+    'rounded-full bg-primaria-clara px-[0.38rem] py-[0.05rem] text-[0.7rem] font-bold text-primaria-escura tabular-nums',
   listaEventosDia: 'flex min-w-0 flex-col gap-[0.2rem]',
   eventoChip:
     'flex items-center gap-1 overflow-hidden rounded-[5px] px-[0.35rem] py-[0.12rem] text-[0.72rem] leading-[1.25] ' +
@@ -48,7 +48,7 @@ export const agendaEstilos = {
   evento_realizada: CHIP_EVENTO.realizada,
   evento_faltou: CHIP_EVENTO.faltou,
   evento_cancelada: CHIP_EVENTO.cancelada,
-  eventoHora: 'shrink-0',
+  eventoHora: 'shrink-0 tabular-nums',
   // Até 720px a célula mostra só o horário
   eventoNome: 'overflow-hidden text-ellipsis ate-720:hidden',
   maisEventos: 'pl-[0.2rem] text-[0.7rem] font-semibold text-primaria-escura',
