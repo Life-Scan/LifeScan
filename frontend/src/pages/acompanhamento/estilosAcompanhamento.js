@@ -16,27 +16,25 @@ const FILTRO =
 
 export const estilos = {
   pilha: 'grid gap-4',
-  voltar:
-    'inline-flex w-fit items-center gap-[0.3rem] text-[0.88rem] font-semibold text-texto-suave no-underline ' +
-    'hover:text-primaria',
   texto: `mt-[0.35rem] ${TEXTO_LONGO}`,
   meta: 'tabular-nums mt-[0.3rem] flex flex-wrap gap-x-[0.9rem] gap-y-[0.2rem] text-[0.84rem] text-texto-suave',
   acoesItem: 'mt-[0.65rem]',
   formularioDestaque: 'rounded-raio-pequeno border border-borda-forte bg-superficie-suave p-[1.1rem]',
 
-  // Cabeçalho
-  cabecalho: 'grid gap-[1.1rem] ate-720:[&_h1]:text-[1.3rem]',
+  // Cabeçalho: identificação na faixa escura (Faixa de ui.jsx), etapas num cartão claro abaixo
   cabecalhoTopo: 'flex flex-wrap items-start justify-between gap-4',
-  // Até 720px some o avatar (primeiro filho)
-  identificacao: 'flex min-w-0 gap-[0.9rem] ate-720:[&>:first-child]:hidden',
-  tituloLinha: 'flex flex-wrap items-center gap-[0.6rem]',
+  // Até 720px some o avatar (primeiro filho); o contorno claro destaca o avatar no fundo escuro
+  identificacao:
+    'flex min-w-0 gap-[0.9rem] [&>:first-child]:ring-2 [&>:first-child]:ring-menu-borda ate-720:[&>:first-child]:hidden',
+  tituloLinha: 'mt-1 flex flex-wrap items-center gap-[0.6rem] ate-720:[&_h1]:text-[1.3rem]',
   pessoas:
-    'mt-[0.3rem] flex flex-wrap gap-x-[1.1rem] gap-y-[0.2rem] text-[0.88rem] text-texto-suave ' +
-    '[&_strong]:font-semibold [&_strong]:text-texto',
-  descricao: 'mt-[0.6rem] max-w-[72ch] text-texto-suave',
+    'tabular-nums mt-[0.3rem] flex flex-wrap gap-x-[1.1rem] gap-y-[0.2rem] text-[0.88rem] text-menu-texto ' +
+    '[&_strong]:font-semibold [&_strong]:text-menu-texto-forte',
+  descricao: 'mt-[0.6rem] max-w-[72ch] text-menu-texto',
 
   // Passo atual: três etapas em linha, ligadas por um traço (ver passos abaixo)
-  passoLinha: 'flex flex-wrap items-center gap-[0.9rem] border-t border-borda pt-4',
+  passoCartao: 'grid gap-3',
+  passoLinha: 'flex flex-wrap items-center gap-[0.9rem]',
   rotuloPasso: 'text-[0.8rem] font-semibold tracking-[0.04em] text-texto-suave uppercase',
   passos: 'm-0 flex list-none flex-wrap items-center p-0 ate-720:flex-nowrap',
 

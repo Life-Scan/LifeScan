@@ -7,10 +7,13 @@ const formatoDataHora = new Intl.DateTimeFormat('pt-BR', {
   minute: '2-digit',
 })
 const formatoHora = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' })
+const formatoDataPorExtenso = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
 
 export const formatarData = (iso) => (iso ? formatoData.format(new Date(iso)) : '')
 export const formatarDataHora = (iso) => (iso ? formatoDataHora.format(new Date(iso)) : '')
 export const formatarHora = (iso) => (iso ? formatoHora.format(new Date(iso)) : '')
+/** "quarta-feira, 26 de novembro". Recebe um Date (ex.: o de useAgora), não uma string ISO. */
+export const formatarDataPorExtenso = (data) => formatoDataPorExtenso.format(data)
 
 /**
  * "hoje", "amanhã", "em 3 dias", "há 2 dias" etc., contando dias do calendário local.

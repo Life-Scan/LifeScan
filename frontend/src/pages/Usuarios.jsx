@@ -19,6 +19,7 @@ export default function Usuarios({ tipo }) {
     <div className={estilos.pilha}>
       <div className={estilos.cabecalho}>
         <div>
+          <p className={ui.sobretitulo}>Cadastros</p>
           <h1>{titulo}</h1>
           <p className={estilos.subtitulo}>
             Busque {titulo.toLowerCase()} e gerencie seus acessos.
