@@ -6,13 +6,21 @@ import { Avatar } from './ui'
 
 const ROTULOS_TIPO = { medico: 'Médico(a)', paciente: 'Paciente', colaborador: 'Colaborador(a)' }
 
-/* Menu lateral fixo em telas largas; até 900px vira barra no topo com a navegação rolando na horizontal. */
+/*
+ * Menu lateral escuro (fundo da apresentação do login), fixo em telas largas; até 900px vira barra no
+ * topo, também escura, com a navegação rolando na horizontal. O conteúdo continua claro.
+ */
 const LINK =
-  'flex items-center gap-[0.65rem] rounded-raio-pequeno px-[0.7rem] py-[0.55rem] text-[0.93rem] font-semibold ' +
+  'relative flex items-center gap-[0.65rem] rounded-raio-pequeno px-[0.7rem] py-[0.55rem] text-[0.93rem] font-semibold ' +
   'no-underline transition-[background,color] duration-150 ease-[ease] ate-900:px-[0.65rem] ate-900:py-[0.45rem] ate-900:whitespace-nowrap'
-const LINK_INATIVO = `${LINK} text-texto-suave hover:bg-superficie-suave hover:text-texto`
-// O ativo não muda no hover
-const LINK_ATIVO = `${LINK} bg-primaria-clara text-primaria-escura`
+const LINK_INATIVO = `${LINK} text-menu-texto hover:bg-menu-hover hover:text-menu-texto-forte`
+// O ativo não muda no hover. Barra de 3px à esquerda; na barra do topo (links lado a lado), embaixo.
+const LINK_ATIVO =
+  `${LINK} bg-menu-ativo text-menu-texto-forte ` +
+  'before:absolute before:top-[0.45rem] before:bottom-[0.45rem] before:left-0 before:w-[3px] before:rounded-full ' +
+  "before:bg-menu-destaque before:content-[''] " +
+  'ate-900:before:top-auto ate-900:before:right-[0.65rem] ate-900:before:bottom-0 ate-900:before:left-[0.65rem] ' +
+  'ate-900:before:h-[3px] ate-900:before:w-auto'
 
 export default function Layout() {
   const { usuario, ehMedico, ehParceiro, ehColaborador, sair } = useAuth()
@@ -27,12 +35,14 @@ export default function Layout() {
 
   return (
     <div className="grid min-h-screen grid-cols-[var(--largura-menu)_minmax(0,1fr)] ate-900:block">
-      <aside className="sticky top-0 flex h-screen flex-col gap-6 border-r border-borda bg-superficie px-[0.9rem] pt-5 pb-4 ate-900:z-10 ate-900:h-auto ate-900:flex-row ate-900:flex-wrap ate-900:items-center ate-900:gap-x-3 ate-900:gap-y-2 ate-900:border-r-0 ate-900:border-b ate-900:py-[0.6rem]">
+      {/* O foco do teclado usa o verde-claro do menu: o contorno primário some no fundo escuro. */}
+      <aside className="sticky top-0 flex h-screen flex-col gap-6 bg-menu [background-image:var(--gradiente-menu)] px-[0.9rem] pt-5 pb-4 text-menu-texto [&_:focus-visible]:outline-menu-destaque ate-900:z-10 ate-900:h-auto ate-900:flex-row ate-900:flex-wrap ate-900:items-center ate-900:gap-x-3 ate-900:gap-y-2 ate-900:py-[0.6rem]">
         <NavLink
           to="/painel"
-          className="inline-flex items-center gap-[0.6rem] px-2 text-[1.2rem] font-bold tracking-[-0.01em] text-texto no-underline ate-900:p-0 ate-900:text-[1.1rem]"
+          className="inline-flex items-center gap-[0.6rem] px-2 text-[1.2rem] font-bold tracking-[-0.01em] text-menu-texto-forte no-underline ate-900:p-0 ate-900:text-[1.1rem]"
         >
-          <img src="/favicon.svg" alt="" width="30" height="30" />
+          {/* Borda clara como no login, para o quadrado verde do logo não sumir no fundo escuro */}
+          <img src="/favicon.svg" alt="" width="30" height="30" className="rounded-[8px] border border-menu-borda" />
           LifeScan
         </NavLink>
 
@@ -68,16 +78,17 @@ export default function Layout() {
           )}
         </nav>
 
-        <div className="flex items-center gap-[0.6rem] border-t border-borda px-2 pt-3 ate-900:ml-auto ate-900:border-t-0 ate-900:p-0">
+        {/* O contorno claro destaca o avatar (o do médico é verde) sobre o fundo escuro */}
+        <div className="flex items-center gap-[0.6rem] border-t border-menu-borda px-2 pt-3 [&>span:first-child]:ring-2 [&>span:first-child]:ring-menu-borda ate-900:ml-auto ate-900:border-t-0 ate-900:p-0">
           <Avatar nome={usuario.nome} tipo={usuario.tipo_usuario} />
           <span className="grid min-w-0 flex-1 leading-[1.25] ate-900:hidden">
-            <span className="truncate text-[0.9rem] font-semibold">{usuario.nome}</span>
+            <span className="truncate text-[0.9rem] font-semibold text-menu-texto-forte">{usuario.nome}</span>
             {/* Parceiros são identificados pela profissão (ex.: Nutricionista) */}
-            <small className="truncate text-[0.78rem] text-texto-suave">{ROTULOS_TIPO[usuario.tipo_usuario] || usuario.profissao}</small>
+            <small className="truncate text-[0.78rem] text-menu-texto">{ROTULOS_TIPO[usuario.tipo_usuario] || usuario.profissao}</small>
           </span>
           <button
             type="button"
-            className="inline-grid size-[2.1rem] shrink-0 cursor-pointer place-items-center rounded-raio-pequeno border border-transparent bg-transparent text-texto-suave hover:bg-perigo-clara hover:text-perigo"
+            className="inline-grid size-[2.1rem] shrink-0 cursor-pointer place-items-center rounded-raio-pequeno border border-transparent bg-transparent text-menu-texto transition-[background,color] duration-150 ease-[ease] hover:bg-perigo-clara hover:text-perigo"
             onClick={aoSair}
             title="Sair"
             aria-label="Sair"

@@ -75,7 +75,8 @@
 
   /* Menu lateral escuro (DESIGN.md, item 1): o fundo da apresentação do login. */
   --cor-menu: #0b514d;
-  --gradiente-menu: radial-gradient(ellipse at 0% 100%, #218c7b 0, transparent 60%);
+  --cor-menu-luz: #218c7b; /* luz do gradiente (menu e apresentação do login) */
+  --gradiente-menu: radial-gradient(ellipse at 0% 100%, var(--cor-menu-luz) 0, transparent 60%);
   --cor-menu-texto: #c4e0da;
   --cor-menu-texto-forte: #ffffff;
   --cor-menu-destaque: #a7e3cc; /* barra do link ativo */
@@ -121,14 +122,14 @@
   --chart-3: var(--cor-alerta);
   --chart-4: var(--cor-sucesso);
   --chart-5: var(--cor-perigo);
-  --sidebar: var(--cor-superficie);
-  --sidebar-foreground: var(--cor-texto);
-  --sidebar-primary: var(--cor-primaria);
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: var(--cor-primaria-clara);
-  --sidebar-accent-foreground: var(--cor-primaria-escura);
-  --sidebar-border: var(--cor-borda);
-  --sidebar-ring: var(--cor-primaria);
+  --sidebar: var(--cor-menu);
+  --sidebar-foreground: var(--cor-menu-texto);
+  --sidebar-primary: var(--cor-menu-destaque);
+  --sidebar-primary-foreground: var(--cor-menu);
+  --sidebar-accent: var(--cor-menu-ativo);
+  --sidebar-accent-foreground: var(--cor-menu-texto-forte);
+  --sidebar-border: var(--cor-menu-borda);
+  --sidebar-ring: var(--cor-menu-destaque);
 
   color-scheme: light;
 }

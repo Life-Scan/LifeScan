@@ -121,7 +121,7 @@ lista atual continua para os outros dias e no celular.
 
 | Item | Situação |
 |---|---|
-| 1. Menu lateral escuro | Planejado |
+| 1. Menu lateral escuro | Implantado |
 | 2. Cabeçalho com presença | Planejado |
 | 3. Tipografia | Planejado |
 | 4. Fundo e profundidade | Implantado (as variáveis dos itens 1 e 5 já existem em `index.css`) |
@@ -250,9 +250,13 @@ Em `rem`. Use os passos que já existem, sem valores soltos:
 
 ## Layout
 
-- `Layout.jsx`: menu lateral fixo de `--largura-menu` (248px). **Até 900px** (`ate-900:`) vira barra
-  no topo, com a navegação rolando na horizontal. As classes dos links ficam nas constantes
-  `LINK_ATIVO` / `LINK_INATIVO` (o ativo não muda no hover).
+- `Layout.jsx`: menu lateral escuro (`bg-menu` + `--gradiente-menu`), fixo, de `--largura-menu`
+  (248px). **Até 900px** (`ate-900:`) vira barra no topo, também escura, com a navegação rolando na
+  horizontal. As classes dos links ficam nas constantes `LINK_ATIVO` / `LINK_INATIVO` (o ativo não
+  muda no hover). O ativo tem a barra de `3px` em `--cor-menu-destaque` à esquerda (embaixo, na barra
+  do topo). Dentro do menu, o foco do teclado usa `--cor-menu-destaque`, porque o contorno primário
+  some no fundo escuro. O logo e o avatar ganham contorno em `--cor-menu-borda`. As variáveis
+  `--sidebar*` do shadcn apontam para as do menu.
 - O conteúdo fica centralizado com `max-width: 1040px` (o `div` dentro do `main` do `Layout.jsx`).
 - Estrutura de página (`estilos` de `pages/estilosPaginas.js`):
   - `cabecalho`: `h1` + `subtitulo` à esquerda, ação principal à direita.
@@ -361,9 +365,9 @@ alguém → `alerta`; problema → `perigo`; futuro/informativo → `info`; ence
 
 - **Login** (`Login.jsx`) tem visual próprio de "porta de entrada": painel de apresentação
   verde-escuro com gradiente, caixa de `28px` de raio, campos de `52px` e valores em `px`/hex
-  direto (classes arbitrárias do Tailwind). É intencional. Os hex do painel verde (`#0b514d`,
-  `#218c7b`) viram variáveis com o item 1 da Direção visual (`--cor-menu`, `--gradiente-menu`); o
-  verde principal já usa `primaria`. As outras telas de acesso (esqueci a senha, definir senha)
+  direto (classes arbitrárias do Tailwind). É intencional. O fundo do painel verde usa as variáveis
+  do menu (`bg-menu` e `--cor-menu-luz`, com o gradiente vindo do canto oposto ao do menu); o verde
+  principal já usa `primaria`. As outras telas de acesso (esqueci a senha, definir senha)
   usam a moldura `TelaAcesso.jsx`, só com tokens.
 - Não há tema escuro (`color-scheme: light`). Se for criado, ele deve sair só da troca das
   variáveis de `:root`.
