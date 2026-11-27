@@ -40,6 +40,8 @@
   --cor-texto-apagado: #94a0ab; /* placeholder */
   --cor-icone-apagado: #9aa7b3; /* ícone do estado vazio */
   --cor-veu: rgb(15 23 32 / 45%); /* fundo atrás dos diálogos */
+  --cor-esqueleto: #e6eeeb; /* blocos do esqueleto de carregamento */
+  --cor-esqueleto-brilho: rgb(255 255 255 / 70%);
 
   --cor-primaria: #0f766e;
   --cor-primaria-escura: #0b5d57;
@@ -343,6 +345,43 @@
 
     .dialogo-animado:not([open])::backdrop {
       opacity: 0;
+    }
+  }
+}
+
+/*
+ * Esqueleto de carregamento (DESIGN.md, item 7): blocos no formato do conteúdo com um brilho que os
+ * atravessa. O brilho é um ::after movido só com transform. Sem ele (movimento reduzido), o bloco fica
+ * parado. Dentro da faixa escura, .esqueleto-faixa troca as cores.
+ */
+@layer components {
+  .esqueleto-brilho {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .esqueleto-faixa {
+    --cor-esqueleto: var(--cor-menu-hover);
+    --cor-esqueleto-brilho: rgb(255 255 255 / 10%);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .esqueleto-brilho::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent, var(--cor-esqueleto-brilho), transparent);
+      transform: translateX(-100%);
+      animation: brilho 1.6s linear infinite;
+    }
+  }
+
+  /* Atravessa em 60% do ciclo e espera o resto, para não virar um piscar contínuo */
+  @keyframes brilho {
+    60%,
+    100% {
+      transform: translateX(100%);
     }
   }
 }

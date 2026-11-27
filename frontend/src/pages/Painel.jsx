@@ -7,7 +7,7 @@ import { mensagemDeErro } from '../api/cliente'
 import { useConfirmar } from '../components/Confirmacao'
 import AgendaConsultas from '../components/AgendaConsultas'
 import FormularioConta from '../components/FormularioConta'
-import { Alerta, Carregando, ErroCarregamento, Etiqueta, Faixa, estilos as ui } from '../components/ui'
+import { Alerta, BlocoEsqueleto, ErroCarregamento, Etiqueta, Faixa, estilos as ui } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { cn } from '@/lib/utils'
 import { useAgora } from '../hooks/useAgora'
@@ -86,6 +86,7 @@ export default function Painel() {
           </div>
           <span className={estilos.atualizacaoFaixa}>Atualiza sozinho a cada 30 segundos</span>
         </div>
+        {carregando && !dados && <ResumosCarregando quantidade={ehMedico ? 3 : ehPaciente ? 4 : ehColaborador ? 0 : 2} />}
         {resumo && (
           <div ref={refResumos} className={estilos.resumos} style={{ '--colunas': resumo.itens.length }}>
             {resumo.itens.map((item) => {
@@ -106,7 +107,6 @@ export default function Painel() {
       {(ehMedico || ehColaborador) && <AgendaConsultas />}
 
       <ErroCarregamento erro={erro} />
-      {carregando && !dados && <Carregando />}
       {dados?.tipo_usuario === 'paciente' && (
         <Secao id="meus-dados" titulo="Meus dados (LGPD)">
           <CardConsentimentoLgpd />
@@ -287,6 +287,25 @@ function Resumo({ id, icone: Icone, numero, rotulo, tipo, aberto, aoAlternar }) 
       </span>
       <ChevronDown size={18} aria-hidden="true" className={cn(estilos.resumoSeta, aberto && estilos.resumoSetaAberta)} />
     </button>
+  )
+}
+
+/** Resumos carregando: os cartões da faixa no mesmo formato, com blocos no lugar do ícone e do número. */
+function ResumosCarregando({ quantidade }) {
+  if (quantidade === 0) return null
+  return (
+    <div className={cn(estilos.resumos, 'esqueleto-faixa')} style={{ '--colunas': quantidade }} role="status">
+      <span className="visualmente-oculto">Carregando os resumos…</span>
+      {Array.from({ length: quantidade }, (_, indice) => (
+        <div key={indice} className={estilos.resumoCarregando} aria-hidden="true">
+          <BlocoEsqueleto className="size-[2.6rem] shrink-0 rounded-[10px]" />
+          <div className="grid flex-1 gap-2">
+            <BlocoEsqueleto className="h-7 w-10" />
+            <BlocoEsqueleto className="h-3 w-3/4" />
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }
 

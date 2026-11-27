@@ -4,7 +4,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { mensagemDeErro } from '../../api/cliente'
 import * as servicos from '../../api/servicos'
-import { Alerta, Carregando, ErroCarregamento, estilos as ui } from '../../components/ui'
+import { Alerta, BlocoEsqueleto, ErroCarregamento, EsqueletoLista, Faixa, estilos as ui } from '../../components/ui'
 import { useAuth } from '../../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../../hooks/useAtualizacaoPeriodica'
 import AbaConsultas from './AbaConsultas'
@@ -52,7 +52,7 @@ export default function Acompanhamento() {
     setParametros({ aba, ...extras })
   }
 
-  if (carregando && !acompanhamento) return <Carregando texto="Carregando o acompanhamento…" />
+  if (carregando && !acompanhamento) return <EsqueletoAcompanhamento />
 
   if (!acompanhamento) {
     const status = erro?.response?.status
@@ -113,6 +113,31 @@ export default function Acompanhamento() {
   )
 }
 
+/** Página carregando: faixa com avatar, título e pessoas, o cartão das etapas e uma lista. */
+function EsqueletoAcompanhamento() {
+  return (
+    <div className={estilos.pilha} role="status">
+      <span className="visualmente-oculto">Carregando o acompanhamento…</span>
+      <Faixa como="header" aria-hidden="true">
+        <div className="esqueleto-faixa flex items-center gap-4">
+          <BlocoEsqueleto className="size-[2.9rem] shrink-0 rounded-full" />
+          <div className="grid min-w-0 flex-1 gap-[0.6rem]">
+            <BlocoEsqueleto className="h-3 w-32" />
+            <BlocoEsqueleto className="h-7 w-80 max-w-full" />
+            <BlocoEsqueleto className="h-3.5 w-[28rem] max-w-full" />
+          </div>
+        </div>
+      </Faixa>
+      <div className={ui.cartao} aria-hidden="true">
+        <BlocoEsqueleto className="h-9 w-[26rem] max-w-full rounded-full" />
+      </div>
+      <div className={ui.cartao} aria-hidden="true">
+        <EsqueletoLista />
+      </div>
+    </div>
+  )
+}
+
 /** Cada aba busca apenas o que precisa; o histórico completo nunca bloqueia o cabeçalho. */
 function ConteudoAba({ aba, solicitacaoInicial, ...contexto }) {
   const { acompanhamento, ehMedico, atualizar: atualizarCabecalho } = contexto
@@ -150,7 +175,7 @@ function ConteudoAba({ aba, solicitacaoInicial, ...contexto }) {
     <>
       <ErroCarregamento erro={erro} />
       {erro && !dados && <button type="button" className={ui.botaoSecundario} onClick={atualizar}>Tentar novamente</button>}
-      {carregando && !dados && <Carregando texto="Carregando esta seção…" />}
+      {carregando && !dados && <EsqueletoLista texto="Carregando esta seção…" />}
       {/* Aba, filtro e página zeram os dados: o conteúdo remonta e entra com fade + 4px. O polling não. */}
       {dados && <div className="animate-entrar">
         {aba === 'anamnese' && <AbaAnamnese anamnese={dados.anamnese} {...propriedades} />}

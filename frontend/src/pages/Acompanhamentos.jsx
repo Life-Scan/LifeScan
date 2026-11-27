@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { obterPagina } from '../api/servicos'
 import Paginacao from '../components/Paginacao'
-import { Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
+import { Avatar, ErroCarregamento, EsqueletoLista, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import { ROTULOS_PASSO, formatarData } from '../utils/formatacao'
@@ -40,7 +40,7 @@ export default function Acompanhamentos() {
       </div>
 
       <ErroCarregamento erro={erro} />
-      {carregando && !acompanhamentos && <Carregando />}
+      {carregando && !acompanhamentos && <EsqueletoLista avatar texto="Carregando acompanhamentos…" />}
       {acompanhamentos?.length === 0 && (
         <EstadoVazio icone={Route}>
           {ehMedico ? (

@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
 import { criarAcompanhamento, listarContas } from '../api/servicos'
-import { Alerta, Carregando, EstadoVazio, estilos as ui } from '../components/ui'
+import { Alerta, EsqueletoFormulario, EstadoVazio, estilos as ui } from '../components/ui'
 import { estilos } from './estilosPaginas'
 
 export default function NovoAcompanhamento() {
@@ -63,7 +63,7 @@ export default function NovoAcompanhamento() {
       </div>
 
       <section className={ui.cartao} style={{ maxWidth: 640 }}>
-        {disponiveis === null && <Carregando />}
+        {disponiveis === null && <EsqueletoFormulario texto="Carregando pacientes…" />}
         {disponiveis?.length === 0 && !erro && (
           <EstadoVazio>
             Todos os seus pacientes já têm acompanhamento, ou você ainda não cadastrou nenhum.{' '}

@@ -5,7 +5,7 @@ import { mensagemDeErro } from '../api/cliente'
 import { atualizarConta, excluirPaciente, obterPagina, reenviarAcesso } from '../api/servicos'
 import Paginacao from '../components/Paginacao'
 import { useConfirmar } from '../components/Confirmacao'
-import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
+import { Alerta, Avatar, ErroCarregamento, EsqueletoLista, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
 import { cn } from '@/lib/utils'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import { TIPOS_CONTA, formatarData, formatarDataHora } from '../utils/formatacao'
@@ -129,7 +129,7 @@ function SecaoContas({ tipo }) {
       </div>
       <div role="tabpanel" id={`painel-${plural}`} aria-labelledby={`aba-${plural}-${aba}`} tabIndex={0} hidden={recolhida}>
         <ErroCarregamento erro={erro} />
-        {carregando && !dados && <Carregando />}
+        {carregando && !dados && <EsqueletoLista avatar texto={`Carregando ${plural}…`} />}
         {dados && <ListaContas contas={dados.itens} vazio={busca ? `Nenhum ${tipo} ${aba === 'ativos' ? 'ativo' : 'desativado'} encontrado para “${busca}”.` : selecionada.vazio} aoAlterar={atualizar} />}
         <Paginacao dados={dados} aoMudar={setPagina} carregando={carregando} />
       </div>

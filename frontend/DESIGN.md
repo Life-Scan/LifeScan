@@ -154,6 +154,19 @@ lista atual continua para os outros dias e no celular.
 
 - **Carregamento:** esqueleto (blocos cinza com brilho passando) com o formato do conteúdo, no
   lugar do spinner nas listas e cartões. O spinner fica para ações em botões.
+  - **Implantado:** `<EsqueletoLista itens avatar texto>` (listas de acompanhamentos, contas, agenda e
+    aba do acompanhamento), `<EsqueletoFormulario campos texto>` (novo acompanhamento) e
+    `<BlocoEsqueleto className>`, o bloco base. Também há esqueletos montados para os resumos na faixa do
+    Painel e para a página do acompanhamento (faixa, etapas e lista). No calendário, a própria grade é o
+    esqueleto, com o brilho passando por cima.
+  - **Brilho:** um `::after` com gradiente que atravessa o bloco só com `transform` (`1.6s`, linear,
+    atravessa em 60% do ciclo e espera o resto). Com movimento reduzido, o bloco fica parado.
+  - **Cores:** `--cor-esqueleto` e `--cor-esqueleto-brilho`. Na faixa escura, um pai com
+    `.esqueleto-faixa` troca as cores.
+  - **Leitor de tela:** o esqueleto fica em `aria-hidden`, e o texto (`role="status"`) diz o que está
+    carregando.
+  - **`<Carregando>`:** com spinner, sobra só na checagem de sessão (`RotaProtegida`), antes de existir
+    layout.
 - **Estados vazios:** ícone dentro de um círculo em `--cor-primaria-clara`, título curto e uma
   frase explicando o que vai aparecer ali; quando houver, botão para a ação que preenche a lista.
 - **Transições:** `150ms` para hover e cor; `200ms` com `ease-out` para troca de aba e
@@ -185,7 +198,7 @@ lista atual continua para os outros dias e no celular.
 | 4. Fundo e profundidade | Implantado (as variáveis dos itens 1 e 5 já existem em `index.css`) |
 | 5. Cor por tipo de informação | Implantado (resumos, itens de lista, título dos cartões e linha do tempo) |
 | 6. Agenda visual | Planejado |
-| 7. Acabamento | Em andamento (movimento implantado; esqueleto e estados vazios planejados) |
+| 7. Acabamento | Em andamento (movimento e esqueleto implantados; estados vazios planejados) |
 
 Ordem sugerida: 1 a 4 primeiro (mudam o sistema inteiro quase só com `index.css` e
 `Layout`), depois 5 a 7, tela por tela.
@@ -355,7 +368,8 @@ Tailwind, usadas como `className={ui.cartao}`). Não recrie essas peças em mód
 | `<Etiqueta variante>` | `neutra`, `perigo`, `alerta`, `sucesso`, `info`, `primaria` | Status e categorias |
 | `<Alerta tipo>` | `erro`, `sucesso`, `info`, `alerta` | Mensagens de retorno; `erro` usa `role="alert"` |
 | `<Avatar tipo>` | `paciente`, `parceiro`, `colaborador`, `medico` | `grande` no cabeçalho do acompanhamento |
-| `<Carregando>` | | Spinner com texto |
+| `<Carregando>` | | Spinner com texto; só na checagem de sessão |
+| `<EsqueletoLista>` / `<EsqueletoFormulario>` / `<BlocoEsqueleto>` | `itens`, `avatar`, `campos`, `texto`, `className` | Carregamento no formato do conteúdo |
 | `<EstadoVazio icone>` | | Lista sem itens: sempre explique o que aparece ali |
 | `<IconeTipo tipo>` | `consulta`, `solicitacao`, `documento`; ícone lucide (`size={16}`) como filho | Ao lado do título do cartão, com `ui.tituloComIcone` no `h2` |
 | `<ErroCarregamento erro>` | | Falha do polling, com a mensagem do backend |

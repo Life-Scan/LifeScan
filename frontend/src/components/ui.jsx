@@ -2,6 +2,7 @@
 import { CircleAlert, CircleCheck, Download, Eye, Inbox, Info, Paperclip, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import { cn } from '@/lib/utils'
 import { textoDeDocx, urlDaPrimeiraPaginaDePdf } from '../utils/previaDocumentos'
 import { mensagemDeErro } from '../api/cliente'
 import { obterArquivo } from '../api/servicos'
@@ -234,6 +235,60 @@ export function Carregando({ texto = 'Carregando…' }) {
         aria-hidden="true"
       />
       {texto}
+    </div>
+  )
+}
+
+/**
+ * Bloco cinza do esqueleto de carregamento, com brilho. className dá o tamanho e o formato
+ * (ex.: "h-4 w-2/5", "size-9 rounded-full"). Dentro da faixa escura, use um pai com .esqueleto-faixa.
+ */
+export function BlocoEsqueleto({ className }) {
+  return <span className={cn('esqueleto-brilho block rounded-[6px] bg-[var(--cor-esqueleto)]', className)} />
+}
+
+const LARGURAS_TITULO = ['w-2/5', 'w-1/2', 'w-1/3']
+
+/**
+ * Lista carregando, no formato do itemLista: avatar (opcional), título, linha de detalhes e etiqueta.
+ * No lugar do <Carregando> em listas; o leitor de tela ouve só o texto.
+ */
+export function EsqueletoLista({ itens = 3, avatar = false, texto = 'Carregando…' }) {
+  return (
+    <div role="status">
+      <span className="visualmente-oculto">{texto}</span>
+      <ul className={estilos.lista} aria-hidden="true">
+        {Array.from({ length: itens }, (_, indice) => (
+          <li key={indice} className={estilos.itemLista}>
+            <div className="flex items-center gap-3">
+              {avatar && <BlocoEsqueleto className="size-9 shrink-0 rounded-full" />}
+              <div className="grid min-w-0 flex-1 gap-2">
+                <BlocoEsqueleto className={cn('h-4', LARGURAS_TITULO[indice % LARGURAS_TITULO.length])} />
+                <BlocoEsqueleto className="h-3 w-3/5" />
+              </div>
+              <BlocoEsqueleto className="h-5 w-20 shrink-0 rounded-full ate-720:hidden" />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+/** Formulário carregando: rótulo + campo para cada item e o botão de enviar. */
+export function EsqueletoFormulario({ campos = 3, texto = 'Carregando…' }) {
+  return (
+    <div role="status">
+      <span className="visualmente-oculto">{texto}</span>
+      <div className={estilos.formulario} aria-hidden="true">
+        {Array.from({ length: campos }, (_, indice) => (
+          <div key={indice} className="grid gap-[0.45rem]">
+            <BlocoEsqueleto className="h-3.5 w-28" />
+            <BlocoEsqueleto className="h-10 w-full rounded-raio-pequeno" />
+          </div>
+        ))}
+        <BlocoEsqueleto className="h-10 w-44 rounded-raio-pequeno" />
+      </div>
     </div>
   )
 }

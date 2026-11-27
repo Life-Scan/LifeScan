@@ -41,7 +41,7 @@ import { estilos } from '../pages/estilosPaginas'
 import { useConfirmar } from './Confirmacao'
 import { agendaEstilos, classesCelulaDia } from './estilosAgenda'
 import Paginacao from './Paginacao'
-import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from './ui'
+import { Alerta, Avatar, ErroCarregamento, EsqueletoLista, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from './ui'
 
 const VARIANTES_STATUS = { agendada: 'info', realizada: 'sucesso', faltou: 'perigo', cancelada: 'neutra' }
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -307,7 +307,12 @@ export default function AgendaConsultas() {
             </div>
 
             <ErroCarregamento erro={erroCalendario} />
-            {carregandoCalendario && !dadosCalendario && <Carregando />}
+            {/* Carregando o mês: a própria grade é o esqueleto, com o brilho passando por cima */}
+            {carregandoCalendario && !dadosCalendario && (
+              <span role="status" className="visualmente-oculto">
+                Carregando as consultas do mês…
+              </span>
+            )}
 
             <div className={agendaEstilos.gradeSemana} aria-hidden="true">
               {DIAS_SEMANA.map((dia) => (
@@ -320,7 +325,11 @@ export default function AgendaConsultas() {
             {/* key: ao trocar de mês a grade remonta e entra com fade + 4px */}
             <div
               key={`${mesReferencia.ano}-${mesReferencia.mes}`}
-              className={cn(agendaEstilos.gradeDias, 'animate-entrar')}
+              className={cn(
+                agendaEstilos.gradeDias,
+                'animate-entrar',
+                carregandoCalendario && !dadosCalendario && 'esqueleto-brilho rounded-raio-pequeno',
+              )}
               role="grid"
               aria-label="Calendário mensal de consultas"
             >
@@ -420,7 +429,7 @@ export default function AgendaConsultas() {
             </div>
             <div role="tabpanel" id="painel-agenda" aria-labelledby={`aba-agenda-${aba}`} tabIndex={0} className={estilos.painelAgenda}>
               <ErroCarregamento erro={erroLista} />
-              {carregandoLista && !dadosLista && <Carregando />}
+              {carregandoLista && !dadosLista && <EsqueletoLista avatar texto="Carregando consultas…" />}
               {/* Aba e página zeram os dados: a lista remonta e entra com fade + 4px. O polling não. */}
               {dadosLista && (
                 <div className="animate-entrar">

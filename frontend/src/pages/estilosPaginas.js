@@ -33,6 +33,9 @@ export const estilos = {
     // Aberto: mesma cor opaca e mesma borda da gaveta, que aponta para ele com a seta (a do cartão gira)
     'aria-expanded:border-menu-destaque/40 aria-expanded:bg-faixa-aberta',
   resumoSeta: 'ml-auto self-start text-menu-texto transition-transform duration-200 ease-out',
+  // Resumo enquanto o painel carrega: mesma caixa do resumo, sem ser botão
+  resumoCarregando:
+    'flex items-center gap-[0.85rem] rounded-raio border border-menu-borda bg-menu-hover px-[1.1rem] py-[0.9rem]',
   resumoSetaAberta: 'rotate-180',
 
   /*
