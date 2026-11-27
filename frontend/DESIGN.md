@@ -150,6 +150,23 @@ As consultas do dia aparecem numa faixa de horários (coluna de horas à esquerd
 consulta coloridos pelo status), com a hora atual marcada por uma linha em `--cor-perigo`. A
 lista atual continua para os outros dias e no celular.
 
+Como está no código (`FaixaHorarios` em `AgendaConsultas.jsx`):
+
+- **Onde:** no modal "Compromissos de hoje", acima de 720px (`useMediaQuery`). Os outros dias e o
+  celular continuam com a lista. O padrão mais próximo no ui-patterns.com é
+  [Event Calendar](https://ui-patterns.com/patterns/EventCalendar): itens de um período com o horário de
+  início. Ele não tem um padrão de grade diária.
+- **Grade:** `72px` por hora, das 7h às 19h, esticando para caber a primeira consulta e 2h depois da
+  última. Como duas consultas ficam a pelo menos 2h uma da outra, os blocos não se sobrepõem.
+- **Blocos:** cada bloco é o próprio `ItemAgendamento` (prop `naFaixa`), então as ações continuam nele.
+  Ele mostra só a hora, o paciente, o status e a observação. A cor segue o status: agendada `info`,
+  a registrar `alerta`, realizada `sucesso`, faltou `perigo`. A etiqueta diz o status em texto.
+- **Canceladas:** ficam fora da faixa, porque o horário pode ter sido reaproveitado, e vêm numa lista
+  abaixo.
+- **Hora atual:** linha de `2px` em `--cor-perigo` com uma bolinha, vinda do `useAgora` (atualiza a cada
+  minuto). Ao abrir, ela fica no meio da área visível. Se um bloco estiver em foco (remarcando), ele
+  sobe por cima da linha e dos vizinhos.
+
 ### 7. Acabamento
 
 - **Carregamento:** esqueleto (blocos cinza com brilho passando) com o formato do conteúdo, no
@@ -204,7 +221,7 @@ lista atual continua para os outros dias e no celular.
 | 3. Tipografia | Implantado (o título da faixa do Painel entra com o item 2) |
 | 4. Fundo e profundidade | Implantado (as variáveis dos itens 1 e 5 já existem em `index.css`) |
 | 5. Cor por tipo de informação | Implantado (resumos, itens de lista, título dos cartões e linha do tempo) |
-| 6. Agenda visual | Planejado |
+| 6. Agenda visual | Implantado (faixa de horários no modal de hoje, no desktop) |
 | 7. Acabamento | Implantado (movimento, esqueleto, estados vazios e entrada do alerta) |
 
 Ordem sugerida: 1 a 4 primeiro (mudam o sistema inteiro quase só com `index.css` e

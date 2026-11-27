@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '../context/AuthContext'
 import { useAgora } from '../hooks/useAgora'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import {
   ROTULOS_STATUS_AGENDAMENTO,
   campoDataHoraParaIso,
@@ -489,6 +490,8 @@ export default function AgendaConsultas() {
 /** `dia` continua preenchido depois de fechar (aberto = false), para a saída animada manter o conteúdo. */
 function ModalCompromissosDia({ dia, aberto, hoje, agendamentos, aoFechar, aoAlterar, aoAgendarNoDia }) {
   const dialogo = useRef(null)
+  // No celular a faixa de horários fica apertada: lá (e nos outros dias) continua a lista
+  const celular = useMediaQuery('(max-width: 720px)')
 
   useEffect(() => {
     if (aberto && !dialogo.current?.open) dialogo.current?.showModal()
@@ -531,6 +534,8 @@ function ModalCompromissosDia({ dia, aberto, hoje, agendamentos, aoFechar, aoAlt
             <EstadoVazio icone={CalendarDays} titulo={ehHoje ? 'Nenhum compromisso hoje' : 'Nenhum compromisso neste dia'}>
               {podeAgendar && 'Use "Agendar neste dia" para marcar uma consulta.'}
             </EstadoVazio>
+          ) : ehHoje && !celular ? (
+            <FaixaHorarios agendamentos={agendamentos} aoAlterar={aoAlterar} />
           ) : (
             <ul className={ui.lista}>
               {agendamentos.map((agendamento) => (
@@ -709,7 +714,11 @@ function FormularioAgendamento({ aoAgendar, dataPredefinida }) {
   )
 }
 
-function ItemAgendamento({ agendamento, aoAlterar }) {
+/**
+ * Uma consulta com as ações (realizada, faltou, remarcar, cancelar). `naFaixa` ({ top, cor }) posiciona o
+ * item na faixa de horários e troca o filete do tipo pela cor do status.
+ */
+function ItemAgendamento({ agendamento, aoAlterar, naFaixa }) {
   const agora = useAgora()
   const confirmar = useConfirmar()
   const [editando, setEditando] = useState(false)
@@ -745,7 +754,7 @@ function ItemAgendamento({ agendamento, aoAlterar }) {
 
   if (editando) {
     return (
-      <li className={ui.itemLista}>
+      <li className={naFaixa ? cn(ITEM_FAIXA, 'border-borda bg-superficie') : ui.itemLista} style={naFaixa && { top: naFaixa.top }}>
         <FormularioRemarcacao
           agendamento={agendamento}
           aoSalvar={async () => {
@@ -759,24 +768,32 @@ function ItemAgendamento({ agendamento, aoAlterar }) {
   }
 
   return (
-    <li className={ui.itemListaConsulta}>
+    <li className={naFaixa ? cn(ITEM_FAIXA, naFaixa.cor) : ui.itemListaConsulta} style={naFaixa && { top: naFaixa.top }}>
       <div className={ui.linhaComAcoes}>
         <div className={ui.pessoa}>
           <Avatar nome={paciente.nome} tipo="paciente" />
           <div>
+            {/* Na faixa o dia já é hoje: só a hora, o status e a observação, para o bloco caber no horário */}
             <div className={ui.pessoaNome}>
-              {formatarDataHora(agendamento.data_hora)} · {paciente.nome}{' '}
-              {agendada && !passou && <Etiqueta variante="info">{formatarPrazoRelativo(agendamento.data_hora, agora)}</Etiqueta>}
+              <span className="tabular-nums">{naFaixa ? formatarHora(agendamento.data_hora) : formatarDataHora(agendamento.data_hora)}</span> ·{' '}
+              {paciente.nome}{' '}
+              {agendada && !passou && (
+                <Etiqueta variante="info">{naFaixa ? 'Agendada' : formatarPrazoRelativo(agendamento.data_hora, agora)}</Etiqueta>
+              )}
               {agendada && passou && <Etiqueta variante="alerta">A registrar</Etiqueta>}
               {!agendada && (
                 <Etiqueta variante={VARIANTES_STATUS[agendamento.status]}>{ROTULOS_STATUS_AGENDAMENTO[agendamento.status]}</Etiqueta>
               )}
             </div>
-            <div className={estilos.meta}>
-              <span>{paciente.email}</span>
-              {agendamento.observacao && <span>{agendamento.observacao}</span>}
-              <span>Agendada por {agendamento.criado_por.nome}</span>
-            </div>
+            {naFaixa ? (
+              agendamento.observacao && <div className={estilos.meta}><span>{agendamento.observacao}</span></div>
+            ) : (
+              <div className={estilos.meta}>
+                <span>{paciente.email}</span>
+                {agendamento.observacao && <span>{agendamento.observacao}</span>}
+                <span>Agendada por {agendamento.criado_por.nome}</span>
+              </div>
+            )}
           </div>
         </div>
         {agendada && (
@@ -808,6 +825,108 @@ function ItemAgendamento({ agendamento, aoAlterar }) {
       </div>
       <Alerta tipo="erro">{erro}</Alerta>
     </li>
+  )
+}
+
+// Faixa de horários (DESIGN.md, item 6): altura de uma hora e folga em cima e embaixo para os rótulos
+const HORA_PX = 72
+const FOLGA_PX = 10
+// Item posicionado na faixa. Ao focar (ex.: remarcando), fica por cima da linha e dos vizinhos.
+const ITEM_FAIXA =
+  'absolute right-0 left-[4.25rem] rounded-raio-pequeno border border-l-3 px-[0.9rem] py-[0.7rem] ' +
+  'focus-within:z-20 focus-within:shadow-sombra-elevada'
+// Cor do bloco pelo status (as etiquetas dentro dele continuam dizendo o status em texto)
+const CORES_STATUS_FAIXA = {
+  futura: 'border-info-borda border-l-info bg-info-clara',
+  aRegistrar: 'border-alerta-borda border-l-alerta bg-alerta-clara',
+  realizada: 'border-sucesso-borda border-l-sucesso bg-sucesso-clara',
+  faltou: 'border-perigo-borda border-l-perigo bg-perigo-clara',
+}
+
+/** Hora do dia em horas decimais (13:30 → 13.5). */
+function horaDecimal(data) {
+  return data.getHours() + data.getMinutes() / 60
+}
+
+function corStatusFaixa(agendamento, agora) {
+  if (agendamento.status !== 'agendada') return CORES_STATUS_FAIXA[agendamento.status]
+  return new Date(agendamento.data_hora) <= agora ? CORES_STATUS_FAIXA.aRegistrar : CORES_STATUS_FAIXA.futura
+}
+
+/**
+ * Consultas de hoje numa faixa de horários: horas à esquerda, cada consulta na altura do seu horário,
+ * colorida pelo status, e uma linha vermelha na hora atual (useAgora, nunca a hora lida no render).
+ * As canceladas ficam fora da faixa (o horário pode ter sido reaproveitado) e vêm numa lista abaixo.
+ */
+function FaixaHorarios({ agendamentos, aoAlterar }) {
+  const agora = useAgora()
+  const linhaAgora = useRef(null)
+  const ativos = agendamentos
+    .filter((a) => a.status !== 'cancelada')
+    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))
+  const canceladas = agendamentos.filter((a) => a.status === 'cancelada')
+
+  // Das 7h às 19h, esticando para caber a primeira consulta e 2h depois da última
+  const horas = ativos.map((a) => horaDecimal(new Date(a.data_hora)))
+  const inicio = Math.min(7, ...horas.map(Math.floor))
+  const fim = Math.min(24, Math.max(19, ...horas.map((h) => Math.floor(h) + 2)))
+  const horaAgora = horaDecimal(agora)
+  const mostrarAgora = horaAgora >= inicio && horaAgora <= fim
+  const topo = (hora) => (hora - inicio) * HORA_PX + FOLGA_PX
+
+  // Ao abrir, a hora atual fica no meio da área visível
+  useEffect(() => {
+    linhaAgora.current?.scrollIntoView({ block: 'center' })
+  }, [])
+
+  return (
+    <div>
+      <div className="relative" style={{ height: (fim - inicio) * HORA_PX + FOLGA_PX * 2 }}>
+        <div aria-hidden="true">
+          {Array.from({ length: fim - inicio + 1 }, (_, indice) => (
+            <div key={indice} className="absolute inset-x-0 flex items-center gap-2" style={{ top: topo(inicio + indice) - 8 }}>
+              <span className="w-[3.6rem] shrink-0 text-right text-[0.75rem] leading-4 tabular-nums text-texto-suave">
+                {String(inicio + indice).padStart(2, '0')}:00
+              </span>
+              <span className="flex-1 border-t border-borda" />
+            </div>
+          ))}
+        </div>
+
+        <ol className="m-0 list-none p-0" aria-label="Consultas de hoje por horário">
+          {ativos.map((agendamento) => (
+            <ItemAgendamento
+              key={agendamento.id}
+              agendamento={agendamento}
+              aoAlterar={aoAlterar}
+              naFaixa={{ top: topo(horaDecimal(new Date(agendamento.data_hora))) + 2, cor: corStatusFaixa(agendamento, agora) }}
+            />
+          ))}
+        </ol>
+
+        {mostrarAgora && (
+          <div
+            ref={linhaAgora}
+            aria-hidden="true"
+            className="pointer-events-none absolute right-0 left-[4rem] z-10 h-0.5 bg-perigo"
+            style={{ top: topo(horaAgora) - 1 }}
+          >
+            <span className="absolute -top-1 -left-1.5 size-2.5 rounded-full bg-perigo" />
+          </div>
+        )}
+      </div>
+
+      {canceladas.length > 0 && (
+        <>
+          <h3 className="mt-5 mb-2 text-[0.92rem] font-semibold">Canceladas</h3>
+          <ul className={ui.lista}>
+            {canceladas.map((agendamento) => (
+              <ItemAgendamento key={agendamento.id} agendamento={agendamento} aoAlterar={aoAlterar} />
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
   )
 }
 
