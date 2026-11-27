@@ -287,6 +287,66 @@
   }
 }
 
+/*
+ * Diálogos (<dialog> com showModal()): entram com fade e escala de 0.96 para 1, e o fundo escurece em
+ * fade (DESIGN.md, item 7). Use a classe .dialogo-animado no <dialog>; o fundo (--cor-veu) vem daqui,
+ * sem backdrop:bg-*. Centralizado, então a escala parte do centro.
+ */
+@layer components {
+  .dialogo-animado {
+    transition:
+      opacity var(--duracao-media) var(--curva-saida),
+      scale var(--duracao-media) var(--curva-saida);
+  }
+
+  .dialogo-animado::backdrop {
+    background-color: var(--cor-veu);
+    transition: opacity var(--duracao-media) var(--curva-saida);
+  }
+
+  /* Entrada: estado de partida no primeiro quadro depois do showModal() */
+  @starting-style {
+    .dialogo-animado[open] {
+      opacity: 0;
+      scale: 0.96;
+    }
+
+    .dialogo-animado[open]::backdrop {
+      opacity: 0;
+    }
+  }
+
+  /*
+   * Saída: só onde o navegador mantém o diálogo na camada do topo enquanto anima (overlay). Sem isso
+   * (Firefox, Safari) ele perderia a centralização no meio da saída, então lá fecha na hora.
+   */
+  @supports (overlay: auto) {
+    .dialogo-animado {
+      transition:
+        opacity var(--duracao-media) var(--curva-saida),
+        scale var(--duracao-media) var(--curva-saida),
+        overlay var(--duracao-media) allow-discrete,
+        display var(--duracao-media) allow-discrete;
+    }
+
+    .dialogo-animado:not([open]) {
+      opacity: 0;
+      scale: 0.96;
+    }
+
+    .dialogo-animado::backdrop {
+      transition:
+        opacity var(--duracao-media) var(--curva-saida),
+        overlay var(--duracao-media) allow-discrete,
+        display var(--duracao-media) allow-discrete;
+    }
+
+    .dialogo-animado:not([open])::backdrop {
+      opacity: 0;
+    }
+  }
+}
+
 /* Texto só para leitores de tela. */
 .visualmente-oculto {
   position: absolute;

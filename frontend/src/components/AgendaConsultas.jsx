@@ -129,7 +129,9 @@ export default function AgendaConsultas() {
     return new Date(ano, mes - 1, dia)
   }, [chaveHoje])
   const [mesReferencia, setMesReferencia] = useState(() => ({ ano: hoje.getFullYear(), mes: hoje.getMonth() }))
+  // O dia fica guardado depois de fechar, para a janela sair animada com o mesmo conteúdo
   const [diaModal, setDiaModal] = useState(null)
+  const [modalAberto, setModalAberto] = useState(false)
   const [dataPredefinida, setDataPredefinida] = useState(null)
   const modalInicialAberto = useRef(false)
 
@@ -171,6 +173,7 @@ export default function AgendaConsultas() {
     if (ehMedico && !modalInicialAberto.current && dadosCalendario !== null) {
       modalInicialAberto.current = true
       setDiaModal(hoje)
+      setModalAberto(true)
     }
   }, [ehMedico, dadosCalendario, hoje])
 
@@ -202,9 +205,14 @@ export default function AgendaConsultas() {
     setMesReferencia({ ano: hoje.getFullYear(), mes: hoje.getMonth() })
   }
 
+  function abrirModalDia(dia) {
+    setDiaModal(dia)
+    setModalAberto(true)
+  }
+
   function abrirCompromissosDeHoje() {
     irParaHoje()
-    setDiaModal(hoje)
+    abrirModalDia(hoje)
   }
 
   function mudarAba(id) {
@@ -328,7 +336,7 @@ export default function AgendaConsultas() {
                     key={chave}
                     type="button"
                     className={classesCelulaDia({ foraMes, temEventos, ehHoje })}
-                    onClick={() => setDiaModal(dia)}
+                    onClick={() => abrirModalDia(dia)}
                     aria-label={`${formatarData(dia.toISOString())}: ${eventos.length} ${eventos.length === 1 ? 'compromisso' : 'compromissos'}`}
                   >
                     <div className={agendaEstilos.cabecalhoDia}>
@@ -435,12 +443,13 @@ export default function AgendaConsultas() {
 
       <ModalCompromissosDia
         dia={diaModal}
+        aberto={modalAberto}
         hoje={hoje}
         agendamentos={compromissosDiaModal}
-        aoFechar={() => setDiaModal(null)}
+        aoFechar={() => setModalAberto(false)}
         aoAlterar={atualizarTudo}
         aoAgendarNoDia={(dia) => {
-          setDiaModal(null)
+          setModalAberto(false)
           setDataPredefinida({ valor: sugestaoHorarioParaDia(dia), token: Date.now() })
         }}
       />
@@ -448,13 +457,14 @@ export default function AgendaConsultas() {
   )
 }
 
-function ModalCompromissosDia({ dia, hoje, agendamentos, aoFechar, aoAlterar, aoAgendarNoDia }) {
+/** `dia` continua preenchido depois de fechar (aberto = false), para a saída animada manter o conteúdo. */
+function ModalCompromissosDia({ dia, aberto, hoje, agendamentos, aoFechar, aoAlterar, aoAgendarNoDia }) {
   const dialogo = useRef(null)
 
   useEffect(() => {
-    if (dia && !dialogo.current?.open) dialogo.current?.showModal()
-    else if (!dia && dialogo.current?.open) dialogo.current?.close()
-  }, [dia])
+    if (aberto && !dialogo.current?.open) dialogo.current?.showModal()
+    else if (!aberto && dialogo.current?.open) dialogo.current?.close()
+  }, [aberto, dia])
 
   if (!dia) return null
 

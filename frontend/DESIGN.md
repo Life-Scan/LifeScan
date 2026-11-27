@@ -241,7 +241,7 @@ variáveis. Se faltar uma, crie a variável em `index.css` primeiro.
 | `--cor-texto-suave` | `#5d6b78` | Metadados, ajuda, rótulos secundários |
 | `--cor-texto-apagado` | `#94a0ab` | Placeholder dos campos |
 | `--cor-icone-apagado` | `#9aa7b3` | Ícone do estado vazio |
-| `--cor-veu` | `rgb(15 23 32 / 45%)` | Fundo atrás dos diálogos (`backdrop:bg-veu`) |
+| `--cor-veu` | `rgb(15 23 32 / 45%)` | Fundo atrás dos diálogos (aplicado pela classe `.dialogo-animado`) |
 | `--cor-primaria` | `#0f766e` | Marca, botão principal, links, foco |
 | `--cor-primaria-escura` | `#0b5d57` | Hover do primário, texto sobre `--cor-primaria-clara` |
 | `--cor-primaria-clara` | `#e2f3f0` | Item de menu ativo, seleção, anel de foco dos campos |
@@ -411,6 +411,13 @@ alguém → `alerta`; problema → `perigo`; futuro/informativo → `info`; ence
   desses atributos.
 - Diálogos usam `<dialog>` com `showModal()`. Em ações destrutivas, o foco inicial fica em
   "Cancelar".
+- **Diálogos animados:** todo `<dialog>` leva a classe `.dialogo-animado` (`index.css`), que dá o fundo
+  `--cor-veu`; não use `backdrop:bg-*`. A janela entra com fade e escala de `0.96` para `1` e o fundo
+  escurece em fade (`200ms`, `--curva-saida`, via `@starting-style`). A saída faz o caminho inverso onde
+  há suporte a `overlay` (Chrome, Edge). No Firefox e no Safari, ela fecha na hora.
+  - **Conteúdo durante a saída:** não desmonte o conteúdo ao fechar. Guarde o que a janela mostra e use
+    um estado `aberto` separado, que chama `showModal()`/`close()`. Assim a saída anima com o mesmo
+    texto. É o que fazem o `ProvedorConfirmacao` (com `key` por pedido) e o modal de compromissos do dia.
 - Animações respeitam `prefers-reduced-motion` (já tratado globalmente).
 - Mensagens de carregamento e sucesso usam `role="status"`; as de erro, `role="alert"`.
 
