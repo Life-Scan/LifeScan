@@ -146,9 +146,43 @@ Como está no código:
 
 ### 6. Agenda visual
 
-As consultas do dia aparecem numa faixa de horários (coluna de horas à esquerda, blocos de
-consulta coloridos pelo status), com a hora atual marcada por uma linha em `--cor-perigo`. A
-lista atual continua para os outros dias e no celular.
+A agenda de um dia, na janela que abre pelo calendário e por "Compromissos de hoje"
+(`components/ModalAgendaDia.jsx`, carregada sob demanda com `React.lazy`). Referências: a grade do
+Google Calendar e os horários livres clicáveis do Calendly/Cal.com. O padrão mais próximo no
+ui-patterns.com é [Event Calendar](https://ui-patterns.com/patterns/EventCalendar) (itens de um período
+pelo horário de início).
+
+- **Cabeçalho:** "Agenda do dia", a data por extenso, a etiqueta "Hoje" e o resumo ("2 consultas · 1
+  cancelada · dia encerrado", em `aria-live`). Também tem anterior, "Hoje" e próximo, e o fechar.
+  - **Dia fora do mês carregado:** o calendário vai para o mês do dia, e a janela mostra o esqueleto
+    enquanto ele carrega.
+- **Grade:** linhas de 30 minutos, das 7h às 20h, esticando para caber consultas fora disso. Cada linha
+  é de um tipo, e o tipo vem das regras do backend:
+  - **Ocupada:** tem consulta.
+  - **Livre:** é um botão, e o clique agenda naquele horário.
+  - **Indisponível:** fica a menos de 2h de uma consulta agendada (listras e texto "intervalo mínimo";
+    a constante espelha `APPOINTMENT_MIN_GAP_HOURS`, quem valida é o backend).
+  - **Passada:** horários passados sem consulta viram uma linha só ("07:00–13:30 · horários passados").
+  - Linhas em fluxo normal (não blocos absolutos), então nada se sobrepõe.
+- **Blocos:** horário de início, paciente, observação e status com etiqueta. A cor segue o status:
+  agendada `info`, a registrar `alerta`, realizada `sucesso`, faltou `perigo`, cancelada neutra.
+  - **Sem fim nem tipo:** o agendamento não tem duração nem tipo, então não há horário de fim nem tipo
+    de consulta.
+  - **Canceladas:** liberam o horário, então ficam numa faixa no topo, fora da grade.
+- **Detalhe:** clicar num bloco abre o `ItemAgendamento` completo dentro da janela, com as ações
+  (realizada, faltou, remarcar, cancelar). "Voltar para a agenda do dia" devolve o foco ao bloco.
+- **Agora:** rótulo "AGORA" na coluna das horas e linha de `2px` em `--cor-perigo`, na altura
+  proporcional dentro da meia hora (`useAgora`, atualiza a cada minuto). Ao abrir ou trocar de dia, a
+  grade rola até agora, ou até a primeira consulta, ou até o primeiro horário livre.
+- **Ações:** "Agendar neste dia" é o botão principal (some em dia passado) e "Fechar" é o secundário.
+  - **Agendar:** clicar num horário livre ou em "Agendar neste dia" fecha a janela, preenche dia e hora
+    no formulário "Agendar consulta" e foca a busca de paciente.
+- **Estados:** esqueleto da grade (carregando), erro com "Tentar novamente", dia passado sem consultas
+  (estado vazio) e dia futuro vazio (legenda + "Escolha um horário livre").
+- **Acessibilidade:** ao abrir, o foco vai para o título. Esc e clique fora fecham, e ao fechar o foco
+  volta para quem abriu. Blocos e horários livres são botões com `aria-label` completo.
+- **Responsivo:** no celular, a coluna das horas estreita, os botões do cabeçalho descem para uma linha
+  própria e os do rodapé ocupam a largura.
 
 ### 7. Acabamento
 
@@ -204,7 +238,7 @@ lista atual continua para os outros dias e no celular.
 | 3. Tipografia | Implantado (o título da faixa do Painel entra com o item 2) |
 | 4. Fundo e profundidade | Implantado (as variáveis dos itens 1 e 5 já existem em `index.css`) |
 | 5. Cor por tipo de informação | Implantado (resumos, itens de lista, título dos cartões e linha do tempo) |
-| 6. Agenda visual | Planejado |
+| 6. Agenda visual | Implantado (janela "Agenda do dia" com grade, navegação e detalhe) |
 | 7. Acabamento | Implantado (movimento, esqueleto, estados vazios e entrada do alerta) |
 
 Ordem sugerida: 1 a 4 primeiro (mudam o sistema inteiro quase só com `index.css` e

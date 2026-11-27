@@ -12,7 +12,7 @@ import {
   Search,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 
 import { mensagemDeErro } from '../api/cliente'
 import {
@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '../context/AuthContext'
 import { useAgora } from '../hooks/useAgora'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
+import { chaveDiaLocal, inicioDoDia } from '../utils/datas'
 import {
   ROTULOS_STATUS_AGENDAMENTO,
   campoDataHoraParaIso,
@@ -43,28 +44,13 @@ import { agendaEstilos, classesCelulaDia } from './estilosAgenda'
 import Paginacao from './Paginacao'
 import { Alerta, Avatar, ErroCarregamento, EsqueletoLista, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from './ui'
 
+// A janela do dia só é baixada quando abre pela primeira vez (o bundle inicial não cresce)
+const ModalAgendaDia = lazy(() => import('./ModalAgendaDia'))
+
 const VARIANTES_STATUS = { agendada: 'info', realizada: 'sucesso', faltou: 'perigo', cancelada: 'neutra' }
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 const formatoMesAno = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' })
-const formatoDiaExtenso = new Intl.DateTimeFormat('pt-BR', {
-  weekday: 'long',
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-})
-
-function chaveDiaLocal(data) {
-  const ano = data.getFullYear()
-  const mes = String(data.getMonth() + 1).padStart(2, '0')
-  const dia = String(data.getDate()).padStart(2, '0')
-  return `${ano}-${mes}-${dia}`
-}
-
-function inicioDoDia(data) {
-  return new Date(data.getFullYear(), data.getMonth(), data.getDate())
-}
-
 function gerarGradeMes(ano, mes) {
   const primeiroDia = new Date(ano, mes, 1)
   const ultimoDia = new Date(ano, mes + 1, 0)
@@ -150,6 +136,8 @@ export default function AgendaConsultas() {
   // O dia fica guardado depois de fechar, para a janela sair animada com o mesmo conteúdo
   const [diaModal, setDiaModal] = useState(null)
   const [modalAberto, setModalAberto] = useState(false)
+  // Muda a cada abertura: a janela volta para a grade do dia, sem consulta selecionada
+  const [aberturasModal, setAberturasModal] = useState(0)
   const [dataPredefinida, setDataPredefinida] = useState(null)
   const modalInicialAberto = useRef(false)
 
@@ -192,6 +180,7 @@ export default function AgendaConsultas() {
       modalInicialAberto.current = true
       setDiaModal(hoje)
       setModalAberto(true)
+      setAberturasModal((n) => n + 1)
     }
   }, [ehMedico, dadosCalendario, hoje])
 
@@ -226,6 +215,16 @@ export default function AgendaConsultas() {
   function abrirModalDia(dia) {
     setDiaModal(dia)
     setModalAberto(true)
+    setAberturasModal((n) => n + 1)
+  }
+
+  // Navegação de dia dentro da janela: fora da grade do mês carregado, o calendário vai para o mês do
+  // dia (a busca do mês novo mostra o carregamento na janela)
+  function mudarDiaModal(dia) {
+    setDiaModal(dia)
+    if (dia < diasGrade[0] || dia > diasGrade[diasGrade.length - 1]) {
+      setMesReferencia({ ano: dia.getFullYear(), mes: dia.getMonth() })
+    }
   }
 
   function abrirCompromissosDeHoje() {
@@ -470,89 +469,31 @@ export default function AgendaConsultas() {
         )}
       </section>
 
-      <ModalCompromissosDia
-        dia={diaModal}
-        aberto={modalAberto}
-        hoje={hoje}
-        agendamentos={compromissosDiaModal}
-        aoFechar={() => setModalAberto(false)}
-        aoAlterar={atualizarTudo}
-        aoAgendarNoDia={(dia) => {
-          setModalAberto(false)
-          setDataPredefinida({ valor: sugestaoHorarioParaDia(dia), token: Date.now() })
-        }}
-      />
+      {diaModal && (
+        <Suspense fallback={null}>
+          <ModalAgendaDia
+            dia={diaModal}
+            aberto={modalAberto}
+            abertura={aberturasModal}
+            hoje={hoje}
+            agendamentos={compromissosDiaModal}
+            carregando={carregandoCalendario && !dadosCalendario}
+            erro={dadosCalendario ? null : erroCalendario}
+            aoTentarNovamente={atualizarCalendario}
+            aoMudarDia={mudarDiaModal}
+            aoFechar={() => setModalAberto(false)}
+            // Horário clicado na grade, ou a sugestão para o dia ("Agendar neste dia"); o formulário recebe o foco
+            aoAgendar={(valorCampo) => {
+              setModalAberto(false)
+              setDataPredefinida({ valor: valorCampo ?? sugestaoHorarioParaDia(diaModal), token: Date.now() })
+            }}
+            renderizarDetalhe={(agendamento) => (
+              <ItemAgendamento key={agendamento.id} agendamento={agendamento} aoAlterar={atualizarTudo} />
+            )}
+          />
+        </Suspense>
+      )}
     </>
-  )
-}
-
-/** `dia` continua preenchido depois de fechar (aberto = false), para a saída animada manter o conteúdo. */
-function ModalCompromissosDia({ dia, aberto, hoje, agendamentos, aoFechar, aoAlterar, aoAgendarNoDia }) {
-  const dialogo = useRef(null)
-
-  useEffect(() => {
-    if (aberto && !dialogo.current?.open) dialogo.current?.showModal()
-    else if (!aberto && dialogo.current?.open) dialogo.current?.close()
-  }, [aberto, dia])
-
-  if (!dia) return null
-
-  const ehHoje = chaveDiaLocal(dia) === chaveDiaLocal(hoje)
-  const podeAgendar = inicioDoDia(dia).getTime() >= hoje.getTime()
-
-  return (
-    <dialog
-      ref={dialogo}
-      className={agendaEstilos.modalDia}
-      aria-labelledby="titulo-modal-dia"
-      // closedby="any": o clique fora da janela também fecha. Esc e clique fora disparam "cancel",
-      // tratado aqui para o estado do React fechar o modal (onde não há suporte, sobram Esc e "Fechar")
-      closedby="any"
-      onCancel={(evento) => {
-        evento.preventDefault()
-        aoFechar()
-      }}
-    >
-      <div className={agendaEstilos.modalConteudo}>
-        <div className={agendaEstilos.modalCabecalho}>
-          <div>
-            <h2 id="titulo-modal-dia">
-              {ehHoje ? 'Compromissos de hoje' : `Compromissos de ${formatarData(dia.toISOString())}`}
-            </h2>
-            <p className={agendaEstilos.modalSubtitulo}>{formatoDiaExtenso.format(dia)}</p>
-          </div>
-          <button type="button" className={agendaEstilos.botaoFechar} onClick={aoFechar} aria-label="Fechar janela">
-            <X size={18} aria-hidden="true" />
-          </button>
-        </div>
-
-        <div className={agendaEstilos.modalCorpo}>
-          {agendamentos.length === 0 ? (
-            <EstadoVazio icone={CalendarDays} titulo={ehHoje ? 'Nenhum compromisso hoje' : 'Nenhum compromisso neste dia'}>
-              {podeAgendar && 'Use "Agendar neste dia" para marcar uma consulta.'}
-            </EstadoVazio>
-          ) : (
-            <ul className={ui.lista}>
-              {agendamentos.map((agendamento) => (
-                <ItemAgendamento key={agendamento.id} agendamento={agendamento} aoAlterar={aoAlterar} />
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className={agendaEstilos.modalRodape}>
-          {podeAgendar && (
-            <button type="button" className={ui.botaoSecundario} onClick={() => aoAgendarNoDia(dia)}>
-              <CalendarPlus size={16} aria-hidden="true" />
-              Agendar neste dia
-            </button>
-          )}
-          <button type="button" className={ui.botao} onClick={aoFechar}>
-            Fechar
-          </button>
-        </div>
-      </div>
-    </dialog>
   )
 }
 
@@ -709,6 +650,7 @@ function FormularioAgendamento({ aoAgendar, dataPredefinida }) {
   )
 }
 
+/** Uma consulta com as ações (realizada, faltou, remarcar, cancelar): na lista e no detalhe da agenda do dia. */
 function ItemAgendamento({ agendamento, aoAlterar }) {
   const agora = useAgora()
   const confirmar = useConfirmar()
