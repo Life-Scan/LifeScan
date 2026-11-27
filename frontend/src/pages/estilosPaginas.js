@@ -15,16 +15,77 @@ export const estilos = {
   pilha: 'grid gap-5',
   grade: 'grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] items-start gap-5',
 
-  // Resumos do Painel; as cores do ícone e do número vêm de tonsResumo
-  resumos: 'grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3',
+  // Faixa do Painel: data, saudação, frase com o que pede atenção e os resumos
+  faixaTopo: 'flex flex-wrap items-end justify-between gap-3',
+  tituloFaixa: 'mt-[0.35rem] text-[2rem] leading-[1.15] tracking-[-0.03em] ate-720:text-[1.6rem]',
+  subtituloFaixa: 'mt-[0.35rem] text-menu-texto',
+  atualizacaoFaixa: 'text-[0.8rem] text-menu-texto',
+
+  /*
+   * Resumos do Painel, dentro da faixa: botões que abrem a gaveta com a lista; cor do ícone em
+   * tonsResumo. Uma coluna por resumo (--colunas, inline), numa linha só; até 720px empilham.
+   */
+  resumos: 'grid grid-cols-[repeat(var(--colunas),minmax(0,1fr))] gap-3 ate-720:grid-cols-1',
   resumo:
-    'flex items-center gap-[0.85rem] rounded-raio border border-borda bg-superficie px-[1.1rem] py-4 text-inherit ' +
-    'no-underline shadow-sombra transition-[border-color,box-shadow,translate] duration-150 ease-[ease] ' +
-    // Cartão clicável: sobe 1px e ganha a sombra de hover (cartões estáticos não se movem)
-    'hover:-translate-y-px hover:border-borda-forte hover:shadow-sombra-hover',
+    'relative flex w-full cursor-pointer items-center gap-[0.85rem] rounded-raio border border-menu-borda bg-menu-hover ' +
+    'px-[1.1rem] py-[0.9rem] text-left text-menu-texto-forte transition-[background,border-color,translate] ' +
+    'duration-150 ease-[ease] hover:bg-menu-ativo not-aria-expanded:hover:-translate-y-px ' +
+    // Aberto: mesma cor opaca e mesma borda da gaveta, que aponta para ele com a seta (a do cartão gira)
+    'aria-expanded:border-menu-destaque/40 aria-expanded:bg-faixa-aberta',
+  resumoSeta: 'ml-auto self-start text-menu-texto transition-transform duration-200 ease-out',
+  resumoSetaAberta: 'rotate-180',
+
+  /*
+   * Gaveta dos resumos (Progressive Disclosure, em forma de dropdown): flutua logo abaixo dos
+   * resumos, por cima do conteúdo, sem esticar a faixa. Abre animando a altura de 0fr a 1fr, com
+   * fade. Mesma cor do resumo aberto, com uma seta no topo apontando para ele, que desliza quando
+   * outro resumo é aberto. A moldura fica; só o conteúdo troca, com fade + 4px, e os itens entram em
+   * sequência. prefers-reduced-motion já zera as durações.
+   */
+  areaResumo: 'relative',
+  gaveta:
+    'pointer-events-none absolute inset-x-0 top-full z-20 grid grid-rows-[0fr] opacity-0 ' +
+    'transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+  gavetaAberta: 'pointer-events-auto grid-rows-[1fr] opacity-100',
+  // Margem em volta para a sombra não ser cortada pelo overflow da animação (a moldura mantém a largura do resumo)
+  gavetaJanela: 'min-h-0 overflow-hidden -mx-6 px-6 pb-8',
+  gavetaMoldura:
+    'relative mt-[0.85rem] rounded-raio border border-menu-destaque/40 bg-faixa-aberta shadow-sombra-elevada',
+  // Losango girado no centro do topo: só as bordas de cima e da esquerda aparecem, formando a ponta
+  gavetaSeta:
+    'pointer-events-none absolute -top-[7px] left-1/2 size-3.5 -translate-x-1/2 rotate-45 border-t border-l ' +
+    'border-menu-destaque/40 bg-faixa-aberta',
+  // Lista longa rola por dentro da gaveta, sem esticar a página
+  gavetaConteudo:
+    'grid max-h-[min(60vh,520px)] gap-3 overflow-y-auto overscroll-contain p-4 ' +
+    'animate-in fade-in slide-in-from-top-1 duration-200',
+  gavetaCabecalho: 'flex items-center gap-[0.65rem]',
+  gavetaIcone: 'grid size-8 place-items-center rounded-[8px]',
+  gavetaTitulo: 'min-w-0 text-[0.98rem] text-menu-texto-forte',
+  gavetaQuantidade:
+    'inline-grid h-6 min-w-6 place-items-center rounded-full bg-menu-ativo px-[0.45rem] text-[0.8rem] ' +
+    'font-semibold text-menu-texto-forte tabular-nums',
+
+  // Lista dentro da gaveta: itens translúcidos sobre o verde, um embaixo do outro
+  listaGaveta: 'm-0 grid list-none gap-[0.6rem] p-0',
+  itemGaveta:
+    'rounded-raio-pequeno border border-menu-borda bg-menu-hover px-4 py-[0.8rem] transition-[background] duration-150 ' +
+    'hover:bg-menu-ativo animate-in fade-in slide-in-from-top-1 duration-300 fill-mode-backwards',
+  // Vencido: filete vermelho-claro à esquerda (o estado também vem escrito na etiqueta)
+  itemGavetaDestaque:
+    'rounded-raio-pequeno border border-menu-borda border-l-3 border-l-perigo-borda bg-menu-hover px-4 py-[0.8rem] ' +
+    'transition-[background] duration-150 hover:bg-menu-ativo animate-in fade-in slide-in-from-top-1 duration-300 ' +
+    'fill-mode-backwards',
+  linkGaveta:
+    'font-semibold text-menu-texto-forte no-underline hover:underline hover:underline-offset-2',
+  textoGaveta: 'mt-[0.35rem] whitespace-pre-wrap text-menu-texto [word-break:break-word]',
+  metaGaveta: 'tabular-nums mt-[0.3rem] flex flex-wrap gap-x-[0.9rem] gap-y-[0.2rem] text-[0.84rem] text-menu-texto',
+  vazioGaveta:
+    'flex items-center gap-[0.6rem] rounded-raio-pequeno border border-dashed border-menu-borda px-4 py-[0.9rem] ' +
+    'text-menu-texto [&_a]:text-menu-texto-forte',
   resumoIcone: 'grid size-[2.6rem] place-items-center rounded-[10px]',
   resumoNumero: 'block text-[2rem] leading-[1.1] font-[750] tracking-[-0.03em] tabular-nums',
-  resumoRotulo: 'block text-[0.86rem] text-texto-suave',
+  resumoRotulo: 'block text-[0.86rem] text-menu-texto',
 
   meta: 'tabular-nums mt-[0.3rem] flex flex-wrap gap-x-[0.9rem] gap-y-[0.2rem] text-[0.84rem] text-texto-suave',
   textoItem: 'mt-[0.35rem] whitespace-pre-wrap [word-break:break-word]',
@@ -67,10 +128,9 @@ export const estilos = {
   painelAgenda: 'mt-4',
 }
 
-/** Cores do resumo do Painel. O tom só vale quando há itens: zero fica neutro. */
+/** Cor do ícone do resumo do Painel: sempre colorido, para identificar o tipo mesmo com zero. */
 export const tonsResumo = {
-  neutro: { icone: 'bg-superficie-suave text-texto-suave', numero: '' },
-  perigo: { icone: 'bg-perigo-clara text-perigo', numero: 'text-perigo' },
-  alerta: { icone: 'bg-alerta-clara text-alerta', numero: '' },
-  info: { icone: 'bg-info-clara text-info', numero: '' },
+  perigo: 'bg-perigo-clara text-perigo',
+  alerta: 'bg-alerta-clara text-alerta',
+  info: 'bg-info-clara text-info',
 }

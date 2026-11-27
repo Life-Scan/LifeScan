@@ -21,6 +21,7 @@ export default function Acompanhamentos() {
     <div className={estilos.pilha}>
       <div className={estilos.cabecalho}>
         <div>
+          <p className={ui.sobretitulo}>Cuidado</p>
           <h1>{ehMedico ? 'Acompanhamentos' : ehParceiro ? 'Pacientes' : 'Meu acompanhamento'}</h1>
           <p className={estilos.subtitulo}>
             {ehMedico

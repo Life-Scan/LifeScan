@@ -1,4 +1,3 @@
-import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Paginacao from '../../components/Paginacao'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
@@ -77,11 +76,6 @@ export default function Acompanhamento() {
 
   return (
     <div className={estilos.pilha}>
-      <Link to="/acompanhamentos" className={estilos.voltar}>
-        <ArrowLeft size={15} aria-hidden="true" />
-        {ehParceiro ? 'Pacientes' : 'Acompanhamentos'}
-      </Link>
-
       <CabecalhoAcompanhamento {...contexto} />
 
       {/* Erro de uma atualização periódica: mantém os dados já carregados na tela */}

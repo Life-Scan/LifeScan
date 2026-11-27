@@ -47,16 +47,46 @@ Na barra do topo (abaixo de 900px) vale o mesmo fundo escuro.
 
 ### 2. Cabeçalho com presença
 
-- **Painel:** faixa de destaque no topo, com o gradiente do login
-  (`radial-gradient(ellipse at 100% 100%, #218c7b 0, transparent 65%), #0b514d`), texto claro,
-  saudação, data de hoje e o resumo do dia ("3 consultas hoje · 2 solicitações vencidas"). A
-  linha de batimento do login entra como detalhe decorativo à direita, com `aria-hidden`. Raio
-  `--raio-grande` (`20px`).
-- **Demais telas:** `.sobretitulo` acima do `h1` (o nome da área: "Pacientes", "Agenda"),
-  `h1` maior e subtítulo em texto suave. Sem faixa escura: ela é exclusiva do Painel e do
-  cabeçalho do acompanhamento.
-- `.sobretitulo`: `0.72rem`, peso `700`, caixa alta, `letter-spacing: 0.12em`,
-  cor `--cor-primaria`. É o mesmo padrão já usado no login.
+- **Faixa** (`<Faixa>` de `ui.jsx`): fundo do login (`bg-menu` com a luz de `--cor-menu-luz` no
+  canto inferior direito), texto claro e a linha de batimento como detalhe decorativo à direita
+  (`aria-hidden`, some abaixo de 720px). Ela **encosta nas bordas da área de conteúdo** (topo, direita e
+  menu), sem raio nem borda. O conteúdo de dentro continua alinhado à coluna de 1040px. Para isso, o `<main>` do
+  `Layout` é um container (`@container`) e a faixa usa `100cqw` mais o padding do `main`. Ela precisa
+  ser o primeiro elemento da página. Para o menu e a faixa não virarem um "L" verde só, o menu tem
+  uma divisória fina à direita (`border-menu-borda/60`; embaixo, na barra do topo) e a faixa uma sombra
+  interna do lado do menu (`--sombra-faixa`, `--sombra-faixa-topo`): o menu fica por cima.
+- **Painel:** padrão [Dashboard](https://ui-patterns.com/patterns/dashboard), com o que pede atenção no
+  topo. A faixa traz a data por extenso (sobretítulo), "Olá, <nome>", a frase "N itens pedem sua atenção"
+  (pendências e documentos para revisar; consultas agendadas não contam) e os **resumos dentro dela**.
+  Cada resumo é um botão (`aria-expanded`) com a sua **gaveta** logo abaixo, mostrando a lista
+  correspondente: padrão [Accordion](https://ui-patterns.com/patterns/AccordionMenu) /
+  [Progressive Disclosure](https://ui-patterns.com/patterns/ProgressiveDisclosure), um aberto por vez,
+  e clicar de novo fecha.
+  - **Dropdown:** a gaveta tem a **mesma largura do resumo** e flutua por cima do conteúdo
+    (`absolute`, `z-20`, `--sombra-elevada`). A faixa não cresce quando ela abre (por isso a `Faixa`
+    não tem `overflow-hidden`). Ela fecha com Esc (o foco volta ao resumo), com um clique fora ou
+    clicando de novo no resumo. Lista longa rola por dentro (`max-h: min(60vh, 520px)`).
+  - **Ligação com o resumo:** o resumo aberto e a gaveta têm a mesma cor opaca (`--cor-faixa-aberta`,
+    `#256561`) e a mesma borda (`--cor-menu-destaque` a 40%). Uma seta no centro do topo da gaveta
+    (losango girado) aponta para ele. Os resumos ficam numa linha só (uma coluna por resumo,
+    `--colunas`). Até 720px eles empilham, e a gaveta cobre os resumos de baixo.
+  - **Conteúdo na paleta da faixa:** ícone do tipo, título e quantidade no topo. Itens translúcidos
+    (`bg-menu-hover`) com texto claro, um embaixo do outro. O item vencido tem um filete à esquerda em
+    `--cor-perigo-borda`. As etiquetas continuam com as cores de estado.
+  - **Movimento:** a gaveta anima `grid-template-rows` (`0fr` → `1fr`) e a opacidade em `300ms` com
+    curva de saída. A cada abertura, o conteúdo entra com fade + `4px` e os itens entram em sequência
+    (`30ms` entre eles, até o oitavo).
+  - Fechada, a gaveta fica `inert`. As listas que antes ficavam no fim do Painel moram só na gaveta. Abaixo
+  da faixa ficam o cadastro e a agenda (médico, colaborador) e os dados LGPD (paciente).
+- **Acompanhamento:** a identificação (avatar, título, status, pessoas, Encerrar/Reabrir) fica na faixa.
+  O sobretítulo é o link de volta para a lista. As etapas ficam num cartão claro logo abaixo.
+- **Demais telas:** `sobretitulo` acima do `h1` com a área do menu ("Cadastros" em pacientes, parceiros
+  e colaboradores; "Cuidado" na lista de acompanhamentos). Em "Novo acompanhamento" ele é um link para
+  a lista (`sobretituloLink`). Sem faixa escura: ela é exclusiva do Painel e do cabeçalho do
+  acompanhamento.
+- `sobretitulo`: `0.72rem`, peso `700`, caixa alta, `letter-spacing: 0.12em`, cor `--cor-primaria`
+  (`--cor-menu-destaque` na faixa: `sobretituloFaixa`, `sobretituloFaixaLink`). É o mesmo padrão do
+  login.
 
 ### 3. Tipografia
 
@@ -122,7 +152,7 @@ lista atual continua para os outros dias e no celular.
 | Item | Situação |
 |---|---|
 | 1. Menu lateral escuro | Implantado |
-| 2. Cabeçalho com presença | Planejado |
+| 2. Cabeçalho com presença | Implantado (faixa de ponta a ponta, sem raio) |
 | 3. Tipografia | Implantado (o título da faixa do Painel entra com o item 2) |
 | 4. Fundo e profundidade | Implantado (as variáveis dos itens 1 e 5 já existem em `index.css`) |
 | 5. Cor por tipo de informação | Planejado (já existe só na linha do tempo) |
@@ -267,8 +297,12 @@ Em `rem`. Use os passos que já existem, sem valores soltos:
   - `cabecalho`: `h1` + `subtitulo` à esquerda, ação principal à direita.
   - `pilha`: cartões empilhados com `1.25rem` entre eles.
   - `grade`: cartões lado a lado, com no mínimo 280px cada.
-  - `resumos` / `resumo`: números do painel. O tom (`tonsResumo`: `perigo`, `alerta`, `info`) só é
-    aplicado quando o número é maior que zero.
+  - `resumos` / `resumo`: números do Painel, dentro da faixa (cartões translúcidos sobre o escuro).
+    O ícone é sempre colorido pelo tom (`tonsResumo`: `perigo`, `alerta`, `info`), mesmo com zero.
+  - `faixaTopo`, `tituloFaixa`, `subtituloFaixa`, `atualizacaoFaixa`: o topo da faixa do Painel.
+  - `gaveta`, `gavetaAberta`, `gavetaJanela`, `gavetaConteudo`, `gavetaCabecalho`: a gaveta dos resumos.
+    `listaGaveta`, `itemGaveta`, `itemGavetaDestaque`, `linkGaveta`, `metaGaveta`, `textoGaveta`,
+    `vazioGaveta`: as listas dentro dela, na paleta da faixa.
 - Breakpoints usados: `900px` (menu), `860px` (linha com ações empilha), `720px` (tamanho do
   `h1`), `760px` (busca da lista de contas em linha própria), `680px` (login em uma coluna). Prefira `auto-fit`/`minmax` a criar breakpoints novos.
 
@@ -299,6 +333,9 @@ Tailwind, usadas como `className={ui.cartao}`). Não recrie essas peças em mód
 | `<CampoArquivo>` / `<Anexo>` | | Upload com validação (RNF01) e anexo com miniatura |
 | `useConfirmar()` | `await confirmar({ titulo, mensagem, rotuloConfirmar, perigo })` | **Nunca** use `window.confirm` |
 | `<Paginacao>` | | Listas paginadas no servidor (20 por página) |
+| `<Faixa como>` | `section` (padrão) ou `header` | Faixa escura do topo; só no Painel e no acompanhamento, como primeiro elemento |
+| Sobretítulo | `estilos.sobretitulo` / `sobretituloLink` / `sobretituloFaixa` / `sobretituloFaixaLink` | Área acima do `h1` |
+| Botão na faixa | `cn(estilos.botaoFaixa, estilos.botaoPequeno)` | Contorno claro, sem fundo |
 
 Padrões do acompanhamento (`pages/acompanhamento/estilosAcompanhamento.js`):
 

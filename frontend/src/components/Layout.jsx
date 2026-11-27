@@ -36,7 +36,7 @@ export default function Layout() {
   return (
     <div className="grid min-h-screen grid-cols-[var(--largura-menu)_minmax(0,1fr)] ate-900:block">
       {/* O foco do teclado usa o verde-claro do menu: o contorno primário some no fundo escuro. */}
-      <aside className="sticky top-0 flex h-screen flex-col gap-6 bg-menu [background-image:var(--gradiente-menu)] px-[0.9rem] pt-5 pb-4 text-menu-texto [&_:focus-visible]:outline-menu-destaque ate-900:z-10 ate-900:h-auto ate-900:flex-row ate-900:flex-wrap ate-900:items-center ate-900:gap-x-3 ate-900:gap-y-2 ate-900:py-[0.6rem]">
+      <aside className="sticky top-0 flex h-screen flex-col gap-6 border-r border-menu-borda/60 bg-menu [background-image:var(--gradiente-menu)] px-[0.9rem] pt-5 pb-4 text-menu-texto [&_:focus-visible]:outline-menu-destaque ate-900:z-10 ate-900:h-auto ate-900:flex-row ate-900:flex-wrap ate-900:items-center ate-900:gap-x-3 ate-900:gap-y-2 ate-900:border-r-0 ate-900:border-b ate-900:py-[0.6rem]">
         <NavLink
           to="/painel"
           className="inline-flex items-center gap-[0.6rem] px-2 text-[1.2rem] font-bold tracking-[-0.01em] text-menu-texto-forte no-underline ate-900:p-0 ate-900:text-[1.1rem]"
@@ -98,7 +98,7 @@ export default function Layout() {
         </div>
       </aside>
 
-      <main className="min-w-0 px-8 pt-8 pb-12 ate-900:px-[0.9rem] ate-900:pt-[1.1rem] ate-900:pb-10">
+      <main className="@container min-w-0 px-8 pt-8 pb-12 ate-900:px-[0.9rem] ate-900:pt-[1.1rem] ate-900:pb-10">
         <div className="mx-auto max-w-[1040px]">
           <Outlet />
         </div>

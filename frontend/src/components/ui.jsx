@@ -36,6 +36,24 @@ const ETIQUETA =
 const ALERTA =
   'flex items-start gap-[0.55rem] px-[0.9rem] py-[0.7rem] rounded-raio-pequeno border text-[0.92rem] [&_svg]:mt-[0.15rem]'
 
+// Sobretítulo: o nome da área acima do h1, no padrão do login (DESIGN.md, item 2)
+const SOBRETITULO = 'text-[0.72rem] font-bold uppercase tracking-[0.12em]'
+
+/*
+ * Faixa escura do topo (Painel e acompanhamento). Encosta nas bordas da área de conteúdo: o <main>
+ * do Layout é um container (@container), e a faixa sai da coluna de 1040px com 100cqw mais o padding
+ * do main (2rem; 0.9rem até 900px). O conteúdo dentro dela volta a se alinhar à coluna.
+ */
+// Sem overflow-hidden: a gaveta dos resumos do Painel sai da faixa e flutua sobre o conteúdo
+const FAIXA =
+  'relative bg-menu [background-image:radial-gradient(ellipse_at_100%_100%,var(--cor-menu-luz)_0,transparent_65%)] ' +
+  'text-menu-texto-forte [&_:focus-visible]:outline-menu-destaque ' +
+  // Sombra interna do lado do menu: separa os dois planos verdes (o menu fica por cima)
+  'shadow-[var(--sombra-faixa)] ate-900:shadow-[var(--sombra-faixa-topo)] ' +
+  '-mt-8 ml-[calc(50%-50cqw-2rem)] w-[calc(100cqw+4rem)] ' +
+  'ate-900:-mt-[1.1rem] ate-900:ml-[calc(50%-50cqw-0.9rem)] ate-900:w-[calc(100cqw+1.8rem)]'
+const FAIXA_CONTEUDO = 'relative mx-auto grid max-w-[calc(1040px+4rem)] gap-[1.4rem] px-8 pt-7 pb-6 ate-900:px-[0.9rem]'
+
 const AVATAR = 'inline-grid place-items-center shrink-0 rounded-full font-bold tracking-[0.02em] select-none'
 
 export const estilos = {
@@ -48,9 +66,17 @@ export const estilos = {
   botaoPerigoSolido: `${BOTAO} border-perigo bg-perigo text-white hover:not-disabled:bg-perigo-escura hover:not-disabled:border-perigo-escura`,
   // leading repetido: o cn() descarta o leading do botão quando um text-[tamanho] vem depois
   botaoPequeno: 'px-[0.7rem] py-[0.32rem] text-[0.84rem] leading-[1.3] gap-[0.35rem]',
+  // Ação dentro da faixa escura: contorno claro, sem fundo
+  botaoFaixa: `${BOTAO} border-menu-texto/45 bg-transparent text-menu-texto-forte hover:not-disabled:bg-menu-hover hover:not-disabled:border-menu-texto`,
   botaoLink:
     'inline-flex items-center gap-[0.3rem] bg-transparent border-0 p-0 text-primaria font-semibold cursor-pointer ' +
     'no-underline hover:underline hover:underline-offset-2',
+
+  sobretitulo: `${SOBRETITULO} mb-1 text-primaria`,
+  sobretituloLink: `${SOBRETITULO} mb-1 inline-block text-primaria no-underline hover:underline hover:underline-offset-2`,
+  sobretituloFaixa: `${SOBRETITULO} text-menu-destaque`,
+  sobretituloFaixaLink:
+    `${SOBRETITULO} inline-flex items-center gap-1 text-menu-destaque no-underline hover:underline hover:underline-offset-2`,
 
   formulario: 'grid gap-[0.9rem]',
   linhaCampos: 'grid gap-[0.9rem] grid-cols-[repeat(auto-fit,minmax(200px,1fr))]',
@@ -113,6 +139,36 @@ const AVATARES = {
   parceiro: 'bg-info-clara text-info',
   colaborador: 'bg-alerta-clara text-alerta',
   medico: 'bg-primaria text-white',
+}
+
+/**
+ * Faixa escura de destaque no topo da página, com a linha de batimento do login. Só no Painel e no
+ * cabeçalho do acompanhamento; precisa ser o primeiro elemento da página (encosta no topo).
+ */
+export function Faixa({ como = 'section', children, ...props }) {
+  const conteudo = (
+    <>
+      <svg
+        className="pointer-events-none absolute top-5 right-0 h-[86px] w-[340px] text-menu-destaque opacity-45 ate-720:hidden"
+        viewBox="0 0 400 100"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path d="M0 50H105L135 12L185 88L215 50H400" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <div className={FAIXA_CONTEUDO}>{children}</div>
+    </>
+  )
+  // como: 'section' (Painel) ou 'header' (cabeçalho do acompanhamento)
+  return como === 'header' ? (
+    <header className={FAIXA} {...props}>
+      {conteudo}
+    </header>
+  ) : (
+    <section className={FAIXA} {...props}>
+      {conteudo}
+    </section>
+  )
 }
 
 /** variante: neutra | perigo | alerta | sucesso | info | primaria */

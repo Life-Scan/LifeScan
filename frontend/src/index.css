@@ -83,6 +83,8 @@
   --cor-menu-hover: rgb(255 255 255 / 8%);
   --cor-menu-ativo: rgb(255 255 255 / 14%);
   --cor-menu-borda: rgb(255 255 255 / 15%);
+  /* Resumo aberto + gaveta do Painel: verde mais claro e opaco (o menu com ~12% de branco por cima) */
+  --cor-faixa-aberta: #256561;
 
   --raio: 12px;
   --raio-pequeno: 8px;
@@ -91,6 +93,9 @@
   --sombra: 0 1px 2px rgb(11 81 77 / 6%), 0 4px 12px rgb(11 81 77 / 4%);
   --sombra-hover: 0 2px 4px rgb(11 81 77 / 8%), 0 12px 28px rgb(11 81 77 / 10%);
   --sombra-elevada: 0 12px 32px rgb(16 24 40 / 18%);
+  /* Faixa do topo: sombra interna vinda do menu, que fica "por cima" (lado esquerdo; no topo até 900px) */
+  --sombra-faixa: inset 14px 0 18px -14px rgb(4 30 28 / 45%);
+  --sombra-faixa-topo: inset 0 14px 18px -14px rgb(4 30 28 / 45%);
 
   --largura-menu: 248px;
 
@@ -349,6 +354,7 @@
   --color-menu-hover: var(--cor-menu-hover);
   --color-menu-ativo: var(--cor-menu-ativo);
   --color-menu-borda: var(--cor-menu-borda);
+  --color-faixa-aberta: var(--cor-faixa-aberta);
   --radius-raio: var(--raio);
   --radius-raio-pequeno: var(--raio-pequeno);
   --radius-raio-grande: var(--raio-grande);

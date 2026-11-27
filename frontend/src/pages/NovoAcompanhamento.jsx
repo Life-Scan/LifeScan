@@ -53,6 +53,10 @@ export default function NovoAcompanhamento() {
     <div className={estilos.pilha}>
       <div className={estilos.cabecalho}>
         <div>
+          {/* O sobretítulo é a área de cima: leva de volta à lista */}
+          <Link to="/acompanhamentos" className={ui.sobretituloLink}>
+            Acompanhamentos
+          </Link>
           <h1>Novo acompanhamento</h1>
           <p className={estilos.subtitulo}>Abra o acompanhamento de tratamento de um paciente cadastrado.</p>
         </div>
