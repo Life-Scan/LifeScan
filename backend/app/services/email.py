@@ -2,14 +2,15 @@
 
 Suporta:
 - modo "console" (EMAIL_MODE=console): o email é mostrado no terminal/log da API (ideal para desenvolvimento e testes).
-- modo "smtp" (EMAIL_MODE=smtp): envio real via servidor SMTP configurado (com suporte a STARTTLS, SSL/TLS e autenticação).
+- modo "brevo" (EMAIL_MODE=brevo): envio real via API transacional do Brevo.
 """
 
 from collections import deque
 from dataclasses import dataclass
-from email.message import EmailMessage
+from email.utils import parseaddr
 import logging
-import smtplib
+
+import httpx
 
 from app.core.config import Configuracoes, obter_configuracoes
 
@@ -32,73 +33,80 @@ class Email:
 caixa_de_saida: deque[Email] = deque(maxlen=50)
 
 
-def _criar_mensagem(config: Configuracoes, destinatario: str, assunto: str, corpo: str, corpo_html: str | None = None) -> EmailMessage:
-    """Monta o objeto EmailMessage com cabeçalhos e conteúdo em texto plano / HTML."""
-    msg = EmailMessage()
-    msg["Subject"] = assunto
-    msg["From"] = config.remetente_email
-    msg["To"] = destinatario
-    msg.set_content(corpo, charset="utf-8")
+def _parsear_remetente(remetente: str) -> dict[str, str]:
+    """Converte 'Nome <email>' ou 'email' para o formato esperado pela API do Brevo."""
+    nome, endereco = parseaddr(remetente.strip())
+    if not endereco:
+        endereco = remetente.strip()
+    if nome:
+        return {"name": nome, "email": endereco}
+    return {"email": endereco}
 
+
+def _montar_payload_brevo(
+    config: Configuracoes,
+    destinatario: str,
+    assunto: str,
+    corpo: str,
+    corpo_html: str | None = None,
+) -> dict:
+    """Monta o payload JSON para a API v3 de envio transacional do Brevo."""
+    payload: dict = {
+        "sender": _parsear_remetente(config.remetente_email),
+        "to": [{"email": destinatario}],
+        "subject": assunto,
+        "textContent": corpo,
+    }
     if corpo_html:
-        msg.add_alternative(corpo_html, subtype="html", charset="utf-8")
+        payload["htmlContent"] = corpo_html
+    return payload
 
-    return msg
 
+def _enviar_via_brevo(config: Configuracoes, payload: dict) -> None:
+    """Envia o email realizando uma requisição POST para a API do Brevo."""
+    api_key = config.brevo_api_key.strip() if config.brevo_api_key else ""
+    if not api_key:
+        msg_erro = "BREVO_API_KEY não configurada para envio de email."
+        logger.error(msg_erro)
+        raise ErroEnvioEmail(msg_erro)
 
-def _enviar_via_smtp(config: Configuracoes, msg: EmailMessage) -> None:
-    """Conecta ao servidor SMTP, aplica criptografia (SSL ou STARTTLS), autentica e envia."""
-    timeout = config.smtp_timeout
-    host = config.smtp_host
-    port = config.smtp_port
+    headers = {
+        "api-key": api_key,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
 
-    usuario = config.smtp_user.strip() if config.smtp_user else ""
-    senha = config.smtp_password.replace(" ", "").strip() if config.smtp_password else ""
-
-    servidor = None
     try:
-        if config.smtp_ssl:
-            # Conexão direta via SSL (comum na porta 465)
-            servidor = smtplib.SMTP_SSL(host, port, timeout=timeout)
-        else:
-            # Conexão padrão ou STARTTLS (comum na porta 587 ou 25)
-            servidor = smtplib.SMTP(host, port, timeout=timeout)
-            if config.smtp_tls:
-                servidor.starttls()
+        resposta = httpx.post(
+            config.brevo_api_url,
+            headers=headers,
+            json=payload,
+            timeout=config.brevo_timeout,
+        )
+    except httpx.TimeoutException as err:
+        msg_erro = f"Tempo esgotado ao conectar à API do Brevo ({config.brevo_timeout}s)."
+        logger.error(msg_erro)
+        raise ErroEnvioEmail(msg_erro) from err
+    except httpx.RequestError as err:
+        msg_erro = f"Falha de rede/conexão com a API do Brevo: {err}"
+        logger.error(msg_erro)
+        raise ErroEnvioEmail(msg_erro) from err
 
-        if usuario and senha:
-            servidor.login(usuario, senha)
+    if resposta.status_code in (401, 403):
+        detalhe = resposta.text.strip()
+        msg_erro = (
+            f"Falha de autenticação na API do Brevo: verifique BREVO_API_KEY ({detalhe})."
+            if detalhe
+            else "Falha de autenticação na API do Brevo: verifique BREVO_API_KEY."
+        )
+        logger.error(msg_erro)
+        raise ErroEnvioEmail(msg_erro)
 
-        servidor.send_message(msg)
-    except smtplib.SMTPAuthenticationError as err:
-        msg_erro = f"Falha de autenticação SMTP ({host}:{port}): verifique usuário e senha."
+    if resposta.is_error:
+        detalhe = resposta.text.strip()
+        msg_erro = f"Erro na API do Brevo (HTTP {resposta.status_code}): {detalhe}"
         logger.error(msg_erro)
-        raise ErroEnvioEmail(msg_erro) from err
-    except smtplib.SMTPConnectError as err:
-        msg_erro = f"Não foi possível conectar ao servidor SMTP em {host}:{port}."
-        logger.error(msg_erro)
-        raise ErroEnvioEmail(msg_erro) from err
-    except smtplib.SMTPException as err:
-        msg_erro = f"Erro no protocolo SMTP ao enviar email: {err}"
-        logger.error(msg_erro)
-        raise ErroEnvioEmail(msg_erro) from err
-    except OSError as err:
-        msg_erro = f"Falha de rede/conexão com o servidor SMTP {host}:{port}: {err}"
-        logger.error(msg_erro)
-        raise ErroEnvioEmail(msg_erro) from err
-    except Exception as err:
-        msg_erro = f"Erro inesperado no envio de email: {err}"
-        logger.error(msg_erro)
-        raise ErroEnvioEmail(msg_erro) from err
-    finally:
-        if servidor is not None:
-            try:
-                servidor.quit()
-            except Exception:
-                try:
-                    servidor.close()
-                except Exception:
-                    pass
+        raise ErroEnvioEmail(msg_erro)
 
 
 def enviar_email(
@@ -107,13 +115,13 @@ def enviar_email(
     corpo: str,
     corpo_html: str | None = None,
 ) -> None:
-    """Envia um email usando a configuração ativa (console ou smtp)."""
+    """Envia um email usando a configuração ativa (console ou brevo)."""
     config = obter_configuracoes()
     modo = config.modo_email.lower().strip()
 
-    if modo not in ("console", "smtp"):
+    if modo not in ("console", "brevo"):
         raise ErroEnvioEmail(
-            f"EMAIL_MODE={config.modo_email!r} não é suportado. Use EMAIL_MODE=console ou EMAIL_MODE=smtp."
+            f"EMAIL_MODE={config.modo_email!r} não é suportado. Use EMAIL_MODE=console ou EMAIL_MODE=brevo."
         )
 
     email = Email(destinatario=destinatario, assunto=assunto, corpo=corpo, corpo_html=corpo_html)
@@ -128,7 +136,6 @@ def enviar_email(
         )
         return
 
-    # Modo SMTP
-    mensagem = _criar_mensagem(config, destinatario, assunto, corpo, corpo_html)
-    _enviar_via_smtp(config, mensagem)
-    logger.info("Email enviado com sucesso via SMTP para %s (Assunto: %s)", destinatario, assunto)
+    payload = _montar_payload_brevo(config, destinatario, assunto, corpo, corpo_html)
+    _enviar_via_brevo(config, payload)
+    logger.info("Email enviado com sucesso via Brevo para %s (Assunto: %s)", destinatario, assunto)

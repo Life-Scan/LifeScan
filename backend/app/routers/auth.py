@@ -186,7 +186,7 @@ def esqueci_senha(dados: EsqueciSenhaEntrada, sessao: Session = Depends(obter_se
         except ErroEnvioEmail as err:
             raise HTTPException(
                 status.HTTP_502_BAD_GATEWAY,
-                f"Falha ao enviar email por SMTP: {err}",
+                f"Falha ao enviar email: {err}",
             ) from err
     return MensagemSaida(
         mensagem="Se este email tiver uma conta ativa, enviaremos uma senha provisória para ele."

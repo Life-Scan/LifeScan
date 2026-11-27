@@ -68,7 +68,7 @@ def criar_conta(dados: ContaEntrada, sessao: Session = Depends(obter_sessao)) ->
     try:
         enviar_acesso_da_conta(usuario)
     except ErroEnvioEmail as err:
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Falha ao enviar email por SMTP: {err}") from err
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Falha ao enviar email: {err}") from err
     sessao.add(usuario)
     sessao.commit()
     return _montar_saidas(sessao, [usuario])[0]
@@ -170,6 +170,6 @@ def reenviar_acesso(usuario_id: int, sessao: Session = Depends(obter_sessao)) ->
     try:
         enviar_acesso_da_conta(usuario)
     except ErroEnvioEmail as err:
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Falha ao enviar email por SMTP: {err}") from err
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Falha ao enviar email: {err}") from err
     sessao.commit()
     return MensagemSaida(mensagem=f"Dados de acesso enviados para {usuario.email}.")

@@ -1,4 +1,4 @@
-"""Script para testar o envio de email via SMTP.
+"""Script para testar o envio de email (console ou Brevo).
 
 Uso:
   python -m scripts.testar_smtp --para seu-email@exemplo.com
@@ -12,7 +12,7 @@ from app.services.email import ErroEnvioEmail, enviar_email
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Testa o envio de email (console ou SMTP).")
+    parser = argparse.ArgumentParser(description="Testa o envio de email (console ou Brevo).")
     parser.add_argument(
         "--para",
         required=True,
@@ -20,7 +20,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--assunto",
-        default="[LifeScan] Teste de Configuração SMTP",
+        default="[LifeScan] Teste de Configuração Brevo",
         help="Assunto do email de teste.",
     )
 
@@ -30,33 +30,29 @@ def main() -> None:
     print("\n" + "=" * 60)
     print(" Configurações de Email Atuais:")
     print("=" * 60)
-    print(f" Modo (EMAIL_MODE):     {config.modo_email}")
-    print(f" Remetente (EMAIL_FROM): {config.remetente_email}")
-    print(f" SMTP Host:              {config.smtp_host}")
-    print(f" SMTP Porta:             {config.smtp_port}")
-    print(f" SMTP Usuário:           {config.smtp_user or '(não informado)'}")
-    print(f" SMTP Senha:             {'******' if config.smtp_password else '(não informada)'}")
-    print(f" SMTP STARTTLS:          {config.smtp_tls}")
-    print(f" SMTP SSL Direto:        {config.smtp_ssl}")
-    print(f" SMTP Timeout:           {config.smtp_timeout}s")
+    print(f" Modo (EMAIL_MODE):        {config.modo_email}")
+    print(f" Remetente (EMAIL_FROM):   {config.remetente_email}")
+    print(f" Brevo API URL:            {config.brevo_api_url}")
+    print(f" Brevo API Key:            {'******' if config.brevo_api_key else '(não informada)'}")
+    print(f" Brevo Timeout:            {config.brevo_timeout}s")
     print("=" * 60 + "\n")
 
-    if config.modo_email != "smtp":
-        print("AVISO: O modo atual é 'console'. Para envio real, defina EMAIL_MODE=smtp no arquivo .env.")
+    if config.modo_email != "brevo":
+        print("AVISO: O modo atual é 'console'. Para envio real, defina EMAIL_MODE=brevo no arquivo .env.")
         print("Prosseguindo no modo configurado...\n")
 
     corpo = (
         "Olá!\n\n"
         "Este é um email de teste enviado pelo sistema LifeScan para validar "
-        "as configurações de conexão SMTP.\n\n"
+        "a integração com a API do Brevo.\n\n"
         "Se você recebeu esta mensagem, o envio de emails está funcionando perfeitamente!\n"
     )
 
     corpo_html = (
         "<div style='font-family: sans-serif; line-height: 1.5; color: #333;'>"
-        "  <h2 style='color: #0d9488;'>LifeScan - Teste de Conexão SMTP</h2>"
+        "  <h2 style='color: #0d9488;'>LifeScan - Teste de Envio via Brevo</h2>"
         "  <p>Olá!</p>"
-        "  <p>Este é um email de teste enviado pelo sistema <strong>LifeScan</strong> para validar as configurações de conexão SMTP.</p>"
+        "  <p>Este é um email de teste enviado pelo sistema <strong>LifeScan</strong> para validar a integração com o Brevo.</p>"
         "  <p style='background: #f0fdfa; border-left: 4px solid #0d9488; padding: 12px; margin: 16px 0;'>"
         "    ✅ Se você recebeu esta mensagem, o envio de emails está funcionando perfeitamente!"
         "  </p>"

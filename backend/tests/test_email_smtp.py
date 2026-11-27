@@ -1,16 +1,15 @@
-"""Testes do serviço de email (console e SMTP)."""
+"""Testes do serviço de email (console e Brevo)."""
 
-from email.message import EmailMessage
-import smtplib
 from unittest.mock import MagicMock, patch
 
+import httpx
 import pytest
 
 from app.core.config import Configuracoes
 from app.services.email import (
     ErroEnvioEmail,
-    _criar_mensagem,
-    _enviar_via_smtp,
+    _enviar_via_brevo,
+    _montar_payload_brevo,
     caixa_de_saida,
     enviar_email,
 )
@@ -20,33 +19,31 @@ def _configuracao_mock(**kwargs) -> Configuracoes:
     padrao = {
         "DATABASE_URL": "sqlite:///:memory:",
         "JWT_SECRET": "teste-segredo-super-longo-12345678901234567890",
-        "EMAIL_MODE": "smtp",
+        "EMAIL_MODE": "brevo",
         "EMAIL_FROM": "LifeScan <nao-responda@lifescan.local>",
-        "SMTP_HOST": "smtp.exemplo.com",
-        "SMTP_PORT": 587,
-        "SMTP_USER": "usuario@exemplo.com",
-        "SMTP_PASSWORD": "senha-secreta",
-        "SMTP_TLS": True,
-        "SMTP_SSL": False,
-        "SMTP_TIMEOUT": 10,
+        "BREVO_API_KEY": "xkeysib-teste-123",
+        "BREVO_API_URL": "https://api.brevo.com/v3/smtp/email",
+        "BREVO_TIMEOUT": 10,
     }
     padrao.update(kwargs)
     return Configuracoes(**padrao)
 
 
-def test_criar_mensagem_simples():
+def test_montar_payload_brevo_simples():
     config = _configuracao_mock()
-    msg = _criar_mensagem(config, "paciente@teste.com", "Assunto Teste", "Corpo texto")
+    payload = _montar_payload_brevo(config, "paciente@teste.com", "Assunto Teste", "Corpo texto")
 
-    assert msg["Subject"] == "Assunto Teste"
-    assert msg["From"] == "LifeScan <nao-responda@lifescan.local>"
-    assert msg["To"] == "paciente@teste.com"
-    assert msg.get_content().strip() == "Corpo texto"
+    assert payload == {
+        "sender": {"name": "LifeScan", "email": "nao-responda@lifescan.local"},
+        "to": [{"email": "paciente@teste.com"}],
+        "subject": "Assunto Teste",
+        "textContent": "Corpo texto",
+    }
 
 
-def test_criar_mensagem_com_html():
-    config = _configuracao_mock()
-    msg = _criar_mensagem(
+def test_montar_payload_brevo_com_html_e_remetente_simples():
+    config = _configuracao_mock(EMAIL_FROM="nao-responda@lifescan.local")
+    payload = _montar_payload_brevo(
         config,
         "paciente@teste.com",
         "Assunto",
@@ -54,68 +51,90 @@ def test_criar_mensagem_com_html():
         corpo_html="<p>Corpo HTML</p>",
     )
 
-    partes = list(msg.iter_parts())
-    assert len(partes) == 2
-    assert partes[0].get_content_type() == "text/plain"
-    assert partes[1].get_content_type() == "text/html"
+    assert payload["sender"] == {"email": "nao-responda@lifescan.local"}
+    assert payload["htmlContent"] == "<p>Corpo HTML</p>"
 
 
-def test_enviar_via_smtp_starttls():
-    config = _configuracao_mock(SMTP_TLS=True, SMTP_SSL=False, SMTP_PORT=587)
-    msg = EmailMessage()
-    msg["Subject"] = "Teste"
-
-    with patch("smtplib.SMTP") as mock_smtp_class:
-        mock_servidor = MagicMock()
-        mock_smtp_class.return_value = mock_servidor
-
-        _enviar_via_smtp(config, msg)
-
-        mock_smtp_class.assert_called_once_with("smtp.exemplo.com", 587, timeout=10)
-        mock_servidor.starttls.assert_called_once()
-        mock_servidor.login.assert_called_once_with("usuario@exemplo.com", "senha-secreta")
-        mock_servidor.send_message.assert_called_once_with(msg)
-        mock_servidor.quit.assert_called_once()
-
-
-def test_enviar_via_smtp_ssl():
-    config = _configuracao_mock(SMTP_TLS=False, SMTP_SSL=True, SMTP_PORT=465)
-    msg = EmailMessage()
-
-    with patch("smtplib.SMTP_SSL") as mock_ssl_class:
-        mock_servidor = MagicMock()
-        mock_ssl_class.return_value = mock_servidor
-
-        _enviar_via_smtp(config, msg)
-
-        mock_ssl_class.assert_called_once_with("smtp.exemplo.com", 465, timeout=10)
-        mock_servidor.login.assert_called_once_with("usuario@exemplo.com", "senha-secreta")
-        mock_servidor.send_message.assert_called_once_with(msg)
-        mock_servidor.quit.assert_called_once()
-
-
-def test_enviar_via_smtp_falha_autenticacao():
+def test_enviar_via_brevo_sucesso():
     config = _configuracao_mock()
-    msg = EmailMessage()
+    payload = _montar_payload_brevo(config, "paciente@teste.com", "Teste", "Corpo")
 
-    with patch("smtplib.SMTP") as mock_smtp_class:
-        mock_servidor = MagicMock()
-        mock_servidor.login.side_effect = smtplib.SMTPAuthenticationError(535, b"Authentication failed")
-        mock_smtp_class.return_value = mock_servidor
+    mock_resposta = MagicMock(status_code=201, is_error=False)
+    with patch("app.services.email.httpx.post", return_value=mock_resposta) as mock_post:
+        _enviar_via_brevo(config, payload)
 
-        with pytest.raises(ErroEnvioEmail, match="Falha de autenticação SMTP"):
-            _enviar_via_smtp(config, msg)
+        mock_post.assert_called_once_with(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={
+                "api-key": "xkeysib-teste-123",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json=payload,
+            timeout=10,
+        )
 
 
-def test_enviar_via_smtp_falha_conexao():
+def test_enviar_via_brevo_sem_api_key():
+    config = _configuracao_mock(BREVO_API_KEY="   ")
+    payload = _montar_payload_brevo(config, "paciente@teste.com", "Teste", "Corpo")
+
+    with pytest.raises(ErroEnvioEmail, match="BREVO_API_KEY não configurada"):
+        _enviar_via_brevo(config, payload)
+
+
+def test_enviar_via_brevo_falha_autenticacao():
     config = _configuracao_mock()
-    msg = EmailMessage()
+    payload = _montar_payload_brevo(config, "paciente@teste.com", "Teste", "Corpo")
 
-    with patch("smtplib.SMTP") as mock_smtp_class:
-        mock_smtp_class.side_effect = OSError("Connection refused")
+    mock_resposta = MagicMock(status_code=401, is_error=True, text="Unauthorized")
+    with patch("app.services.email.httpx.post", return_value=mock_resposta):
+        with pytest.raises(ErroEnvioEmail, match="Falha de autenticação na API do Brevo"):
+            _enviar_via_brevo(config, payload)
 
+
+def test_enviar_via_brevo_erro_http():
+    config = _configuracao_mock()
+    payload = _montar_payload_brevo(config, "paciente@teste.com", "Teste", "Corpo")
+
+    mock_resposta = MagicMock(status_code=400, is_error=True, text='{"message":"invalid"}')
+    with patch("app.services.email.httpx.post", return_value=mock_resposta):
+        with pytest.raises(ErroEnvioEmail, match="HTTP 400"):
+            _enviar_via_brevo(config, payload)
+
+
+def test_enviar_via_brevo_timeout():
+    config = _configuracao_mock()
+    payload = _montar_payload_brevo(config, "paciente@teste.com", "Teste", "Corpo")
+
+    with patch("app.services.email.httpx.post", side_effect=httpx.TimeoutException("timeout")):
+        with pytest.raises(ErroEnvioEmail, match="Tempo esgotado"):
+            _enviar_via_brevo(config, payload)
+
+
+def test_enviar_via_brevo_falha_conexao():
+    config = _configuracao_mock()
+    payload = _montar_payload_brevo(config, "paciente@teste.com", "Teste", "Corpo")
+
+    with patch("app.services.email.httpx.post", side_effect=httpx.ConnectError("Connection refused")):
         with pytest.raises(ErroEnvioEmail, match="Falha de rede/conexão"):
-            _enviar_via_smtp(config, msg)
+            _enviar_via_brevo(config, payload)
+
+
+def test_enviar_email_modo_brevo():
+    caixa_de_saida.clear()
+    config = _configuracao_mock(EMAIL_MODE="brevo")
+    mock_resposta = MagicMock(status_code=201, is_error=False)
+
+    with (
+        patch("app.services.email.obter_configuracoes", return_value=config),
+        patch("app.services.email.httpx.post", return_value=mock_resposta) as mock_post,
+    ):
+        enviar_email("destino@teste.com", "Assunto", "Texto do corpo", "<p>HTML</p>")
+
+        mock_post.assert_called_once()
+        assert len(caixa_de_saida) == 1
+        assert caixa_de_saida[0].destinatario == "destino@teste.com"
 
 
 def test_enviar_email_modo_console(capsys):

@@ -30,17 +30,13 @@ class Configuracoes(BaseSettings):
     # Distância mínima, em horas, entre duas consultas agendadas
     horas_entre_agendamentos: int = Field(2, ge=0, validation_alias="APPOINTMENT_MIN_GAP_HOURS")
 
-    # Email: suporta modo "console" (terminal) e "smtp" (envio real)
+    # Email: suporta modo "console" (terminal) e "brevo" (envio real via API Brevo)
     modo_email: str = Field("console", validation_alias="EMAIL_MODE")
     remetente_email: str = Field("LifeScan <nao-responda@lifescan.local>", validation_alias="EMAIL_FROM")
-    # Configurações de SMTP (quando EMAIL_MODE=smtp)
-    smtp_host: str = Field("localhost", validation_alias="SMTP_HOST")
-    smtp_port: int = Field(587, validation_alias="SMTP_PORT")
-    smtp_user: str = Field("", validation_alias="SMTP_USER")
-    smtp_password: str = Field("", validation_alias="SMTP_PASSWORD")
-    smtp_tls: bool = Field(True, validation_alias="SMTP_TLS")
-    smtp_ssl: bool = Field(False, validation_alias="SMTP_SSL")
-    smtp_timeout: int = Field(30, validation_alias="SMTP_TIMEOUT")
+    # Configurações da API Brevo (quando EMAIL_MODE=brevo)
+    brevo_api_key: str = Field("", validation_alias="BREVO_API_KEY")
+    brevo_api_url: str = Field("https://api.brevo.com/v3/smtp/email", validation_alias="BREVO_API_URL")
+    brevo_timeout: int = Field(15, validation_alias="BREVO_TIMEOUT")
 
     # Endereço do frontend, usado nos links dos emails
     url_frontend: str = Field("http://localhost:5173", validation_alias="FRONTEND_URL")
