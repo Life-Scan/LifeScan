@@ -48,7 +48,11 @@ export default function AbaParceiros({ parceiros, acompanhamento, ehMedico, edit
       <Alerta tipo="erro">{erro}</Alerta>
 
       {parceiros.length === 0 ? (
-        <EstadoVazio icone={Handshake}>Nenhum parceiro atribuído a este acompanhamento.</EstadoVazio>
+        <EstadoVazio icone={Handshake} titulo="Nenhum parceiro atribuído">
+          {ehMedico && editavel
+            ? 'Use o formulário acima para atribuir um profissional a este tratamento.'
+            : 'Os profissionais que colaboram neste tratamento aparecem aqui.'}
+        </EstadoVazio>
       ) : (
         <ul className={ui.lista}>
           {parceiros.map((atribuicao) => (

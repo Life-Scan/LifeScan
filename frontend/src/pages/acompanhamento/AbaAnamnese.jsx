@@ -76,10 +76,10 @@ export default function AbaAnamnese({ anamnese, acompanhamento, ehMedico, ehParc
         />
       )}
       {!editando && (anamnese.preenchida ? <VisualizacaoAnamnese anamnese={anamnese} ehParceiro={ehParceiro} /> : (
-        <EstadoVazio icone={NotebookPen}>
+        <EstadoVazio icone={NotebookPen} titulo="Anamnese ainda não preenchida">
           {ehMedico
-            ? 'A anamnese ainda não foi preenchida. Ela resume o paciente para você e para os parceiros atribuídos.'
-            : 'O médico ainda não preencheu esta anamnese.'}
+            ? 'Ela resume o paciente para você e para os parceiros atribuídos.'
+            : 'Quando o médico preencher, o resumo do paciente aparece aqui.'}
         </EstadoVazio>
       ))}
 

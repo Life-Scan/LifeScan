@@ -98,17 +98,35 @@ const ABAS = [
     id: 'proximas',
     titulo: 'Próximas',
     parametros: () => ({ status: 'agendada', inicio: new Date().toISOString() }),
-    vazio: 'Nenhuma consulta agendada. Use o formulário acima para agendar.',
+    vazio: { titulo: 'Nenhuma consulta agendada', frase: 'Use o formulário acima para agendar.' },
   },
   {
     id: 'a-registrar',
     titulo: 'A registrar',
     parametros: () => ({ status: 'agendada', fim: new Date().toISOString() }),
-    vazio: 'Nenhuma consulta esperando registro. Depois do horário, marque aqui se a consulta foi realizada ou se o paciente faltou.',
+    vazio: {
+      titulo: 'Nada para registrar',
+      frase: 'Depois do horário, as consultas aparecem aqui para você marcar se foram realizadas ou se o paciente faltou.',
+    },
   },
-  { id: 'realizadas', titulo: 'Realizadas', parametros: () => ({ status: 'realizada', ordem: 'desc' }), vazio: 'Nenhuma consulta realizada.' },
-  { id: 'faltas', titulo: 'Faltas', parametros: () => ({ status: 'faltou', ordem: 'desc' }), vazio: 'Nenhuma falta registrada.' },
-  { id: 'canceladas', titulo: 'Canceladas', parametros: () => ({ status: 'cancelada', ordem: 'desc' }), vazio: 'Nenhuma consulta cancelada.' },
+  {
+    id: 'realizadas',
+    titulo: 'Realizadas',
+    parametros: () => ({ status: 'realizada', ordem: 'desc' }),
+    vazio: { titulo: 'Nenhuma consulta realizada', frase: 'As consultas marcadas como realizadas aparecem aqui.' },
+  },
+  {
+    id: 'faltas',
+    titulo: 'Faltas',
+    parametros: () => ({ status: 'faltou', ordem: 'desc' }),
+    vazio: { titulo: 'Nenhuma falta registrada', frase: 'As consultas em que o paciente faltou aparecem aqui.' },
+  },
+  {
+    id: 'canceladas',
+    titulo: 'Canceladas',
+    parametros: () => ({ status: 'cancelada', ordem: 'desc' }),
+    vazio: { titulo: 'Nenhuma consulta cancelada', frase: 'As consultas canceladas aparecem aqui.' },
+  },
 ]
 
 /**
@@ -434,7 +452,9 @@ export default function AgendaConsultas() {
               {dadosLista && (
                 <div className="animate-entrar">
                   {dadosLista.itens.length === 0 ? (
-                    <EstadoVazio icone={CalendarDays}>{selecionada.vazio}</EstadoVazio>
+                    <EstadoVazio icone={CalendarDays} titulo={selecionada.vazio.titulo}>
+                      {selecionada.vazio.frase}
+                    </EstadoVazio>
                   ) : (
                     <ul className={ui.lista}>
                       {dadosLista.itens.map((agendamento) => (
@@ -508,8 +528,8 @@ function ModalCompromissosDia({ dia, aberto, hoje, agendamentos, aoFechar, aoAlt
 
         <div className={agendaEstilos.modalCorpo}>
           {agendamentos.length === 0 ? (
-            <EstadoVazio icone={CalendarDays}>
-              {ehHoje ? 'Nenhum compromisso agendado para hoje.' : 'Nenhum compromisso agendado para este dia.'}
+            <EstadoVazio icone={CalendarDays} titulo={ehHoje ? 'Nenhum compromisso hoje' : 'Nenhum compromisso neste dia'}>
+              {podeAgendar && 'Use "Agendar neste dia" para marcar uma consulta.'}
             </EstadoVazio>
           ) : (
             <ul className={ui.lista}>

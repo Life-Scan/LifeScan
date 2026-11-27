@@ -42,14 +42,17 @@ export default function Acompanhamentos() {
       <ErroCarregamento erro={erro} />
       {carregando && !acompanhamentos && <EsqueletoLista avatar texto="Carregando acompanhamentos…" />}
       {acompanhamentos?.length === 0 && (
-        <EstadoVazio icone={Route}>
+        <EstadoVazio
+          icone={Route}
+          titulo={ehMedico ? 'Nenhum acompanhamento aberto' : ehParceiro ? 'Nenhum paciente atribuído' : 'Nenhum acompanhamento ainda'}
+        >
           {ehMedico ? (
             <>
-              Nenhum acompanhamento aberto. Cadastre um paciente no <Link to="/painel">Painel</Link> e abra o
-              acompanhamento dele em <Link to="/pacientes">Pacientes</Link>.
+              Cadastre um paciente no <Link to="/painel">Painel</Link> e abra o acompanhamento dele em &quot;Novo
+              acompanhamento&quot;.
             </>
           ) : ehParceiro ? (
-            'Nenhum paciente atribuído a você no momento.'
+            'Quando um médico atribuir você a um tratamento, o paciente aparece aqui.'
           ) : (
             'Seu médico ainda não abriu um acompanhamento para você.'
           )}

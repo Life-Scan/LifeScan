@@ -47,7 +47,9 @@ export default function AbaConsultas({ consultas, acompanhamento, ehMedico, edit
       )}
 
       {consultas.length === 0 ? (
-        <EstadoVazio icone={Stethoscope}>Nenhuma consulta registrada.</EstadoVazio>
+        <EstadoVazio icone={Stethoscope} titulo="Nenhuma consulta registrada">
+          As consultas e os retornos aparecem aqui, com as prescrições de cada um.
+        </EstadoVazio>
       ) : (
         <ul className={ui.lista}>
           {consultas.map((consulta) => (

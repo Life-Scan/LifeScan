@@ -198,7 +198,8 @@ export function Alerta({ tipo = 'info', children }) {
   if (!children) return null
   const Icone = ICONES_ALERTA[tipo]
   return (
-    <div className={`${ALERTA} ${ALERTAS[tipo]}`} role={tipo === 'erro' ? 'alert' : 'status'}>
+    // Entra com fade + 4px (animate-entrar) quando a mensagem aparece
+    <div className={`${ALERTA} ${ALERTAS[tipo]} animate-entrar`} role={tipo === 'erro' ? 'alert' : 'status'}>
       <Icone size={17} aria-hidden="true" />
       <div>{children}</div>
     </div>
@@ -293,11 +294,21 @@ export function EsqueletoFormulario({ campos = 3, texto = 'Carregando…' }) {
   )
 }
 
-export function EstadoVazio({ icone: Icone = Inbox, children }) {
+/**
+ * Lista ou seção sem conteúdo (DESIGN.md, item 7): ícone num círculo, título curto, uma frase dizendo o
+ * que vai aparecer ali e, quando a ação que preenche a lista não estiver à vista, o botão dela (`acao`,
+ * já pronto). `tituloComo` troca a tag do título (ex.: "h1" na página não encontrada).
+ */
+export function EstadoVazio({ titulo, acao, children, ...opcoes }) {
+  const { icone: Icone = Inbox, tituloComo: Titulo = 'p' } = opcoes
   return (
-    <div className="grid justify-items-center gap-2 text-center px-4 py-7 text-texto-suave text-[0.92rem] bg-superficie-suave rounded-raio-pequeno [&_svg]:text-icone-apagado">
-      <Icone size={26} strokeWidth={1.5} aria-hidden="true" />
-      <div>{children}</div>
+    <div className="grid justify-items-center gap-[0.35rem] rounded-raio-pequeno bg-superficie-suave px-4 py-8 text-center">
+      <span className="mb-[0.45rem] grid size-12 place-items-center rounded-full bg-primaria-clara text-primaria" aria-hidden="true">
+        <Icone size={22} strokeWidth={1.75} />
+      </span>
+      {titulo && <Titulo className="text-[1rem] leading-[1.35] font-semibold text-texto">{titulo}</Titulo>}
+      {children && <div className="max-w-[48ch] text-[0.9rem] text-texto-suave">{children}</div>}
+      {acao && <div className="mt-[0.65rem]">{acao}</div>}
     </div>
   )
 }

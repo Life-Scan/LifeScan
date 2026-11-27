@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
 import { criarAcompanhamento, listarContas } from '../api/servicos'
+import { UserPlus, Users } from 'lucide-react'
+
 import { Alerta, EsqueletoFormulario, EstadoVazio, estilos as ui } from '../components/ui'
 import { estilos } from './estilosPaginas'
 
@@ -65,9 +67,17 @@ export default function NovoAcompanhamento() {
       <section className={ui.cartao} style={{ maxWidth: 640 }}>
         {disponiveis === null && <EsqueletoFormulario texto="Carregando pacientes…" />}
         {disponiveis?.length === 0 && !erro && (
-          <EstadoVazio>
-            Todos os seus pacientes já têm acompanhamento, ou você ainda não cadastrou nenhum.{' '}
-            <Link to="/painel">Cadastrar paciente no painel</Link>
+          <EstadoVazio
+            icone={Users}
+            titulo="Nenhum paciente disponível"
+            acao={
+              <Link to="/painel" className={ui.botao}>
+                <UserPlus size={16} aria-hidden="true" />
+                Cadastrar paciente no Painel
+              </Link>
+            }
+          >
+            Todos os seus pacientes já têm acompanhamento, ou você ainda não cadastrou nenhum.
           </EstadoVazio>
         )}
         {disponiveis?.length > 0 && (
