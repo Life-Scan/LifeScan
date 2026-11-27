@@ -44,6 +44,12 @@ class Configuracoes(BaseSettings):
 
     # Endereço do frontend, usado nos links dos emails
     url_frontend: str = Field("http://localhost:5173", validation_alias="FRONTEND_URL")
+    # Arquivo com os limiares do componente de IA (relativo à raiz do repositório).
+    # O backend apenas lê o resultado da calibração; o modelo não é treinado em execução.
+    caminho_limiares_ia_texto: str = Field(
+        "ai-model/models/limiares.json", validation_alias="AI_LIMIARES_PATH"
+    )
+
     # Validade da senha provisória de uma conta nova e da enviada pelo "esqueci minha senha"
     dias_senha_provisoria: int = Field(7, validation_alias="ACCESS_PASSWORD_DAYS")
     minutos_redefinicao_senha: int = Field(60, validation_alias="RESET_PASSWORD_MINUTES")
@@ -75,6 +81,12 @@ class Configuracoes(BaseSettings):
     @property
     def tamanho_maximo_upload_bytes(self) -> int:
         return self.tamanho_maximo_upload_mb * 1024 * 1024
+
+    @property
+    def caminho_limiares_ia(self) -> Path:
+        """Arquivo de limiares da IA; caminhos relativos partem da raiz do repositório."""
+        caminho = Path(self.caminho_limiares_ia_texto)
+        return caminho if caminho.is_absolute() else PASTA_BACKEND.parent / caminho
 
 
 @lru_cache
