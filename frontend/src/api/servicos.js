@@ -63,6 +63,16 @@ export function enviarDocumento(acompanhamentoId, { titulo, categoria, arquivo, 
   if (solicitacaoId) formulario.append('solicitacao_id', solicitacaoId)
   return dados(api.post(`/follow-ups/${acompanhamentoId}/documents`, formulario))
 }
+/**
+ * Componente de IA (docs/ia-legibilidade.md): avalia se a foto de um documento está legível antes do
+ * envio. Devolve { legivel, classe, motivo, confianca, indicadores }. O resultado só orienta: o envio
+ * nunca depende dele.
+ */
+export function verificarQualidade(arquivo) {
+  const formulario = new FormData()
+  formulario.append('arquivo', arquivo)
+  return dados(api.post('/ai/verificar-qualidade', formulario))
+}
 export const revisarDocumento = (id, observacao) =>
   dados(api.patch(`/documents/${id}/review`, { observacao_revisao: observacao }))
 

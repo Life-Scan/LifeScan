@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { textoDeDocx, urlDaPrimeiraPaginaDePdf } from '../utils/previaDocumentos'
 import { mensagemDeErro } from '../api/cliente'
-import { obterArquivo } from '../api/servicos'
+import { obterArquivo, verificarQualidade } from '../api/servicos'
 import {
   ACCEPT_ARQUIVOS,
   EXTENSOES_PERMITIDAS,
@@ -175,9 +175,41 @@ export function ErroCarregamento({ erro }) {
  * Seletor de arquivo com validação imediata de extensão e tamanho (RNF01).
  * Chama onChange(arquivo | null) apenas com arquivos válidos.
  */
+/**
+ * Legibilidade da imagem escolhida, pelo componente de IA (docs/ia-legibilidade.md). Só para image/*:
+ * PDF, DOCX e TXT não passam pela IA. O resultado fica guardado junto do arquivo a que se refere, então
+ * uma resposta atrasada de uma foto já trocada nunca aparece. Falha da API não mostra nada.
+ */
+function useQualidadeDaFoto(arquivo) {
+  const [verificacao, setVerificacao] = useState({ arquivo: null, resultado: null })
+  const ehImagem = Boolean(arquivo?.type?.startsWith('image/'))
+
+  useEffect(() => {
+    if (!ehImagem) return undefined
+    let ativo = true
+    verificarQualidade(arquivo)
+      .then((resultado) => {
+        if (ativo) setVerificacao({ arquivo, resultado })
+      })
+      // Falhou (rede, 415, 503): fica sem aviso; o envio segue normal
+      .catch(() => {
+        if (ativo) setVerificacao({ arquivo, resultado: null })
+      })
+    return () => {
+      ativo = false
+    }
+  }, [arquivo, ehImagem])
+
+  if (!ehImagem) return { verificando: false, resultado: null }
+  const doArquivoAtual = verificacao.arquivo === arquivo
+  return { verificando: !doArquivoAtual, resultado: doArquivoAtual ? verificacao.resultado : null }
+}
+
 export function CampoArquivo({ id, rotulo = 'Arquivo', arquivo, onChange, obrigatorio = false }) {
   const [erro, setErro] = useState('')
   const entrada = useRef(null)
+  const qualidade = useQualidadeDaFoto(arquivo)
+  const resultado = qualidade.resultado
 
   function aoEscolher(evento) {
     const escolhido = evento.target.files?.[0] ?? null
@@ -221,6 +253,17 @@ export function CampoArquivo({ id, rotulo = 'Arquivo', arquivo, onChange, obriga
             </button>
           </span>
           <MiniaturaEscolhida arquivo={arquivo} />
+          {qualidade.verificando && (
+            <span className={estilos.ajuda} role="status">
+              Verificando a qualidade da foto…
+            </span>
+          )}
+          {/* O aviso só orienta: "alerta" (amarelo), não "erro", porque o envio continua liberado */}
+          {resultado && !resultado.legivel && (
+            <Alerta tipo="alerta">{resultado.motivo} Se preferir, você pode enviar assim mesmo.</Alerta>
+          )}
+          {/* Legível, mas com dica (ex.: documento inclinado) */}
+          {resultado?.legivel && resultado.motivo && <Alerta tipo="info">{resultado.motivo}</Alerta>}
         </>
       ) : (
         <span className={estilos.ajuda}>
