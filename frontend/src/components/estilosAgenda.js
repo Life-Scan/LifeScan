@@ -21,7 +21,7 @@ export const agendaEstilos = {
   alternadorModo: 'inline-flex gap-[0.15rem] rounded-raio-pequeno border border-borda bg-superficie-suave p-[0.2rem]',
   // O hover muda a cor do texto também no botão ativo (como no CSS original)
   botaoModo: `${BOTAO_MODO} bg-transparent text-texto-suave`,
-  botaoModoAtivo: `${BOTAO_MODO} bg-superficie text-primaria-escura shadow-[0_1px_2px_rgb(16_24_40/8%)]`,
+  botaoModoAtivo: `${BOTAO_MODO} bg-superficie text-primaria-escura shadow-sombra`,
 
   // Barra de navegação do calendário
   calendarioTopo: 'mb-[0.9rem] flex flex-wrap items-center justify-between gap-3',
@@ -61,7 +61,7 @@ export const agendaEstilos = {
   // Modal de compromissos do dia
   modalDia:
     'max-h-[calc(100vh-2rem)] w-[min(680px,calc(100vw-2rem))] rounded-raio border-0 bg-superficie p-0 text-texto ' +
-    'shadow-sombra-elevada backdrop:bg-[rgb(15_23_32/50%)]',
+    'shadow-sombra-elevada backdrop:bg-veu',
   modalConteudo: 'flex max-h-[calc(100vh-2rem)] flex-col',
   modalCabecalho: 'flex items-start justify-between gap-4 border-b border-borda px-[1.35rem] py-[1.15rem]',
   modalSubtitulo: 'mt-[0.2rem] text-[0.88rem] text-texto-suave capitalize',
@@ -84,10 +84,10 @@ const CELULA =
  */
 export function classesCelulaDia({ foraMes, temEventos, ehHoje }) {
   const borda = ehHoje
-    ? 'border-2 border-primaria shadow-[0_0_0_2px_rgb(15_118_110/12%)]'
-    : `border ${temEventos ? 'border-[#b7dfd7]' : 'border-borda'}`
+    ? 'border-2 border-primaria shadow-[0_0_0_2px_var(--cor-primaria-anel)]'
+    : `border ${temEventos ? 'border-primaria-borda' : 'border-borda'}`
   const fundo = temEventos
-    ? 'bg-[#f4fbf9] hover:bg-primaria-clara'
+    ? 'bg-primaria-suave hover:bg-primaria-clara'
     : `${foraMes ? 'bg-superficie-suave' : 'bg-superficie'} hover:bg-superficie-suave`
   return `${CELULA} ${borda} ${fundo} ${foraMes ? 'text-texto-suave opacity-65' : ''}`
 }

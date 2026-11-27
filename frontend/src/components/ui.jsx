@@ -45,7 +45,7 @@ export const estilos = {
   botao: `${BOTAO} border-primaria bg-primaria text-white hover:not-disabled:bg-primaria-escura hover:not-disabled:border-primaria-escura`,
   botaoSecundario: `${BOTAO} border-borda-forte bg-superficie text-texto hover:not-disabled:bg-superficie-suave hover:not-disabled:border-texto-suave`,
   botaoPerigo: `${BOTAO} border-borda-forte bg-superficie text-perigo hover:not-disabled:bg-perigo-clara hover:not-disabled:border-perigo`,
-  botaoPerigoSolido: `${BOTAO} border-perigo bg-perigo text-white hover:not-disabled:bg-[#8f1c13] hover:not-disabled:border-[#8f1c13]`,
+  botaoPerigoSolido: `${BOTAO} border-perigo bg-perigo text-white hover:not-disabled:bg-perigo-escura hover:not-disabled:border-perigo-escura`,
   // leading repetido: o cn() descarta o leading do botão quando um text-[tamanho] vem depois
   botaoPequeno: 'px-[0.7rem] py-[0.32rem] text-[0.84rem] leading-[1.3] gap-[0.35rem]',
   botaoLink:
@@ -61,7 +61,7 @@ export const estilos = {
 
   lista: 'list-none m-0 p-0 grid gap-[0.6rem]',
   itemLista: `${ITEM_LISTA} border border-borda bg-superficie`,
-  itemListaDestaque: `${ITEM_LISTA} border border-[#f3c0ba] border-l-3 border-l-perigo bg-[#fff8f7]`,
+  itemListaDestaque: `${ITEM_LISTA} border border-perigo-borda-suave border-l-3 border-l-perigo bg-perigo-suave`,
   cabecalhoItem: 'flex justify-between items-start gap-3 flex-wrap',
 
   campoArquivo: 'grid gap-[0.35rem]',
@@ -79,7 +79,7 @@ export const estilos = {
 
   dialogo:
     'w-[min(440px,calc(100vw-2rem))] p-0 border-0 rounded-raio bg-superficie text-texto shadow-sombra-elevada ' +
-    'backdrop:bg-[rgb(15_23_32/45%)]',
+    'backdrop:bg-veu',
   dialogoConteudo: 'grid gap-[0.6rem] p-[1.4rem]',
   dialogoMensagem: 'text-texto-suave',
   dialogoAcoes: 'flex justify-end gap-2 flex-wrap mt-3',
@@ -102,10 +102,10 @@ const ETIQUETAS = {
 }
 
 const ALERTAS = {
-  erro: 'bg-perigo-clara text-perigo border-[#f5c2bc]',
-  sucesso: 'bg-sucesso-clara text-sucesso border-[#b9e2c5]',
-  info: 'bg-info-clara text-info border-[#bcd5f2]',
-  alerta: 'bg-alerta-clara text-alerta border-[#f0d68f]',
+  erro: 'bg-perigo-clara text-perigo border-perigo-borda',
+  sucesso: 'bg-sucesso-clara text-sucesso border-sucesso-borda',
+  info: 'bg-info-clara text-info border-info-borda',
+  alerta: 'bg-alerta-clara text-alerta border-alerta-borda',
 }
 
 const AVATARES = {
@@ -158,7 +158,7 @@ export function Carregando({ texto = 'Carregando…' }) {
 
 export function EstadoVazio({ icone: Icone = Inbox, children }) {
   return (
-    <div className="grid justify-items-center gap-2 text-center px-4 py-7 text-texto-suave text-[0.92rem] bg-superficie-suave rounded-raio-pequeno [&_svg]:text-[#9aa7b3]">
+    <div className="grid justify-items-center gap-2 text-center px-4 py-7 text-texto-suave text-[0.92rem] bg-superficie-suave rounded-raio-pequeno [&_svg]:text-icone-apagado">
       <Icone size={26} strokeWidth={1.5} aria-hidden="true" />
       <div>{children}</div>
     </div>

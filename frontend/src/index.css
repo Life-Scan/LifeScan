@@ -29,30 +29,66 @@
 /* Estilos globais e variáveis de tema. Os componentes usam CSS Modules ou classes do Tailwind. */
 
 :root {
-  --cor-fundo: #f3f5f7;
+  /* Fundo e bordas com o mesmo tom esverdeado do fundo do login. */
+  --cor-fundo: #edf3f1;
   --cor-superficie: #ffffff;
   --cor-superficie-suave: #f7f9fa;
-  --cor-borda: #e2e7eb;
+  --cor-borda: #dfe8e4;
   --cor-borda-forte: #cfd6dc;
   --cor-texto: #17212b;
   --cor-texto-suave: #5d6b78;
+  --cor-texto-apagado: #94a0ab; /* placeholder */
+  --cor-icone-apagado: #9aa7b3; /* ícone do estado vazio */
+  --cor-veu: rgb(15 23 32 / 45%); /* fundo atrás dos diálogos */
 
   --cor-primaria: #0f766e;
   --cor-primaria-escura: #0b5d57;
   --cor-primaria-clara: #e2f3f0;
+  --cor-primaria-suave: #f4fbf9; /* dia com compromissos no calendário */
+  --cor-primaria-borda: #b7dfd7;
+  --cor-primaria-anel: rgb(15 118 110 / 12%);
 
+  /* Estados: forte (texto e ícone), -clara (fundo) e -borda (contorno dos alertas). */
   --cor-perigo: #b42318;
+  --cor-perigo-escura: #8f1c13;
   --cor-perigo-clara: #fdecea;
+  --cor-perigo-suave: #fff8f7; /* fundo do item de lista em destaque */
+  --cor-perigo-borda: #f5c2bc;
+  --cor-perigo-borda-suave: #f3c0ba;
   --cor-alerta: #93610a;
   --cor-alerta-clara: #fff3d4;
+  --cor-alerta-borda: #f0d68f;
   --cor-sucesso: #1a7340;
   --cor-sucesso-clara: #e3f4e9;
+  --cor-sucesso-borda: #b9e2c5;
   --cor-info: #1d5fa8;
   --cor-info-clara: #e5effb;
+  --cor-info-borda: #bcd5f2;
+
+  /* Cor por tipo de informação (DESIGN.md, item 5). Não substitui a cor do estado. */
+  --cor-consulta: var(--cor-primaria);
+  --cor-consulta-clara: var(--cor-primaria-clara);
+  --cor-solicitacao: var(--cor-alerta);
+  --cor-solicitacao-clara: var(--cor-alerta-clara);
+  --cor-documento: var(--cor-info);
+  --cor-documento-clara: var(--cor-info-clara);
+
+  /* Menu lateral escuro (DESIGN.md, item 1): o fundo da apresentação do login. */
+  --cor-menu: #0b514d;
+  --gradiente-menu: radial-gradient(ellipse at 0% 100%, #218c7b 0, transparent 60%);
+  --cor-menu-texto: #c4e0da;
+  --cor-menu-texto-forte: #ffffff;
+  --cor-menu-destaque: #a7e3cc; /* barra do link ativo */
+  --cor-menu-hover: rgb(255 255 255 / 8%);
+  --cor-menu-ativo: rgb(255 255 255 / 14%);
+  --cor-menu-borda: rgb(255 255 255 / 15%);
 
   --raio: 12px;
   --raio-pequeno: 8px;
-  --sombra: 0 1px 2px rgb(16 24 40 / 5%);
+  --raio-grande: 20px;
+  /* Sombras com o tom do verde da marca, não cinza. */
+  --sombra: 0 1px 2px rgb(11 81 77 / 6%), 0 4px 12px rgb(11 81 77 / 4%);
+  --sombra-hover: 0 2px 4px rgb(11 81 77 / 8%), 0 12px 28px rgb(11 81 77 / 10%);
   --sombra-elevada: 0 12px 32px rgb(16 24 40 / 18%);
 
   --largura-menu: 248px;
@@ -197,7 +233,7 @@
 
   input:where(:not([data-slot]))::placeholder,
   textarea:where(:not([data-slot]))::placeholder {
-    color: #94a0ab;
+    color: var(--cor-texto-apagado);
   }
 
   select:disabled:where(:not([data-slot])),
@@ -277,17 +313,45 @@
   --color-primaria: var(--cor-primaria);
   --color-primaria-escura: var(--cor-primaria-escura);
   --color-primaria-clara: var(--cor-primaria-clara);
+  --color-primaria-suave: var(--cor-primaria-suave);
+  --color-primaria-borda: var(--cor-primaria-borda);
+  --color-primaria-anel: var(--cor-primaria-anel);
+  --color-texto-apagado: var(--cor-texto-apagado);
+  --color-icone-apagado: var(--cor-icone-apagado);
+  --color-veu: var(--cor-veu);
   --color-perigo: var(--cor-perigo);
+  --color-perigo-escura: var(--cor-perigo-escura);
   --color-perigo-clara: var(--cor-perigo-clara);
+  --color-perigo-suave: var(--cor-perigo-suave);
+  --color-perigo-borda: var(--cor-perigo-borda);
+  --color-perigo-borda-suave: var(--cor-perigo-borda-suave);
   --color-alerta: var(--cor-alerta);
   --color-alerta-clara: var(--cor-alerta-clara);
+  --color-alerta-borda: var(--cor-alerta-borda);
   --color-sucesso: var(--cor-sucesso);
   --color-sucesso-clara: var(--cor-sucesso-clara);
+  --color-sucesso-borda: var(--cor-sucesso-borda);
   --color-info: var(--cor-info);
   --color-info-clara: var(--cor-info-clara);
+  --color-info-borda: var(--cor-info-borda);
+  --color-consulta: var(--cor-consulta);
+  --color-consulta-clara: var(--cor-consulta-clara);
+  --color-solicitacao: var(--cor-solicitacao);
+  --color-solicitacao-clara: var(--cor-solicitacao-clara);
+  --color-documento: var(--cor-documento);
+  --color-documento-clara: var(--cor-documento-clara);
+  --color-menu: var(--cor-menu);
+  --color-menu-texto: var(--cor-menu-texto);
+  --color-menu-texto-forte: var(--cor-menu-texto-forte);
+  --color-menu-destaque: var(--cor-menu-destaque);
+  --color-menu-hover: var(--cor-menu-hover);
+  --color-menu-ativo: var(--cor-menu-ativo);
+  --color-menu-borda: var(--cor-menu-borda);
   --radius-raio: var(--raio);
   --radius-raio-pequeno: var(--raio-pequeno);
+  --radius-raio-grande: var(--raio-grande);
   --shadow-sombra: var(--sombra);
+  --shadow-sombra-hover: var(--sombra-hover);
   --shadow-sombra-elevada: var(--sombra-elevada);
 
   --color-background: var(--background);
