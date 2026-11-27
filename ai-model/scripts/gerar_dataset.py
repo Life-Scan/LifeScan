@@ -9,6 +9,8 @@ fotos reais, este script:
    - ``boa``: praticamente sem degradação;
    - ``borrada``: desfoque gaussiano de raio variável;
    - ``iluminacao``: sub ou superexposição (foto escura ou estourada);
+   - ``baixa_resolucao``: imagem pequena ou documento distante em fundo claro;
+   - ``torta``: página inclinada entre 10° e 25°, em ambos os sentidos;
 3. divide 70% para calibração e 30% para teste, por classe;
 4. grava tudo em ``datasets/fotos`` e o índice em ``datasets/rotulos.csv``.
 
@@ -38,7 +40,7 @@ ARQUIVO_ROTULOS = RAIZ / "datasets" / "rotulos.csv"
 POR_CLASSE = 40
 PROPORCAO_TREINO = 0.7
 LARGURA, ALTURA = 900, 1200
-CLASSES = ("boa", "borrada", "iluminacao")
+CLASSES = ("boa", "borrada", "iluminacao", "baixa_resolucao", "torta")
 
 
 def pagina_de_documento(rng: random.Random) -> Image.Image:
@@ -102,6 +104,20 @@ def degradar(pagina: Image.Image, classe: str, rng: random.Random) -> Image.Imag
             fator_brilho = rng.uniform(1.45, 1.90)  # foto estourada
         foto = ImageEnhance.Brightness(pagina).enhance(fator_brilho)
         return ImageEnhance.Contrast(foto).enhance(rng.uniform(0.65, 0.95))
+
+    if classe == "baixa_resolucao":
+        if rng.random() < 0.5:
+            return pagina.resize((300, 400), Image.Resampling.LANCZOS)
+
+        # Fundo claro evita confundir distância com iluminação insuficiente.
+        fundo = Image.new("RGB", (1600, 2133), (205, 205, 205))
+        reduzida = pagina.resize((560, 747), Image.Resampling.LANCZOS).convert("RGB")
+        fundo.paste(reduzida, ((1600 - 560) // 2, (2133 - 747) // 2))
+        return fundo
+
+    if classe == "torta":
+        angulo = rng.uniform(10, 25) * rng.choice([-1, 1])
+        return pagina.rotate(angulo, resample=Image.Resampling.BICUBIC, fillcolor=205)
 
     # "boa": variação leve de brilho/contraste, como uma foto bem tirada
     # (sem estourar o branco, para não se confundir com a classe "iluminacao")
