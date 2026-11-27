@@ -12,23 +12,33 @@ const ContextoConfirmacao = createContext(null)
  *   if (!(await confirmar({ titulo, mensagem, rotuloConfirmar, perigo }))) return
  */
 export function ProvedorConfirmacao({ children }) {
+  // O pedido continua montado depois de respondido: a janela sai animada (.dialogo-animado) com o
+  // mesmo texto. `aberto` diz se ela está na tela; `id` remonta o <dialog> a cada pedido novo.
   const [pedido, setPedido] = useState(null)
+  const [aberto, setAberto] = useState(false)
+  const proximoId = useRef(0)
   const dialogo = useRef(null)
 
   const confirmar = useCallback(
-    (opcoes) => new Promise((resolver) => setPedido({ ...opcoes, resolver })),
+    (opcoes) =>
+      new Promise((resolver) => {
+        proximoId.current += 1
+        setPedido({ ...opcoes, resolver, id: proximoId.current })
+        setAberto(true)
+      }),
     [],
   )
 
   // showModal() cuida do foco, da tecla Esc e de bloquear o resto da página
   useEffect(() => {
-    if (pedido && !dialogo.current?.open) dialogo.current?.showModal()
-  }, [pedido])
+    if (aberto && !dialogo.current?.open) dialogo.current?.showModal()
+  }, [aberto, pedido])
 
   function responder(resposta) {
+    if (!aberto) return
     pedido.resolver(resposta)
     dialogo.current?.close()
-    setPedido(null)
+    setAberto(false)
   }
 
   return (
@@ -36,6 +46,7 @@ export function ProvedorConfirmacao({ children }) {
       {children}
       {pedido && (
         <dialog
+          key={pedido.id}
           ref={dialogo}
           className={estilos.dialogo}
           aria-labelledby="confirmacao-titulo"

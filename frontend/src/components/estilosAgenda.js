@@ -61,7 +61,7 @@ export const agendaEstilos = {
   // Modal de compromissos do dia
   modalDia:
     'max-h-[calc(100vh-2rem)] w-[min(680px,calc(100vw-2rem))] rounded-raio border-0 bg-superficie p-0 text-texto ' +
-    'shadow-sombra-elevada backdrop:bg-veu',
+    'shadow-sombra-elevada dialogo-animado',
   modalConteudo: 'flex max-h-[calc(100vh-2rem)] flex-col',
   modalCabecalho: 'flex items-start justify-between gap-4 border-b border-borda px-[1.35rem] py-[1.15rem]',
   modalSubtitulo: 'mt-[0.2rem] text-[0.88rem] text-texto-suave capitalize',

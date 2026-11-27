@@ -112,7 +112,7 @@ export const estilos = {
 
   dialogo:
     'w-[min(440px,calc(100vw-2rem))] p-0 border-0 rounded-raio bg-superficie text-texto shadow-sombra-elevada ' +
-    'backdrop:bg-veu',
+    'dialogo-animado',
   dialogoConteudo: 'grid gap-[0.6rem] p-[1.4rem]',
   dialogoMensagem: 'text-texto-suave',
   dialogoAcoes: 'flex justify-end gap-2 flex-wrap mt-3',
