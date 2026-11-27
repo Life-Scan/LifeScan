@@ -1,8 +1,8 @@
 import { FileText, Pencil, Upload } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
-import { enviarDocumento, revisarDocumento } from '../../api/servicos'
+import { enviarDocumento, revisarDocumento, verificarQualidade } from '../../api/servicos'
 import { Alerta, Anexo, CampoArquivo, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
 import { cn } from '@/lib/utils'
 import {
@@ -219,6 +219,29 @@ function FormularioDocumento({
   const [arquivo, setArquivo] = useState(null)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [qualidade, setQualidade] = useState(null)
+  const [verificando, setVerificando] = useState(false)
+  const ultimaVerificacao = useRef(0)
+
+  /** Consulta o componente de IA assim que a foto é escolhida; o aviso é orientativo. */
+  async function aoEscolherArquivo(escolhido) {
+    setArquivo(escolhido)
+    setQualidade(null)
+    const identificador = ++ultimaVerificacao.current
+    if (!escolhido?.type?.startsWith('image/')) {
+      setVerificando(false)
+      return
+    }
+    setVerificando(true)
+    try {
+      const resultado = await verificarQualidade(escolhido)
+      if (identificador === ultimaVerificacao.current) setQualidade(resultado)
+    } catch {
+      // Falha na verificação não impede o envio: o recurso é um apoio, não uma barreira.
+    } finally {
+      if (identificador === ultimaVerificacao.current) setVerificando(false)
+    }
+  }
 
   async function aoEnviar(evento) {
     evento.preventDefault()
@@ -284,7 +307,16 @@ function FormularioDocumento({
           <p className={ui.ajuda}>A solicitação escolhida será marcada como atendida.</p>
         </div>
       )}
-      <CampoArquivo id="documento-arquivo" arquivo={arquivo} onChange={setArquivo} obrigatorio />
+      <CampoArquivo id="documento-arquivo" arquivo={arquivo} onChange={aoEscolherArquivo} obrigatorio />
+      {verificando && <p className={ui.ajuda}>Verificando a qualidade da foto…</p>}
+      {qualidade && !qualidade.legivel && (
+        <Alerta tipo="alerta">
+          {qualidade.motivo} Você ainda pode enviar, mas o documento pode ficar difícil de ler.
+        </Alerta>
+      )}
+      {qualidade?.legivel && qualidade.classe === 'torta' && (
+        <Alerta tipo="info">{qualidade.motivo}</Alerta>
+      )}
       <div className={ui.acoes}>
         <button type="submit" className={ui.botao} disabled={enviando || !arquivo}>
           {enviando ? 'Enviando…' : 'Enviar'}

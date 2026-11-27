@@ -66,6 +66,13 @@ export function enviarDocumento(acompanhamentoId, { titulo, categoria, arquivo, 
 export const revisarDocumento = (id, observacao) =>
   dados(api.patch(`/documents/${id}/review`, { observacao_revisao: observacao }))
 
+// Componente de IA: qualidade e legibilidade da foto antes do envio (aviso orientativo)
+export function verificarQualidade(arquivo) {
+  const formulario = new FormData()
+  formulario.append('arquivo', arquivo)
+  return dados(api.post('/ai/verificar-qualidade', formulario))
+}
+
 // Agenda de consultas (médico e colaboradores; o paciente só lista as próprias)
 export const listarAgendamentos = (parametros) => dados(api.get('/appointments', { params: parametros }))
 export const listarPacientesAgendaveis = (parametros) => dados(api.get('/appointments/patients', { params: parametros }))
