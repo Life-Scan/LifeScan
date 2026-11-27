@@ -25,7 +25,8 @@ import { formatarTamanho, iniciais } from '../utils/formatacao'
 const BOTAO =
   'inline-flex items-center justify-center gap-[0.45rem] px-4 py-[0.55rem] border rounded-raio-pequeno ' +
   'font-semibold text-[0.92rem] leading-[1.3] no-underline cursor-pointer whitespace-nowrap ' +
-  'transition-[background,border-color] duration-150 ease-[ease] disabled:opacity-55 disabled:cursor-not-allowed'
+  'transition-[background,border-color,scale] duration-150 ease-saida active:not-disabled:scale-[0.97] ' +
+  'disabled:opacity-55 disabled:cursor-not-allowed'
 
 const ITEM_LISTA = 'rounded-raio-pequeno px-4 py-[0.85rem]'
 

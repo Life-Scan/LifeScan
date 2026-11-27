@@ -119,7 +119,8 @@ export const estilos = {
   escolha:
     'm-0 grid max-w-[780px] grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-[0.6rem] border-0 p-0 ' +
     '[&_legend]:mb-[0.3rem] [&_legend]:p-0 [&_legend]:text-[0.9rem] [&_legend]:font-medium',
-  opcao: `${OPCAO} border-borda hover:border-primaria`,
+  // Clicável: sobe 1px com a sombra de hover; a selecionada fica parada
+  opcao: `${OPCAO} border-borda transition-[border-color,box-shadow,translate] duration-150 ease-saida hover:-translate-y-px hover:border-primaria hover:shadow-sombra-hover`,
   opcaoSelecionada: `${OPCAO} border-primaria bg-primaria-clara shadow-[0_0_0_1px_var(--cor-primaria)]`,
   opcaoRotulo: 'font-semibold',
   opcaoDescricao: 'text-[0.82rem] font-normal text-texto-suave',

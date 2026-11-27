@@ -151,14 +151,15 @@ function ConteudoAba({ aba, solicitacaoInicial, ...contexto }) {
       <ErroCarregamento erro={erro} />
       {erro && !dados && <button type="button" className={ui.botaoSecundario} onClick={atualizar}>Tentar novamente</button>}
       {carregando && !dados && <Carregando texto="Carregando esta seção…" />}
-      {dados && <>
+      {/* Aba, filtro e página zeram os dados: o conteúdo remonta e entra com fade + 4px. O polling não. */}
+      {dados && <div className="animate-entrar">
         {aba === 'anamnese' && <AbaAnamnese anamnese={dados.anamnese} {...propriedades} />}
         {aba === 'parceiros' && <AbaParceiros parceiros={dados.parceiros} {...propriedades} />}
         {aba === 'linha' && <AbaLinhaDoTempo eventos={dados.lista.itens} filtro={tipos} setFiltro={(valor) => mudarFiltro(setTipos, valor)} recentesPrimeiro={recentes} setRecentesPrimeiro={(valor) => mudarFiltro(setRecentes, valor)} {...propriedades} />}
         {aba === 'consultas' && <AbaConsultas consultas={dados.lista.itens} {...propriedades} />}
         {aba === 'solicitacoes' && <AbaSolicitacoes solicitacoes={dados.lista.itens} parceiros={dados.parceiros} {...propriedades} />}
         {aba === 'documentos' && <AbaDocumentos documentos={dados.lista.itens} solicitacoes={dados.solicitacoes} solicitacaoInicial={solicitacaoInicial} filtro={categoria} setFiltro={(valor) => mudarFiltro(setCategoria, valor)} {...propriedades} />}
-      </>}
+      </div>}
       <Paginacao dados={dados?.lista} aoMudar={setPagina} carregando={carregando} />
     </>
   )

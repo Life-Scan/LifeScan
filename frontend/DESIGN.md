@@ -160,6 +160,21 @@ lista atual continua para os outros dias e no celular.
   entrada de conteúdo (opacidade + `4px` de deslocamento). Tudo respeita
   `prefers-reduced-motion`.
 
+#### Movimento (implantado)
+
+- **Tokens** (`index.css`): `--duracao-rapida` (`150ms`), `--duracao-media` (`200ms`) e
+  `--curva-saida` (`cubic-bezier(0.23, 1, 0.32, 1)`, saída forte). No Tailwind: `ease-saida` para
+  transições e `animate-entrar` para conteúdo que entra (opacidade `0` → `1` e `translateY(4px)` → `0`,
+  `200ms`, `fill-mode: backwards`, então não sobra `transform` depois).
+- **Onde entra:** a página a cada troca de rota (`key={pathname}` no `Layout`; `?aba=` não conta), o
+  conteúdo da aba do acompanhamento (troca de aba, filtro e página), a lista da agenda (aba e página) e a
+  grade do calendário ao trocar de mês. O polling de 30s não repete a entrada: ele não zera os dados.
+- **Clique e hover:** botões (`ui.botao*`) encolhem para `0.97` enquanto pressionados (`150ms`). Cartões
+  clicáveis sobem `1px` no hover: resumos do Painel, células do calendário e opções de cadastro (estas
+  também ganham `--sombra-hover`). No Tailwind 4, `hover:` só vale em aparelho com mouse.
+- **Só `transform`/`translate`/`scale` e `opacity`.** Com `prefers-reduced-motion`, a regra global zera
+  as durações.
+
 ### Implantação
 
 | Item | Situação |
@@ -170,7 +185,7 @@ lista atual continua para os outros dias e no celular.
 | 4. Fundo e profundidade | Implantado (as variáveis dos itens 1 e 5 já existem em `index.css`) |
 | 5. Cor por tipo de informação | Implantado (resumos, itens de lista, título dos cartões e linha do tempo) |
 | 6. Agenda visual | Planejado |
-| 7. Acabamento | Planejado |
+| 7. Acabamento | Em andamento (movimento implantado; esqueleto e estados vazios planejados) |
 
 Ordem sugerida: 1 a 4 primeiro (mudam o sistema inteiro quase só com `index.css` e
 `Layout`), depois 5 a 7, tela por tela.
