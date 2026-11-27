@@ -169,6 +169,13 @@ lista atual continua para os outros dias e no celular.
     layout.
 - **Estados vazios:** ícone dentro de um círculo em `--cor-primaria-clara`, título curto e uma
   frase explicando o que vai aparecer ali; quando houver, botão para a ação que preenche a lista.
+  - **Implantado:** `<EstadoVazio icone titulo acao tituloComo>`. A frase é o `children`.
+  - **Botão (`acao`):** só quando a ação não está à vista. Nas abas do acompanhamento, ela já fica no
+    cabeçalho do cartão. Hoje há botão em "Novo acompanhamento" sem pacientes, na página não
+    encontrada e nas contas ativas vazias (os três levam ao Painel).
+  - **Filtro ou busca:** o vazio diz isso ("Nenhum documento nesta categoria", "Nenhum resultado para…")
+    e como sair dele.
+- **Feedback:** o `<Alerta>` entra com `animate-entrar` (fade + `4px`) quando a mensagem aparece.
 - **Transições:** `150ms` para hover e cor; `200ms` com `ease-out` para troca de aba e
   entrada de conteúdo (opacidade + `4px` de deslocamento). Tudo respeita
   `prefers-reduced-motion`.
@@ -198,7 +205,7 @@ lista atual continua para os outros dias e no celular.
 | 4. Fundo e profundidade | Implantado (as variáveis dos itens 1 e 5 já existem em `index.css`) |
 | 5. Cor por tipo de informação | Implantado (resumos, itens de lista, título dos cartões e linha do tempo) |
 | 6. Agenda visual | Planejado |
-| 7. Acabamento | Em andamento (movimento e esqueleto implantados; estados vazios planejados) |
+| 7. Acabamento | Implantado (movimento, esqueleto, estados vazios e entrada do alerta) |
 
 Ordem sugerida: 1 a 4 primeiro (mudam o sistema inteiro quase só com `index.css` e
 `Layout`), depois 5 a 7, tela por tela.
@@ -253,7 +260,6 @@ variáveis. Se faltar uma, crie a variável em `index.css` primeiro.
 | `--cor-texto` | `#17212b` | Texto principal |
 | `--cor-texto-suave` | `#5d6b78` | Metadados, ajuda, rótulos secundários |
 | `--cor-texto-apagado` | `#94a0ab` | Placeholder dos campos |
-| `--cor-icone-apagado` | `#9aa7b3` | Ícone do estado vazio |
 | `--cor-veu` | `rgb(15 23 32 / 45%)` | Fundo atrás dos diálogos (aplicado pela classe `.dialogo-animado`) |
 | `--cor-primaria` | `#0f766e` | Marca, botão principal, links, foco |
 | `--cor-primaria-escura` | `#0b5d57` | Hover do primário, texto sobre `--cor-primaria-clara` |
@@ -370,7 +376,7 @@ Tailwind, usadas como `className={ui.cartao}`). Não recrie essas peças em mód
 | `<Avatar tipo>` | `paciente`, `parceiro`, `colaborador`, `medico` | `grande` no cabeçalho do acompanhamento |
 | `<Carregando>` | | Spinner com texto; só na checagem de sessão |
 | `<EsqueletoLista>` / `<EsqueletoFormulario>` / `<BlocoEsqueleto>` | `itens`, `avatar`, `campos`, `texto`, `className` | Carregamento no formato do conteúdo |
-| `<EstadoVazio icone>` | | Lista sem itens: sempre explique o que aparece ali |
+| `<EstadoVazio icone titulo acao>` | `tituloComo` (ex.: `h1`) | Lista sem itens: título curto, frase sobre o que aparece ali e, se a ação não estiver à vista, o botão |
 | `<IconeTipo tipo>` | `consulta`, `solicitacao`, `documento`; ícone lucide (`size={16}`) como filho | Ao lado do título do cartão, com `ui.tituloComIcone` no `h2` |
 | `<ErroCarregamento erro>` | | Falha do polling, com a mensagem do backend |
 | `<CampoArquivo>` / `<Anexo>` | | Upload com validação (RNF01) e anexo com miniatura |

@@ -1,4 +1,5 @@
-import { ChevronDown, ChevronUp, MailCheck, Pencil, Search, Trash2, UserCheck, Users, UserX } from 'lucide-react'
+import { ChevronDown, ChevronUp, MailCheck, Pencil, Search, Trash2, UserCheck, UserPlus, Users, UserX } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 
 import { mensagemDeErro } from '../api/cliente'
@@ -55,8 +56,26 @@ function SecaoContas({ tipo }) {
   const titulo = TIPOS_CONTA[tipo].plural
   const plural = titulo.toLowerCase()
   const abas = [
-    { id: 'ativos', titulo, vazio: `Nenhum ${tipo} ativo. Crie uma conta ou reative um ${tipo} na aba ${titulo} desativados.` },
-    { id: 'desativados', titulo: `${titulo} desativados`, vazio: `Nenhum ${tipo} desativado.` },
+    {
+      id: 'ativos',
+      titulo,
+      vazio: {
+        titulo: `Nenhum ${tipo} ativo`,
+        frase: `Crie a conta no Painel ou reative um ${tipo} na aba ${titulo} desativados.`,
+        // A conta nova é criada no Painel ("Novo usuário"), fora desta tela
+        acao: (
+          <Link to="/painel" className={ui.botao}>
+            <UserPlus size={16} aria-hidden="true" />
+            Cadastrar no Painel
+          </Link>
+        ),
+      },
+    },
+    {
+      id: 'desativados',
+      titulo: `${titulo} desativados`,
+      vazio: { titulo: `Nenhum ${tipo} desativado`, frase: `Ao desativar um ${tipo}, ele aparece aqui e pode ser reativado.` },
+    },
   ]
   const selecionada = abas.find((item) => item.id === aba)
 
@@ -130,7 +149,17 @@ function SecaoContas({ tipo }) {
       <div role="tabpanel" id={`painel-${plural}`} aria-labelledby={`aba-${plural}-${aba}`} tabIndex={0} hidden={recolhida}>
         <ErroCarregamento erro={erro} />
         {carregando && !dados && <EsqueletoLista avatar texto={`Carregando ${plural}…`} />}
-        {dados && <ListaContas contas={dados.itens} vazio={busca ? `Nenhum ${tipo} ${aba === 'ativos' ? 'ativo' : 'desativado'} encontrado para “${busca}”.` : selecionada.vazio} aoAlterar={atualizar} />}
+        {dados && (
+          <ListaContas
+            contas={dados.itens}
+            vazio={
+              busca
+                ? { icone: Search, titulo: `Nenhum resultado para “${busca}”`, frase: 'Confira a grafia ou busque pelo e-mail.' }
+                : selecionada.vazio
+            }
+            aoAlterar={atualizar}
+          />
+        )}
         <Paginacao dados={dados} aoMudar={setPagina} carregando={carregando} />
       </div>
     </section>
@@ -138,7 +167,13 @@ function SecaoContas({ tipo }) {
 }
 
 function ListaContas({ contas, vazio, aoAlterar }) {
-  if (contas.length === 0) return <EstadoVazio icone={Users}>{vazio}</EstadoVazio>
+  if (contas.length === 0) {
+    return (
+      <EstadoVazio icone={vazio.icone ?? Users} titulo={vazio.titulo} acao={vazio.acao}>
+        {vazio.frase}
+      </EstadoVazio>
+    )
+  }
   return (
     <ul className={ui.lista}>
       {contas.map((conta) => <ItemConta key={conta.id} conta={conta} aoAlterar={aoAlterar} />)}

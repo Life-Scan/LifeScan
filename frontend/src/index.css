@@ -38,7 +38,6 @@
   --cor-texto: #17212b;
   --cor-texto-suave: #5d6b78;
   --cor-texto-apagado: #94a0ab; /* placeholder */
-  --cor-icone-apagado: #9aa7b3; /* ícone do estado vazio */
   --cor-veu: rgb(15 23 32 / 45%); /* fundo atrás dos diálogos */
   --cor-esqueleto: #e6eeeb; /* blocos do esqueleto de carregamento */
   --cor-esqueleto-brilho: rgb(255 255 255 / 70%);
@@ -444,7 +443,6 @@
   --color-primaria-borda: var(--cor-primaria-borda);
   --color-primaria-anel: var(--cor-primaria-anel);
   --color-texto-apagado: var(--cor-texto-apagado);
-  --color-icone-apagado: var(--cor-icone-apagado);
   --color-veu: var(--cor-veu);
   --color-perigo: var(--cor-perigo);
   --color-perigo-escura: var(--cor-perigo-escura);

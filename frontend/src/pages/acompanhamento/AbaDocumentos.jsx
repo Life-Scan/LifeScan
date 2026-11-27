@@ -101,9 +101,17 @@ export default function AbaDocumentos({
       )}
 
       {visiveis.length === 0 ? (
-        <EstadoVazio icone={FileText}>
-          {ehParceiro ? 'Você ainda não enviou documentos para este paciente.' : 'Nenhum documento enviado.'}
-        </EstadoVazio>
+        filtro ? (
+          <EstadoVazio icone={FileText} titulo="Nenhum documento nesta categoria">
+            Escolha &quot;Todos&quot; para ver os documentos das outras categorias.
+          </EstadoVazio>
+        ) : (
+          <EstadoVazio icone={FileText} titulo={ehParceiro ? 'Nenhum envio ainda' : 'Nenhum documento enviado'}>
+            {ehParceiro
+              ? 'Os documentos que você enviar para este paciente aparecem aqui.'
+              : 'Exames, laudos e outros arquivos enviados aparecem aqui para revisão.'}
+          </EstadoVazio>
+        )
       ) : (
         <ul className={ui.lista}>
           {visiveis.map((documento) => (

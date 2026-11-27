@@ -94,9 +94,15 @@ export default function AbaLinhaDoTempo({ eventos, acompanhamento, irParaAba, fi
       </div>
 
       {visiveis.length === 0 ? (
-        <EstadoVazio icone={History}>
-          {eventos.length === 0 ? 'Nada registrado nesta acompanhamento ainda.' : 'Nenhum evento deste tipo.'}
-        </EstadoVazio>
+        filtro.length === 0 ? (
+          <EstadoVazio icone={History} titulo="Nada registrado ainda">
+            Consultas, solicitações e documentos deste acompanhamento aparecem aqui, em ordem de data.
+          </EstadoVazio>
+        ) : (
+          <EstadoVazio icone={History} titulo="Nenhum evento deste tipo">
+            Escolha outro filtro ou &quot;Todos&quot;.
+          </EstadoVazio>
+        )
       ) : (
         <ol className={estilos.linhaDoTempo}>
           {visiveis.map((evento) => {

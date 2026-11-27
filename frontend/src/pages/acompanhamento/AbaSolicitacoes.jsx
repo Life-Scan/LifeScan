@@ -97,8 +97,10 @@ export default function AbaSolicitacoes({
       <Alerta tipo="erro">{erro}</Alerta>
 
       {ordenadas.length === 0 ? (
-        <EstadoVazio icone={ClipboardList}>
-          {ehParceiro ? 'O médico ainda não fez solicitações para você.' : 'Nenhuma solicitação neste acompanhamento.'}
+        <EstadoVazio icone={ClipboardList} titulo={ehParceiro ? 'Nenhuma solicitação para você' : 'Nenhuma solicitação'}>
+          {ehParceiro
+            ? 'Quando o médico pedir algo a você, o pedido aparece aqui, com o prazo.'
+            : 'Os pedidos feitos ao paciente e aos parceiros aparecem aqui, com o prazo.'}
         </EstadoVazio>
       ) : (
         <ul className={ui.lista}>

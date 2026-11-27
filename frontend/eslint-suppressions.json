@@ -19,9 +19,6 @@
     }
   },
   "src/components/ui.jsx": {
-    "no-unused-vars": {
-      "count": 1
-    },
     "react-refresh/only-export-components": {
       "count": 1
     }
