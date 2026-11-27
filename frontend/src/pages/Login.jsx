@@ -46,7 +46,7 @@ export default function Login() {
     <main className="grid min-h-svh place-items-center bg-[#edf3f1] p-10 ate-900:p-6 ate-680:block ate-680:bg-white ate-680:p-0">
       <div className="grid w-full max-w-[1120px] min-h-[710px] grid-cols-[1fr_1fr] overflow-hidden rounded-[28px] border border-[#dce7e2] shadow-[0_24px_80px_#183e3020] ate-680:min-h-svh ate-680:grid-cols-[1fr] ate-680:rounded-none ate-680:border-0 ate-680:shadow-none">
         <section
-          className="relative flex flex-col p-12 text-white [background:radial-gradient(ellipse_at_100%_100%,#218c7b_0,transparent_65%),#0b514d] ate-900:p-9 ate-680:px-7 ate-680:pt-[26px] ate-680:pb-[30px]"
+          className="relative flex flex-col p-12 text-white bg-menu [background-image:radial-gradient(ellipse_at_100%_100%,var(--cor-menu-luz)_0,transparent_65%)] ate-900:p-9 ate-680:px-7 ate-680:pt-[26px] ate-680:pb-[30px]"
           aria-labelledby="titulo-apresentacao"
         >
           <div className="flex items-center gap-3 text-[27px] font-[650] tracking-[-1px] ate-680:text-[24px]">
