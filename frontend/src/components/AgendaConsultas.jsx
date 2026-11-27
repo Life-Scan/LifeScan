@@ -41,7 +41,7 @@ import { estilos } from '../pages/estilosPaginas'
 import { useConfirmar } from './Confirmacao'
 import { agendaEstilos, classesCelulaDia } from './estilosAgenda'
 import Paginacao from './Paginacao'
-import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, estilos as ui } from './ui'
+import { Alerta, Avatar, Carregando, ErroCarregamento, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from './ui'
 
 const VARIANTES_STATUS = { agendada: 'info', realizada: 'sucesso', faltou: 'perigo', cancelada: 'neutra' }
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -233,7 +233,12 @@ export default function AgendaConsultas() {
 
       <section id="agenda" className={ui.cartao} aria-labelledby="titulo-agenda">
         <div className={ui.cartaoCabecalho}>
-          <h2 id="titulo-agenda">Agenda de consultas</h2>
+          <h2 id="titulo-agenda" className={ui.tituloComIcone}>
+            <IconeTipo tipo="consulta">
+              <CalendarDays size={16} />
+            </IconeTipo>
+            Agenda de consultas
+          </h2>
           <div className={agendaEstilos.cabecalhoControles}>
             <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={abrirCompromissosDeHoje}>
               <CalendarDays size={15} aria-hidden="true" />
@@ -705,7 +710,7 @@ function ItemAgendamento({ agendamento, aoAlterar }) {
   }
 
   return (
-    <li className={ui.itemLista}>
+    <li className={ui.itemListaConsulta}>
       <div className={ui.linhaComAcoes}>
         <div className={ui.pessoa}>
           <Avatar nome={paciente.nome} tipo="paciente" />

@@ -129,8 +129,10 @@ export const estilos = {
 }
 
 /** Cor do ícone do resumo do Painel: sempre colorido, para identificar o tipo mesmo com zero. */
+/** Cor do ícone do resumo pelo tipo (DESIGN.md, item 5). Vencida tem prioridade sobre o tipo. */
 export const tonsResumo = {
-  perigo: 'bg-perigo-clara text-perigo',
-  alerta: 'bg-alerta-clara text-alerta',
-  info: 'bg-info-clara text-info',
+  consulta: 'bg-consulta-clara text-consulta',
+  solicitacao: 'bg-solicitacao-clara text-solicitacao',
+  documento: 'bg-documento-clara text-documento',
+  vencida: 'bg-perigo-clara text-perigo',
 }

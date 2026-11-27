@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
 import { registrarConsulta } from '../../api/servicos'
-import { Alerta, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
+import { Alerta, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from '../../components/ui'
 import { cn } from '@/lib/utils'
 import {
   ROTULOS_TIPO_CONSULTA,
@@ -21,7 +21,12 @@ export default function AbaConsultas({ consultas, acompanhamento, ehMedico, edit
   return (
     <div className={estilos.pilha}>
       <div className={ui.cartaoCabecalho} style={{ marginBottom: 0 }}>
-        <h2>Consultas e retornos</h2>
+        <h2 className={ui.tituloComIcone}>
+          <IconeTipo tipo="consulta">
+            <Stethoscope size={16} />
+          </IconeTipo>
+          Consultas e retornos
+        </h2>
         {ehMedico && editavel && !formularioAberto && (
           <button type="button" className={ui.botao} onClick={() => setFormularioAberto(true)}>
             <Plus size={16} aria-hidden="true" />
@@ -46,7 +51,7 @@ export default function AbaConsultas({ consultas, acompanhamento, ehMedico, edit
       ) : (
         <ul className={ui.lista}>
           {consultas.map((consulta) => (
-            <li key={consulta.id} className={ui.itemLista}>
+            <li key={consulta.id} className={ui.itemListaConsulta}>
               <div className={ui.cabecalhoItem}>
                 <strong>{formatarDataHora(consulta.data)}</strong>
                 <Etiqueta variante={consulta.tipo === 'retorno' ? 'info' : 'primaria'}>
