@@ -3,9 +3,9 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
 import { criarAcompanhamento, listarContas } from '../api/servicos'
-import { UserPlus, Users } from 'lucide-react'
+import { ArrowLeft, UserPlus, Users } from 'lucide-react'
 
-import { Alerta, EsqueletoFormulario, EstadoVazio, estilos as ui } from '../components/ui'
+import { Alerta, EsqueletoFormulario, EstadoVazio, Faixa, estilos as ui } from '../components/ui'
 import { estilos } from './estilosPaginas'
 
 export default function NovoAcompanhamento() {
@@ -53,16 +53,21 @@ export default function NovoAcompanhamento() {
 
   return (
     <div className={estilos.pilha}>
-      <div className={estilos.cabecalho}>
-        <div>
-          {/* O sobretítulo é a área de cima: leva de volta à lista */}
-          <Link to="/acompanhamentos" className={ui.sobretituloLink}>
-            Acompanhamentos
-          </Link>
-          <h1>Novo acompanhamento</h1>
-          <p className={estilos.subtitulo}>Abra o acompanhamento de tratamento de um paciente cadastrado.</p>
+      <Faixa como="header" aria-labelledby="titulo-novo-acompanhamento">
+        <div className={estilos.faixaTopo}>
+          <div>
+            {/* O sobretítulo é a área de cima: leva de volta à lista, como no acompanhamento */}
+            <Link to="/acompanhamentos" className={ui.sobretituloFaixaLink}>
+              <ArrowLeft size={13} aria-hidden="true" />
+              Acompanhamentos
+            </Link>
+            <h1 id="titulo-novo-acompanhamento" className={estilos.tituloFaixa}>
+              Novo acompanhamento
+            </h1>
+            <p className={estilos.subtituloFaixa}>Abra o acompanhamento de tratamento de um paciente cadastrado.</p>
+          </div>
         </div>
-      </div>
+      </Faixa>
 
       <section className={ui.cartao} style={{ maxWidth: 640 }}>
         {disponiveis === null && <EsqueletoFormulario texto="Carregando pacientes…" />}

@@ -6,7 +6,7 @@ import { mensagemDeErro } from '../api/cliente'
 import { atualizarConta, excluirPaciente, obterPagina, reenviarAcesso } from '../api/servicos'
 import Paginacao from '../components/Paginacao'
 import { useConfirmar } from '../components/Confirmacao'
-import { Alerta, Avatar, ErroCarregamento, EsqueletoLista, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
+import { Alerta, Avatar, ErroCarregamento, EsqueletoLista, EstadoVazio, Etiqueta, Faixa, estilos as ui } from '../components/ui'
 import { cn } from '@/lib/utils'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import { TIPOS_CONTA, formatarData, formatarDataHora } from '../utils/formatacao'
@@ -18,15 +18,17 @@ export default function Usuarios({ tipo }) {
   const titulo = TIPOS_CONTA[tipo].plural
   return (
     <div className={estilos.pilha}>
-      <div className={estilos.cabecalho}>
-        <div>
-          <p className={ui.sobretitulo}>Cadastros</p>
-          <h1>{titulo}</h1>
-          <p className={estilos.subtitulo}>
-            Busque {titulo.toLowerCase()} e gerencie seus acessos.
-          </p>
+      <Faixa como="header" aria-labelledby="titulo-usuarios">
+        <div className={estilos.faixaTopo}>
+          <div>
+            <p className={ui.sobretituloFaixa}>Cadastros</p>
+            <h1 id="titulo-usuarios" className={estilos.tituloFaixa}>
+              {titulo}
+            </h1>
+            <p className={estilos.subtituloFaixa}>Busque {titulo.toLowerCase()} e gerencie seus acessos.</p>
+          </div>
         </div>
-      </div>
+      </Faixa>
 
       <SecaoContas key={tipo} tipo={tipo} />
     </div>

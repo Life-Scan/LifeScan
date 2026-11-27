@@ -42,7 +42,7 @@ const ALERTA =
 const SOBRETITULO = 'text-[0.72rem] font-bold uppercase tracking-[0.12em]'
 
 /*
- * Faixa escura do topo (Painel e acompanhamento). Encosta nas bordas da área de conteúdo: o <main>
+ * Faixa escura do topo de todas as páginas internas. Encosta nas bordas da área de conteúdo: o <main>
  * do Layout é um container (@container), e a faixa sai da coluna de 1040px com 100cqw mais o padding
  * do main (2rem; 0.9rem até 900px). O conteúdo dentro dela volta a se alinhar à coluna.
  */
@@ -71,13 +71,14 @@ export const estilos = {
   // leading repetido: o cn() descarta o leading do botão quando um text-[tamanho] vem depois
   botaoPequeno: 'px-[0.7rem] py-[0.32rem] text-[0.84rem] leading-[1.3] gap-[0.35rem]',
   // Ação dentro da faixa escura: contorno claro, sem fundo
+  // Ação principal dentro da faixa: branco sólido, porque o verde primário some no fundo escuro
+  botaoFaixaPrimario: `${BOTAO} border-white bg-white text-primaria-escura hover:not-disabled:bg-primaria-clara hover:not-disabled:border-primaria-clara`,
   botaoFaixa: `${BOTAO} border-menu-texto/45 bg-transparent text-menu-texto-forte hover:not-disabled:bg-menu-hover hover:not-disabled:border-menu-texto`,
   botaoLink:
     'inline-flex items-center gap-[0.3rem] bg-transparent border-0 p-0 text-primaria font-semibold cursor-pointer ' +
     'no-underline hover:underline hover:underline-offset-2',
 
   sobretitulo: `${SOBRETITULO} mb-1 text-primaria`,
-  sobretituloLink: `${SOBRETITULO} mb-1 inline-block text-primaria no-underline hover:underline hover:underline-offset-2`,
   sobretituloFaixa: `${SOBRETITULO} text-menu-destaque`,
   sobretituloFaixaLink:
     `${SOBRETITULO} inline-flex items-center gap-1 text-menu-destaque no-underline hover:underline hover:underline-offset-2`,
@@ -157,8 +158,8 @@ const AVATARES = {
 }
 
 /**
- * Faixa escura de destaque no topo da página, com a linha de batimento do login. Só no Painel e no
- * cabeçalho do acompanhamento; precisa ser o primeiro elemento da página (encosta no topo).
+ * Faixa escura de destaque no topo da página, com a linha de batimento do login. É o cabeçalho de
+ * todas as páginas internas; precisa ser o primeiro elemento da página (encosta no topo).
  */
 export function Faixa({ como = 'section', children, ...props }) {
   const conteudo = (
@@ -174,7 +175,7 @@ export function Faixa({ como = 'section', children, ...props }) {
       <div className={FAIXA_CONTEUDO}>{children}</div>
     </>
   )
-  // como: 'section' (Painel) ou 'header' (cabeçalho do acompanhamento)
+  // como: 'section' (Painel) ou 'header' (cabeçalho das demais páginas)
   return como === 'header' ? (
     <header className={FAIXA} {...props}>
       {conteudo}

@@ -10,12 +10,10 @@ const OPCAO =
   'has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-primaria'
 
 export const estilos = {
-  cabecalho: 'mb-5 flex flex-wrap items-end justify-between gap-4',
-  subtitulo: 'mt-1 text-texto-suave',
   pilha: 'grid gap-5',
   grade: 'grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] items-start gap-5',
 
-  // Faixa do Painel: data, saudação, frase com o que pede atenção e os resumos
+  // Faixa do topo (Painel e demais páginas): sobretítulo, título, frase de apoio e, à direita, ação ou aviso
   faixaTopo: 'flex flex-wrap items-end justify-between gap-3',
   tituloFaixa: 'mt-[0.35rem] text-[2rem] leading-[1.15] tracking-[-0.03em] ate-720:text-[1.6rem]',
   subtituloFaixa: 'mt-[0.35rem] text-menu-texto',

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { obterPagina } from '../api/servicos'
 import Paginacao from '../components/Paginacao'
-import { Avatar, ErroCarregamento, EsqueletoLista, EstadoVazio, Etiqueta, estilos as ui } from '../components/ui'
+import { Avatar, ErroCarregamento, EsqueletoLista, EstadoVazio, Etiqueta, Faixa, estilos as ui } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
 import { ROTULOS_PASSO, formatarData } from '../utils/formatacao'
@@ -19,25 +19,29 @@ export default function Acompanhamentos() {
 
   return (
     <div className={estilos.pilha}>
-      <div className={estilos.cabecalho}>
-        <div>
-          <p className={ui.sobretitulo}>Cuidado</p>
-          <h1>{ehMedico ? 'Acompanhamentos' : ehParceiro ? 'Pacientes' : 'Meu acompanhamento'}</h1>
-          <p className={estilos.subtitulo}>
-            {ehMedico
-              ? 'Acompanhe o tratamento de cada paciente.'
-              : ehParceiro
-                ? 'Pacientes em cujo tratamento o médico incluiu você.'
-                : 'O acompanhamento do seu tratamento com o seu médico.'}
-          </p>
+      <Faixa como="header" aria-labelledby="titulo-acompanhamentos">
+        <div className={estilos.faixaTopo}>
+          <div>
+            <p className={ui.sobretituloFaixa}>Cuidado</p>
+            <h1 id="titulo-acompanhamentos" className={estilos.tituloFaixa}>
+              {ehMedico ? 'Acompanhamentos' : ehParceiro ? 'Pacientes' : 'Meu acompanhamento'}
+            </h1>
+            <p className={estilos.subtituloFaixa}>
+              {ehMedico
+                ? 'Acompanhe o tratamento de cada paciente.'
+                : ehParceiro
+                  ? 'Pacientes em cujo tratamento o médico incluiu você.'
+                  : 'O acompanhamento do seu tratamento com o seu médico.'}
+            </p>
+          </div>
+          {ehMedico && (
+            <Link to="/acompanhamentos/novo" className={ui.botaoFaixaPrimario}>
+              <Plus size={16} aria-hidden="true" />
+              Novo acompanhamento
+            </Link>
+          )}
         </div>
-        {ehMedico && (
-          <Link to="/acompanhamentos/novo" className={ui.botao}>
-            <Plus size={16} aria-hidden="true" />
-            Novo acompanhamento
-          </Link>
-        )}
-      </div>
+      </Faixa>
 
       <ErroCarregamento erro={erro} />
       {carregando && !acompanhamentos && <EsqueletoLista avatar texto="Carregando acompanhamentos…" />}
