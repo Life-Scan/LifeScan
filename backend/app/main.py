@@ -13,6 +13,7 @@ from app.routers import (
     auth,
     consultas,
     documentos,
+    ia,
     linha_do_tempo,
     painel,
     solicitacoes,
@@ -71,6 +72,7 @@ def criar_app() -> FastAPI:
         solicitacoes,
         documentos,
         arquivos,
+        ia,
         linha_do_tempo,
         painel,
     ):

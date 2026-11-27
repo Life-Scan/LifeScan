@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import { mensagemDeErro } from '../../api/cliente'
 import { acessosAnamnese, corrigirDadosBasicosAnamnese, exportarAnamnese, salvarAnamnese } from '../../api/servicos'
 import { Alerta, EstadoVazio, estilos as ui } from '../../components/ui'
+import { useAgora } from '../../hooks/useAgora'
 import { baixarBlob } from '../../utils/arquivos'
-import { ROTULOS_SEXO, formatarDataHora, formatarDataSemHora } from '../../utils/formatacao'
-import estilos from './Acompanhamento.module.css'
+import { ROTULOS_SEXO, formatarDataHora, formatarDataSemHora, paraCampoDataHora } from '../../utils/formatacao'
+import { estilos } from './estilosAcompanhamento'
 
 const CAMPOS_DE_TEXTO = [
   { campo: 'diagnosticos', rotulo: 'Diagnósticos e condições', exemplo: 'Ex.: Hipertensão estágio 1' },
@@ -167,6 +168,7 @@ function TrilhaDeAcessos({ acessos }) {
 
 /** Correção dos dados básicos pelo próprio paciente (LGPD, art. 18, III). */
 function FormularioDadosBasicos({ anamnese, acompanhamentoId, aoConcluir, aoCancelar }) {
+  const hoje = paraCampoDataHora(useAgora()).slice(0, 10)
   const [formulario, setFormulario] = useState(() => ({
     data_nascimento: anamnese.data_nascimento || '',
     sexo: anamnese.sexo || '',
@@ -211,7 +213,7 @@ function FormularioDadosBasicos({ anamnese, acompanhamentoId, aoConcluir, aoCanc
             id="dados-nascimento"
             type="date"
             value={formulario.data_nascimento}
-            max={new Date().toISOString().slice(0, 10)}
+            max={hoje}
             onChange={alterar('data_nascimento')}
           />
         </div>
@@ -262,16 +264,16 @@ function VisualizacaoAnamnese({ anamnese, ehParceiro }) {
       <dl className={estilos.anamneseBasicos}>
         {basicos.map(({ rotulo, valor }) => (
           <div key={rotulo} className={estilos.anamneseItem}>
-            <dt>{rotulo}</dt>
-            <dd>{valor || <span className={ui.suave}>Não informado</span>}</dd>
+            <dt className={estilos.anamneseRotulo}>{rotulo}</dt>
+            <dd className={estilos.anamneseValor}>{valor || <span className={ui.suave}>Não informado</span>}</dd>
           </div>
         ))}
       </dl>
       <dl className={estilos.anamneseTextos}>
         {CAMPOS_DE_TEXTO.filter(({ campo }) => anamnese[campo]).map(({ campo, rotulo }) => (
           <div key={campo} className={estilos.anamneseItem}>
-            <dt>{rotulo}</dt>
-            <dd className={estilos.texto}>{anamnese[campo]}</dd>
+            <dt className={estilos.anamneseRotulo}>{rotulo}</dt>
+            <dd className={estilos.anamneseValorTexto}>{anamnese[campo]}</dd>
           </div>
         ))}
       </dl>
@@ -280,6 +282,7 @@ function VisualizacaoAnamnese({ anamnese, ehParceiro }) {
 }
 
 function FormularioAnamnese({ anamnese, acompanhamentoId, aoConcluir, aoCancelar }) {
+  const hoje = paraCampoDataHora(useAgora()).slice(0, 10)
   const [formulario, setFormulario] = useState(() => ({
     data_nascimento: anamnese.data_nascimento || '',
     sexo: anamnese.sexo || '',
@@ -321,7 +324,7 @@ function FormularioAnamnese({ anamnese, acompanhamentoId, aoConcluir, aoCancelar
             id="anamnese-nascimento"
             type="date"
             value={formulario.data_nascimento}
-            max={new Date().toISOString().slice(0, 10)}
+            max={hoje}
             onChange={alterar('data_nascimento')}
           />
         </div>

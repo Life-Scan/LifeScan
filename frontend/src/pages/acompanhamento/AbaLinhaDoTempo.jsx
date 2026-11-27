@@ -3,7 +3,7 @@ import { ArrowUpDown, ClipboardList, FileText, History, Stethoscope } from 'luci
 import { Anexo, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
 import { ROTULOS_CATEGORIA, ROTULOS_TIPO_CONSULTA, formatarDataHora } from '../../utils/formatacao'
 import { EtiquetaSolicitacao } from './AbaSolicitacoes'
-import estilos from './Acompanhamento.module.css'
+import { estilos, iconesEvento } from './estilosAcompanhamento'
 
 const TIPOS = [
   { id: 'consulta', rotulo: 'Consultas', icone: Stethoscope, aba: 'consultas' },
@@ -104,7 +104,7 @@ export default function AbaLinhaDoTempo({ eventos, acompanhamento, irParaAba, fi
             const { titulo, texto, detalhes, etiqueta, anexo } = descreverEvento(evento, acompanhamento.paciente.id)
             return (
               <li key={`${evento.tipo}-${evento.id}`} className={estilos.evento}>
-                <span className={`${estilos.iconeEvento} ${estilos[`icone_${evento.tipo}`]}`} aria-hidden="true">
+                <span className={`${estilos.iconeEvento} ${iconesEvento[evento.tipo]}`} aria-hidden="true">
                   <Icone size={16} />
                 </span>
                 <div className={estilos.corpoEvento}>

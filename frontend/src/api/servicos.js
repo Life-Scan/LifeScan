@@ -67,6 +67,7 @@ export const revisarDocumento = (id, observacao) =>
   dados(api.patch(`/documents/${id}/review`, { observacao_revisao: observacao }))
 
 // Agenda de consultas (médico e colaboradores; o paciente só lista as próprias)
+export const listarAgendamentos = (parametros) => dados(api.get('/appointments', { params: parametros }))
 export const listarPacientesAgendaveis = (parametros) => dados(api.get('/appointments/patients', { params: parametros }))
 export const agendarConsulta = (agendamento) => dados(api.post('/appointments', agendamento))
 export const remarcarConsulta = (id, alteracoes) => dados(api.patch(`/appointments/${id}`, alteracoes))

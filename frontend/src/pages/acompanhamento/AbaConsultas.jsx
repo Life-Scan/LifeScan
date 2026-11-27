@@ -4,13 +4,14 @@ import { useState } from 'react'
 import { mensagemDeErro } from '../../api/cliente'
 import { registrarConsulta } from '../../api/servicos'
 import { Alerta, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
+import { cn } from '@/lib/utils'
 import {
   ROTULOS_TIPO_CONSULTA,
   campoDataHoraParaIso,
   formatarDataHora,
   paraCampoDataHora,
 } from '../../utils/formatacao'
-import estilos from './Acompanhamento.module.css'
+import { estilos } from './estilosAcompanhamento'
 
 const prescricaoVazia = () => ({ descricao: '', dosagem: '', instrucoes: '' })
 
@@ -170,7 +171,7 @@ function FormularioConsulta({ acompanhamentoId, aoConcluir, aoCancelar }) {
             </div>
             <button
               type="button"
-              className={`${ui.botaoPerigo} ${ui.botaoPequeno}`}
+              className={cn(ui.botaoPerigo, ui.botaoPequeno)}
               onClick={() => setPrescricoes((atuais) => atuais.filter((_, i) => i !== indice))}
               aria-label={`Remover prescrição ${indice + 1}`}
             >
@@ -180,7 +181,7 @@ function FormularioConsulta({ acompanhamentoId, aoConcluir, aoCancelar }) {
         ))}
         <button
           type="button"
-          className={`${ui.botaoSecundario} ${ui.botaoPequeno}`}
+          className={cn(ui.botaoSecundario, ui.botaoPequeno)}
           onClick={() => setPrescricoes((atuais) => [...atuais, prescricaoVazia()])}
         >
           <Plus size={14} aria-hidden="true" />

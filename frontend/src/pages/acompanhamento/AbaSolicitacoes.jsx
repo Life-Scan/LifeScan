@@ -5,6 +5,8 @@ import { mensagemDeErro } from '../../api/cliente'
 import { cancelarSolicitacao, concluirSolicitacao, criarSolicitacao } from '../../api/servicos'
 import { useConfirmar } from '../../components/Confirmacao'
 import { Alerta, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
+import { cn } from '@/lib/utils'
+import { useAgora } from '../../hooks/useAgora'
 import {
   ROTULOS_STATUS_SOLICITACAO,
   ROTULOS_TIPO_SOLICITACAO,
@@ -13,7 +15,7 @@ import {
   formatarPrazoRelativo,
   paraCampoDataHora,
 } from '../../utils/formatacao'
-import estilos from './Acompanhamento.module.css'
+import { estilos } from './estilosAcompanhamento'
 
 // Solicitações que o destinatário atende enviando um documento
 const TIPOS_COM_ENVIO = ['exame', 'orientacao_profissional']
@@ -42,6 +44,7 @@ export default function AbaSolicitacoes({
   atualizar,
   irParaAba,
 }) {
+  const agora = useAgora()
   const confirmar = useConfirmar()
   const [formularioAberto, setFormularioAberto] = useState(false)
   const [erro, setErro] = useState('')
@@ -113,7 +116,7 @@ export default function AbaSolicitacoes({
                   <span>
                     {solicitacao.tipo === 'consulta_extra' ? 'Marcada para' : 'Prazo'}:{' '}
                     {formatarDataHora(solicitacao.prazo)}
-                    {pendente && ` (${formatarPrazoRelativo(solicitacao.prazo)})`}
+                    {pendente && ` (${formatarPrazoRelativo(solicitacao.prazo, agora)})`}
                   </span>
                   {solicitacao.atendida_em && <span>Atendida em {formatarDataHora(solicitacao.atendida_em)}</span>}
                 </div>
@@ -123,7 +126,7 @@ export default function AbaSolicitacoes({
                     {!ehMedico && paraMim && TIPOS_COM_ENVIO.includes(solicitacao.tipo) && (
                       <button
                         type="button"
-                        className={`${ui.botao} ${ui.botaoPequeno}`}
+                        className={cn(ui.botao, ui.botaoPequeno)}
                         onClick={() => irParaAba('documentos', { solicitacao: String(solicitacao.id) })}
                       >
                         <Upload size={14} aria-hidden="true" />
@@ -142,7 +145,7 @@ export default function AbaSolicitacoes({
                       <>
                         <button
                           type="button"
-                          className={`${ui.botaoSecundario} ${ui.botaoPequeno}`}
+                          className={cn(ui.botaoSecundario, ui.botaoPequeno)}
                           onClick={() => executar(() => concluirSolicitacao(solicitacao.id))}
                         >
                           <Check size={14} aria-hidden="true" />
@@ -150,7 +153,7 @@ export default function AbaSolicitacoes({
                         </button>
                         <button
                           type="button"
-                          className={`${ui.botaoPerigo} ${ui.botaoPequeno}`}
+                          className={cn(ui.botaoPerigo, ui.botaoPequeno)}
                           onClick={() =>
                             executar(() => cancelarSolicitacao(solicitacao.id), {
                               titulo: 'Cancelar esta solicitação?',
@@ -178,6 +181,7 @@ export default function AbaSolicitacoes({
 }
 
 function FormularioSolicitacao({ acompanhamento, parceiros, aoConcluir, aoCancelar }) {
+  const agora = useAgora()
   const [tipo, setTipo] = useState('exame')
   const [destinatarioId, setDestinatarioId] = useState(String(acompanhamento.paciente.id))
   const [descricao, setDescricao] = useState('')
@@ -248,7 +252,7 @@ function FormularioSolicitacao({ acompanhamento, parceiros, aoConcluir, aoCancel
             id="solicitacao-prazo"
             type="datetime-local"
             value={prazo}
-            min={paraCampoDataHora(new Date())}
+            min={paraCampoDataHora(agora)}
             onChange={(e) => setPrazo(e.target.value)}
             required
           />

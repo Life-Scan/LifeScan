@@ -4,7 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { mensagemDeErro } from '../api/cliente'
 import { criarAcompanhamento, listarContas } from '../api/servicos'
 import { Alerta, Carregando, EstadoVazio, estilos as ui } from '../components/ui'
-import estilos from './Paginas.module.css'
+import { estilos } from './estilosPaginas'
 
 export default function NovoAcompanhamento() {
   const navegar = useNavigate()
