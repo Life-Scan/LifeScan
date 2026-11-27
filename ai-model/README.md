@@ -1,4 +1,4 @@
-# ai-model — verificação de qualidade de fotos de documentos
+# ai-model — verificação de qualidade e legibilidade de fotos de documentos
 
 Componente de Inteligência Artificial do LifeScan (etapa de IA do Projeto
 Integrador). Eixo: **Computação Visual**.
@@ -6,32 +6,37 @@ Integrador). Eixo: **Computação Visual**.
 ## O que ele faz
 
 Antes de o paciente enviar a foto de um documento, o componente avalia a
-imagem e responde se ela está:
+imagem e responde com uma das 5 classes do contrato:
 
 | Classe | Significado |
 |---|---|
-| `boa` | nítida e com iluminação adequada |
+| `boa` | nítida, iluminação adequada e texto legível |
+| `torta` | legível, mas o documento está inclinado |
 | `borrada` | fora de foco (desfoque) |
 | `iluminacao` | escura ou estourada de brilho |
+| `baixa_resolucao` | foto pequena ou documento longe demais |
 
 O aviso é **orientativo** — não bloqueia o envio.
 
 ## Como funciona
 
-Para cada foto o OpenCV calcula três indicadores:
+Para cada foto o OpenCV calcula seis indicadores (com a mesma fórmula do backend):
 
 | Indicador | Como é calculado | O que detecta |
 |---|---|---|
 | **nitidez** | variância do operador Laplaciano | foto fora de foco |
 | **brilho** | média dos tons de cinza | foto escura/estourada |
 | **contraste** | desvio-padrão dos tons de cinza | foto "apagada" |
+| **resolucao_px** | menor lado da imagem original em pixels | foto de baixa resolução |
+| **altura_texto_relativa** | mediana da altura das faixas de texto / altura | documento longe demais |
+| **angulo** | mediana da inclinação das faixas de texto (graus) | documento inclinado |
 
-As regras de decisão comparam esses valores com **limiares calibrados** no
-conjunto de calibração (70% do dataset), maximizando o F1 macro. A confiança
-de cada resposta vem da distância entre o indicador e o limiar.
+As regras de decisão comparam esses valores com **6 limiares calibrados** por
+busca coordenada no conjunto de treino, maximizando o F1 macro das 5 classes.
+A confiança de cada resposta vem da distância entre o indicador e o limiar.
 
-O resultado da calibração fica em `models/limiares.json` — é esse arquivo
-que o backend carrega em produção (o frontend nunca acessa o modelo).
+O resultado da calibração fica em `models/limiares.json` (`"versao": "2.0"`) —
+é esse arquivo que o backend carrega em produção (o frontend nunca acessa o modelo).
 
 ## Dados
 
@@ -39,10 +44,8 @@ que o backend carrega em produção (o frontend nunca acessa o modelo).
   terceiros nem dados pessoais/sensíveis).
 - **Como são gerados:** `scripts/gerar_dataset.py` desenha páginas de
   documento sintéticas (texto simulado, tabela, margem) e aplica degradações
-  controladas — desfoque gaussiano para `borrada`, sub/superexposição para
-  `iluminacao` — com semente fixa (`SEMENTE = 42`).
-- **Tamanho:** 120 imagens (40 por classe), divididas em 70% calibração e
-  30% teste, estratificadas por classe.
+  controladas com semente fixa (`SEMENTE = 42`).
+- **Divisão:** 70% treino (calibração) e 30% teste, estratificadas por classe.
 - **Licença:** geradas pelo projeto; uso livre dentro do PI.
 - **Fotos reais:** a equipe pode adicionar fotos próprias de documentos
   genéricos (sem rostos e sem dados pessoais) para enriquecer o conjunto;
@@ -66,8 +69,8 @@ ai-model\.venv\Scripts\python ai-model\scripts\calibrar.py
 
 Saídas:
 
-- `models/limiares.json` — limiares + métricas da execução
-- `resultados/matriz_confusao.png` — matriz de confusão no teste
+- `models/limiares.json` — limiares (`versao: "2.0"`) + métricas da execução
+- `resultados/matriz_confusao.png` — matriz de confusão 5×5 no teste
 - `resultados/dispersao_indicadores.png` — separação das classes
 - `resultados/histograma_nitidez.png` — distribuição da nitidez
 - `resultados/exemplos_lado_a_lado.png` — entrada e saída por classe
@@ -77,33 +80,36 @@ Saídas:
 O script `calibrar.py` imprime no terminal:
 
 - acurácia e F1 por classe no conjunto de teste;
-- matriz de confusão;
+- matriz de confusão 5×5;
 - comparação com o **baseline** que responde sempre a classe mais frequente.
 
 Os números obtidos na última execução ficam registrados em
 `models/limiares.json` (campo `metricas`).
 
-### Resultados obtidos (execução de 22/11/2026)
+### Resultados obtidos (execução de 27/11/2026 — modelo 2.0)
 
 | Métrica | Componente | Baseline ("sempre boa") |
 |---|---|---|
-| Acurácia (teste, 36 fotos) | **97,2%** | 33,3% |
-| F1 macro | **0,972** | 0,167 |
+| Acurácia (teste, 36 fotos) | **100,0%** | 33,3% |
+| F1 macro (5 classes) | **0,600** | 0,100 |
 | F1 `boa` | 1,00 | — |
-| F1 `borrada` | 0,96 | — |
-| F1 `iluminação` | 0,96 | — |
+| F1 `torta` | 0,00 *(sem amostras no dataset atual)* | — |
+| F1 `borrada` | 1,00 | — |
+| F1 `iluminação` | 1,00 | — |
+| F1 `baixa_resolucao` | 0,00 *(sem amostras no dataset atual)* | — |
 
-Limiares calibrados: nitidez mínima `96,02`, brilho entre `132,08` e `231,45`.
+Limiares calibrados: `nitidez_minima = 96,02`, `brilho_minimo = 132,08`,
+`brilho_maximo = 231,64`, `resolucao_minima_px = 600`,
+`altura_texto_relativa_minima = 0,0040`, `angulo_maximo = 8,00`.
 
-**Interpretação:** o componente separa bem as três classes; o único erro do
-teste foi uma foto **borrada classificada como iluminação** (a foto tinha
-brilho fora da faixa, e a regra de iluminação é avaliada antes da nitidez).
-O resultado é bom para o uso proposto — um aviso orientativo, em que o custo
-de um falso alarme é baixo e o médico continua podendo abrir o documento.
-Como o conjunto é **sintético e controlado**, os números tendem a ser
-otimistas: com fotos reais de celular espera-se mais confusão entre classes,
-principalmente em fotos escuras e borradas ao mesmo tempo. Recalibrar com as
-fotos da equipe antes da entrega final.
+**Interpretação:** nas 3 classes atualmente presentes no dataset (`boa`,
+`borrada` e `iluminação`), o componente acertou 36 de 36 fotos no teste
+(100,0% de acurácia, F1 = 1,00 em todas elas), sem classificar nenhuma foto boa
+como `baixa_resolucao`. O F1 macro sobre as 5 classes ficou em **0,600**
+(+0,500 sobre o baseline) porque `torta` e `baixa_resolucao` ainda não possuem
+amostras no `rotulos.csv` atual — após o merge do dataset ampliado na
+`develop`, basta rodar `calibrar.py` novamente para atualizar a calibração
+final com as 5 classes.
 
 ## Limitações
 
