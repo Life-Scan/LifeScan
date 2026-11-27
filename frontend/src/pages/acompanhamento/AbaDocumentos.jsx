@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
 import { enviarDocumento, revisarDocumento } from '../../api/servicos'
-import { Alerta, Anexo, CampoArquivo, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
+import { Alerta, Anexo, CampoArquivo, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from '../../components/ui'
 import { cn } from '@/lib/utils'
 import {
   ROTULOS_CATEGORIA,
@@ -46,7 +46,12 @@ export default function AbaDocumentos({
   return (
     <div className={estilos.pilha}>
       <div className={ui.cartaoCabecalho} style={{ marginBottom: 0 }}>
-        <h2>{ehParceiro ? 'Meus envios' : 'Documentos'}</h2>
+        <h2 className={ui.tituloComIcone}>
+          <IconeTipo tipo="documento">
+            <FileText size={16} />
+          </IconeTipo>
+          {ehParceiro ? 'Meus envios' : 'Documentos'}
+        </h2>
         {editavel && !formularioAberto && (
           <button type="button" className={ui.botao} onClick={() => setFormularioAberto(true)}>
             <Upload size={16} aria-hidden="true" />
@@ -139,7 +144,7 @@ function ItemDocumento({ documento, solicitacao, podeRevisar, atualizar }) {
   }
 
   return (
-    <li className={ui.itemLista}>
+    <li className={ui.itemListaDocumento}>
       <div className={ui.cabecalhoItem}>
         <div className={ui.acoes}>
           <strong>{documento.titulo}</strong>

@@ -59,6 +59,8 @@ const AVATAR = 'inline-grid place-items-center shrink-0 rounded-full font-bold t
 export const estilos = {
   cartao: 'bg-superficie border border-borda rounded-raio shadow-sombra p-5',
   cartaoCabecalho: 'flex items-center justify-between gap-3 flex-wrap mb-4',
+  // h2 do cartão com o <IconeTipo> à esquerda
+  tituloComIcone: 'flex items-center gap-[0.6rem]',
 
   botao: `${BOTAO} border-primaria bg-primaria text-white hover:not-disabled:bg-primaria-escura hover:not-disabled:border-primaria-escura`,
   botaoSecundario: `${BOTAO} border-borda-forte bg-superficie text-texto hover:not-disabled:bg-superficie-suave hover:not-disabled:border-texto-suave`,
@@ -88,6 +90,10 @@ export const estilos = {
   lista: 'list-none m-0 p-0 grid gap-[0.6rem]',
   itemLista: `${ITEM_LISTA} border border-borda bg-superficie`,
   itemListaDestaque: `${ITEM_LISTA} border border-perigo-borda-suave border-l-3 border-l-perigo bg-perigo-suave`,
+  // Filete de 3px na cor do tipo (DESIGN.md, item 5). O vencido usa itemListaDestaque, que tem prioridade.
+  itemListaConsulta: `${ITEM_LISTA} border border-borda border-l-3 border-l-consulta bg-superficie`,
+  itemListaSolicitacao: `${ITEM_LISTA} border border-borda border-l-3 border-l-solicitacao bg-superficie`,
+  itemListaDocumento: `${ITEM_LISTA} border border-borda border-l-3 border-l-documento bg-superficie`,
   cabecalhoItem: 'flex justify-between items-start gap-3 flex-wrap',
 
   campoArquivo: 'grid gap-[0.35rem]',
@@ -132,6 +138,13 @@ const ALERTAS = {
   sucesso: 'bg-sucesso-clara text-sucesso border-sucesso-borda',
   info: 'bg-info-clara text-info border-info-borda',
   alerta: 'bg-alerta-clara text-alerta border-alerta-borda',
+}
+
+/** Cor por tipo de informação (DESIGN.md, item 5): consulta, solicitação e documento. */
+const CORES_TIPO = {
+  consulta: 'bg-consulta-clara text-consulta',
+  solicitacao: 'bg-solicitacao-clara text-solicitacao',
+  documento: 'bg-documento-clara text-documento',
 }
 
 const AVATARES = {
@@ -196,6 +209,18 @@ export function Avatar({ nome, tipo = 'paciente', grande = false }) {
   return (
     <span className={`${AVATAR} ${tamanho} ${AVATARES[tipo] ?? AVATARES.paciente}`} aria-hidden="true">
       {iniciais(nome)}
+    </span>
+  )
+}
+
+/**
+ * Ícone do tipo ao lado do título do cartão: tipo = consulta | solicitacao | documento; o ícone
+ * (lucide, size 16) vem como filho.
+ */
+export function IconeTipo({ tipo, children }) {
+  return (
+    <span className={`inline-grid size-7 shrink-0 place-items-center rounded-raio-pequeno ${CORES_TIPO[tipo]}`} aria-hidden="true">
+      {children}
     </span>
   )
 }

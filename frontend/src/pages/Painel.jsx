@@ -144,7 +144,7 @@ function resumoDoPainel(painel) {
           icone: FileText,
           numero: documentos.length,
           rotulo: 'Documentos para revisar',
-          tom: 'info',
+          tipo: 'documento',
           titulo: 'Documentos aguardando revisão',
           conteudo: <ListaDocumentos documentos={documentos} />,
         },
@@ -153,7 +153,7 @@ function resumoDoPainel(painel) {
           icone: TriangleAlert,
           numero: vencidas.length,
           rotulo: 'Solicitações vencidas',
-          tom: 'perigo',
+          tipo: 'vencida',
           titulo: 'Solicitações vencidas',
           conteudo: (
             <ListaSolicitacoes solicitacoes={vencidas} vazio="Nenhuma solicitação vencida." mostrarPaciente mostrarDestinatario />
@@ -164,7 +164,7 @@ function resumoDoPainel(painel) {
           icone: Clock,
           numero: proximas.length,
           rotulo: rotuloProximas,
-          tom: 'alerta',
+          tipo: 'solicitacao',
           titulo: rotuloProximas,
           conteudo: (
             <ListaSolicitacoes
@@ -189,7 +189,7 @@ function resumoDoPainel(painel) {
           icone: ClipboardList,
           numero: pendentes.length,
           rotulo: 'Pendências',
-          tom: 'alerta',
+          tipo: 'solicitacao',
           titulo: 'O que você precisa fazer',
           conteudo: <ListaSolicitacoes solicitacoes={pendentes} vazio="Nenhuma pendência no momento." />,
         },
@@ -198,7 +198,7 @@ function resumoDoPainel(painel) {
           icone: TriangleAlert,
           numero: vencidas.length,
           rotulo: 'Vencidas',
-          tom: 'perigo',
+          tipo: 'vencida',
           titulo: 'Pendências vencidas',
           conteudo: <ListaSolicitacoes solicitacoes={vencidas} vazio="Nenhuma pendência vencida." />,
         },
@@ -207,7 +207,7 @@ function resumoDoPainel(painel) {
           icone: CalendarClock,
           numero: consultasExtras.length,
           rotulo: 'Consultas extras marcadas',
-          tom: 'info',
+          tipo: 'consulta',
           titulo: 'Consultas extras marcadas pelo médico',
           conteudo: <ListaConsultasExtras consultas={consultasExtras} />,
         },
@@ -216,7 +216,7 @@ function resumoDoPainel(painel) {
           icone: CalendarDays,
           numero: proximas.length,
           rotulo: 'Consultas agendadas',
-          tom: 'info',
+          tipo: 'consulta',
           titulo: 'Suas próximas consultas',
           conteudo: <ListaAgendamentos agendamentos={proximas} vazio="Nenhuma consulta agendada no momento." />,
         },
@@ -239,7 +239,7 @@ function resumoDoPainel(painel) {
           icone: ClipboardList,
           numero: pendentes.length,
           rotulo: 'Solicitações para você',
-          tom: 'alerta',
+          tipo: 'solicitacao',
           titulo: 'Solicitações destinadas a você',
           conteudo: <ListaSolicitacoes solicitacoes={pendentes} vazio={vazioParceiro} mostrarPaciente />,
         },
@@ -248,7 +248,7 @@ function resumoDoPainel(painel) {
           icone: TriangleAlert,
           numero: pendentes.filter((s) => s.vencida).length,
           rotulo: 'Vencidas',
-          tom: 'perigo',
+          tipo: 'vencida',
           titulo: 'Solicitações vencidas',
           conteudo: (
             <ListaSolicitacoes
@@ -265,10 +265,10 @@ function resumoDoPainel(painel) {
 }
 
 /**
- * Resumo dentro da faixa: número grande com ícone colorido pelo tom (perigo | alerta | info). É um
+ * Resumo dentro da faixa: número grande com ícone na cor do tipo (consulta | solicitacao | documento | vencida). É um
  * botão que abre e fecha a gaveta com a lista (aria-expanded); a seta gira quando aberto.
  */
-function Resumo({ id, icone: Icone, numero, rotulo, tom, aberto, aoAlternar }) {
+function Resumo({ id, icone: Icone, numero, rotulo, tipo, aberto, aoAlternar }) {
   return (
     <button
       type="button"
@@ -278,7 +278,7 @@ function Resumo({ id, icone: Icone, numero, rotulo, tom, aberto, aoAlternar }) {
       aria-controls={`gaveta-${id}`}
       onClick={aoAlternar}
     >
-      <span className={`${estilos.resumoIcone} ${tonsResumo[tom]}`}>
+      <span className={`${estilos.resumoIcone} ${tonsResumo[tipo]}`}>
         <Icone size={20} aria-hidden="true" />
       </span>
       <span>
@@ -326,7 +326,7 @@ function GavetaResumo({ item, aberto, chave }) {
           <span className={estilos.gavetaSeta} aria-hidden="true" />
           <section key={chave} aria-labelledby={`titulo-gaveta-${item.id}`} className={estilos.gavetaConteudo}>
             <div className={estilos.gavetaCabecalho}>
-              <span className={`${estilos.gavetaIcone} ${tonsResumo[item.tom]}`}>
+              <span className={`${estilos.gavetaIcone} ${tonsResumo[item.tipo]}`}>
                 <item.icone size={17} aria-hidden="true" />
               </span>
               <h2 id={`titulo-gaveta-${item.id}`} className={estilos.gavetaTitulo}>

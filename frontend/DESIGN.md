@@ -131,6 +131,19 @@ colorido, não só quando há itens), faixa lateral de `3px` nos itens de lista 
 do título dos cartões. O estado (vencida, cancelada…) continua nas etiquetas: a cor do tipo não
 substitui a do estado.
 
+Como está no código:
+
+- **Resumos do Painel** (`tonsResumo`, por `tipo`): documentos → `documento`, pendências e prazos
+  próximos → `solicitacao`, consultas extras e agendadas → `consulta`. Vencidas → `vencida`
+  (`--cor-perigo`): o vermelho de vencido tem prioridade sobre a cor do tipo. A gaveta repete a cor no
+  ícone do cabeçalho; os itens dela não ganham filete (são todos do mesmo tipo).
+- **Itens de lista** (`ui.itemListaConsulta`, `itemListaSolicitacao`, `itemListaDocumento`): filete
+  de `3px` à esquerda (`border-l-3`). Abas de consultas, solicitações e documentos e a lista da agenda.
+  Solicitação vencida continua em `itemListaDestaque`. Itens sem tipo (pacientes, parceiros, contas)
+  e formulários abertos dentro da lista ficam em `itemLista`.
+- **Título dos cartões** (`<IconeTipo tipo>` + `ui.tituloComIcone` no `h2`): quadrado de `1.75rem`
+  com o ícone do tipo (o mesmo da linha do tempo; calendário na agenda).
+
 ### 6. Agenda visual
 
 As consultas do dia aparecem numa faixa de horários (coluna de horas à esquerda, blocos de
@@ -155,7 +168,7 @@ lista atual continua para os outros dias e no celular.
 | 2. Cabeçalho com presença | Implantado (faixa de ponta a ponta, sem raio) |
 | 3. Tipografia | Implantado (o título da faixa do Painel entra com o item 2) |
 | 4. Fundo e profundidade | Implantado (as variáveis dos itens 1 e 5 já existem em `index.css`) |
-| 5. Cor por tipo de informação | Planejado (já existe só na linha do tempo) |
+| 5. Cor por tipo de informação | Implantado (resumos, itens de lista, título dos cartões e linha do tempo) |
 | 6. Agenda visual | Planejado |
 | 7. Acabamento | Planejado |
 
@@ -329,6 +342,7 @@ Tailwind, usadas como `className={ui.cartao}`). Não recrie essas peças em mód
 | `<Avatar tipo>` | `paciente`, `parceiro`, `colaborador`, `medico` | `grande` no cabeçalho do acompanhamento |
 | `<Carregando>` | | Spinner com texto |
 | `<EstadoVazio icone>` | | Lista sem itens: sempre explique o que aparece ali |
+| `<IconeTipo tipo>` | `consulta`, `solicitacao`, `documento`; ícone lucide (`size={16}`) como filho | Ao lado do título do cartão, com `ui.tituloComIcone` no `h2` |
 | `<ErroCarregamento erro>` | | Falha do polling, com a mensagem do backend |
 | `<CampoArquivo>` / `<Anexo>` | | Upload com validação (RNF01) e anexo com miniatura |
 | `useConfirmar()` | `await confirmar({ titulo, mensagem, rotuloConfirmar, perigo })` | **Nunca** use `window.confirm` |

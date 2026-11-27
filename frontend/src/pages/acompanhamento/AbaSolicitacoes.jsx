@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { mensagemDeErro } from '../../api/cliente'
 import { cancelarSolicitacao, concluirSolicitacao, criarSolicitacao } from '../../api/servicos'
 import { useConfirmar } from '../../components/Confirmacao'
-import { Alerta, EstadoVazio, Etiqueta, estilos as ui } from '../../components/ui'
+import { Alerta, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from '../../components/ui'
 import { cn } from '@/lib/utils'
 import { useAgora } from '../../hooks/useAgora'
 import {
@@ -68,7 +68,12 @@ export default function AbaSolicitacoes({
   return (
     <div className={estilos.pilha}>
       <div className={ui.cartaoCabecalho} style={{ marginBottom: 0 }}>
-        <h2>{ehParceiro ? 'Solicitações para você' : 'Solicitações'}</h2>
+        <h2 className={ui.tituloComIcone}>
+          <IconeTipo tipo="solicitacao">
+            <ClipboardList size={16} />
+          </IconeTipo>
+          {ehParceiro ? 'Solicitações para você' : 'Solicitações'}
+        </h2>
         {ehMedico && editavel && !formularioAberto && (
           <button type="button" className={ui.botao} onClick={() => setFormularioAberto(true)}>
             <Plus size={16} aria-hidden="true" />
@@ -102,7 +107,7 @@ export default function AbaSolicitacoes({
             const paraMim = solicitacao.destinatario.id === usuario.id
             const paraParceiro = solicitacao.destinatario.tipo_usuario === 'parceiro'
             return (
-              <li key={solicitacao.id} className={solicitacao.vencida ? ui.itemListaDestaque : ui.itemLista}>
+              <li key={solicitacao.id} className={solicitacao.vencida ? ui.itemListaDestaque : ui.itemListaSolicitacao}>
                 <div className={ui.cabecalhoItem}>
                   <strong>{ROTULOS_TIPO_SOLICITACAO[solicitacao.tipo]}</strong>
                   <EtiquetaSolicitacao solicitacao={solicitacao} />
