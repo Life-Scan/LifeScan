@@ -93,6 +93,14 @@
   --sombra: 0 1px 2px rgb(11 81 77 / 6%), 0 4px 12px rgb(11 81 77 / 4%);
   --sombra-hover: 0 2px 4px rgb(11 81 77 / 8%), 0 12px 28px rgb(11 81 77 / 10%);
   --sombra-elevada: 0 12px 32px rgb(16 24 40 / 18%);
+
+  /*
+   * Movimento (DESIGN.md, item 7): 150ms para hover, cor e clique; 200ms para conteúdo que entra.
+   * Curva de saída forte (começa rápido, assenta devagar). Só transform e opacity.
+   */
+  --duracao-rapida: 150ms;
+  --duracao-media: 200ms;
+  --curva-saida: cubic-bezier(0.23, 1, 0.32, 1);
   /* Faixa do topo: sombra interna vinda do menu, que fica "por cima" (lado esquerdo; no topo até 900px) */
   --sombra-faixa: inset 14px 0 18px -14px rgb(4 30 28 / 45%);
   --sombra-faixa-topo: inset 0 14px 18px -14px rgb(4 30 28 / 45%);
@@ -289,9 +297,22 @@
   white-space: nowrap;
 }
 
-/* Animações próprias: animate-girar (spinner do <Carregando>). */
+/*
+ * Animações próprias: animate-girar (spinner do <Carregando>) e animate-entrar (conteúdo que entra:
+ * página na troca de rota, aba, filtro, página da lista e mês do calendário). ease-saida é a curva
+ * dos tokens de movimento para usar nas transições (ease-saida duration-150).
+ */
 @theme {
   --animate-girar: girar 0.8s linear infinite;
+  --animate-entrar: entrar var(--duracao-media) var(--curva-saida) backwards;
+  --ease-saida: var(--curva-saida);
+
+  @keyframes entrar {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
 
   @keyframes girar {
     to {

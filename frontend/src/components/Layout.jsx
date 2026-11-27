@@ -1,5 +1,5 @@
 import { Handshake, IdCard, LayoutDashboard, LogOut, Route, Users } from 'lucide-react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../context/AuthContext'
 import { Avatar } from './ui'
@@ -25,6 +25,7 @@ const LINK_ATIVO =
 export default function Layout() {
   const { usuario, ehMedico, ehParceiro, ehColaborador, sair } = useAuth()
   const navegar = useNavigate()
+  const { pathname } = useLocation()
 
   function aoSair() {
     sair()
@@ -99,7 +100,8 @@ export default function Layout() {
       </aside>
 
       <main className="@container min-w-0 px-8 pt-8 pb-12 ate-900:px-[0.9rem] ate-900:pt-[1.1rem] ate-900:pb-10">
-        <div className="mx-auto max-w-[1040px]">
+        {/* key: a cada troca de rota a página remonta e entra com fade + 4px (só o caminho; ?aba= não conta) */}
+        <div key={pathname} className="mx-auto max-w-[1040px] animate-entrar">
           <Outlet />
         </div>
       </main>

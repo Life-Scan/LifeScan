@@ -75,7 +75,7 @@ export const agendaEstilos = {
 
 const CELULA =
   'flex min-h-[92px] cursor-pointer flex-col items-stretch gap-[0.28rem] rounded-raio-pequeno p-[0.45rem] text-left ' +
-  'transition-[border-color,background,box-shadow] duration-150 ease-[ease] hover:border-primaria ' +
+  'transition-[border-color,background,box-shadow,translate] duration-150 ease-saida hover:-translate-y-px hover:border-primaria ' +
   'ate-720:min-h-[64px] ate-720:p-[0.3rem]'
 
 /**

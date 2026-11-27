@@ -309,7 +309,13 @@ export default function AgendaConsultas() {
               ))}
             </div>
 
-            <div className={agendaEstilos.gradeDias} role="grid" aria-label="Calendário mensal de consultas">
+            {/* key: ao trocar de mês a grade remonta e entra com fade + 4px */}
+            <div
+              key={`${mesReferencia.ano}-${mesReferencia.mes}`}
+              className={cn(agendaEstilos.gradeDias, 'animate-entrar')}
+              role="grid"
+              aria-label="Calendário mensal de consultas"
+            >
               {diasGrade.map((dia) => {
                 const chave = chaveDiaLocal(dia)
                 const eventos = agendamentosPorDia.get(chave) || []
@@ -407,16 +413,20 @@ export default function AgendaConsultas() {
             <div role="tabpanel" id="painel-agenda" aria-labelledby={`aba-agenda-${aba}`} tabIndex={0} className={estilos.painelAgenda}>
               <ErroCarregamento erro={erroLista} />
               {carregandoLista && !dadosLista && <Carregando />}
-              {dadosLista &&
-                (dadosLista.itens.length === 0 ? (
-                  <EstadoVazio icone={CalendarDays}>{selecionada.vazio}</EstadoVazio>
-                ) : (
-                  <ul className={ui.lista}>
-                    {dadosLista.itens.map((agendamento) => (
-                      <ItemAgendamento key={agendamento.id} agendamento={agendamento} aoAlterar={atualizarTudo} />
-                    ))}
-                  </ul>
-                ))}
+              {/* Aba e página zeram os dados: a lista remonta e entra com fade + 4px. O polling não. */}
+              {dadosLista && (
+                <div className="animate-entrar">
+                  {dadosLista.itens.length === 0 ? (
+                    <EstadoVazio icone={CalendarDays}>{selecionada.vazio}</EstadoVazio>
+                  ) : (
+                    <ul className={ui.lista}>
+                      {dadosLista.itens.map((agendamento) => (
+                        <ItemAgendamento key={agendamento.id} agendamento={agendamento} aoAlterar={atualizarTudo} />
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
               <Paginacao dados={dadosLista} aoMudar={setPagina} carregando={carregandoLista} />
             </div>
           </>
