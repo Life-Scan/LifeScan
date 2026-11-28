@@ -383,6 +383,43 @@
       transform: translateX(100%);
     }
   }
+
+  /*
+   * Logo do menu: só o traço do batimento, com um brilho atrás. Um pulso claro percorre a linha
+   * como num monitor cardíaco e descansa antes de repetir (a linha de base fica sempre visível).
+   * Os caminhos usam pathLength="100": o traço do pulso tem 22 de comprimento e um vão maior que a
+   * linha, então só um trecho aparece por vez.
+   */
+  .logo-batimento {
+    filter: drop-shadow(0 0 6px rgb(167 227 204 / 55%)) drop-shadow(0 0 14px rgb(33 140 123 / 60%));
+  }
+
+  .logo-batimento-pulso {
+    stroke-dasharray: 22 200;
+    stroke-dashoffset: 22;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .logo-batimento-pulso {
+      animation: batimento 2.6s linear infinite;
+    }
+  }
+
+  /* Reduzir movimento: sem pulso andando, a linha de base fica inteira na cor forte */
+  @media (prefers-reduced-motion: reduce) {
+    .logo-batimento-pulso {
+      stroke-dasharray: none;
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* Percorre a linha em 55% do ciclo (~1,4s) e descansa o resto, no ritmo de um batimento calmo */
+  @keyframes batimento {
+    55%,
+    100% {
+      stroke-dashoffset: -100;
+    }
+  }
 }
 
 /* Texto só para leitores de tela. */
