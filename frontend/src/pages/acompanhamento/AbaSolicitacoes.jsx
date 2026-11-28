@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { mensagemDeErro } from '../../api/cliente'
 import { cancelarSolicitacao, concluirSolicitacao, criarSolicitacao } from '../../api/servicos'
 import { useConfirmar } from '../../components/Confirmacao'
+import Modal from '../../components/Modal'
 import { Alerta, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from '../../components/ui'
 import { cn } from '@/lib/utils'
 import { useAgora } from '../../hooks/useAgora'
@@ -74,7 +75,7 @@ export default function AbaSolicitacoes({
           </IconeTipo>
           {ehParceiro ? 'Solicitações para você' : 'Solicitações'}
         </h2>
-        {ehMedico && editavel && !formularioAberto && (
+        {ehMedico && editavel && (
           <button type="button" className={ui.botao} onClick={() => setFormularioAberto(true)}>
             <Plus size={16} aria-hidden="true" />
             Nova solicitação
@@ -82,7 +83,7 @@ export default function AbaSolicitacoes({
         )}
       </div>
 
-      {formularioAberto && (
+      <Modal aberto={formularioAberto} aoFechar={() => setFormularioAberto(false)} titulo="Nova solicitação">
         <FormularioSolicitacao
           acompanhamento={acompanhamento}
           parceiros={parceiros}
@@ -92,7 +93,7 @@ export default function AbaSolicitacoes({
           }}
           aoCancelar={() => setFormularioAberto(false)}
         />
-      )}
+      </Modal>
 
       <Alerta tipo="erro">{erro}</Alerta>
 
@@ -223,8 +224,7 @@ function FormularioSolicitacao({ acompanhamento, parceiros, aoConcluir, aoCancel
   }
 
   return (
-    <form className={`${ui.formulario} ${estilos.formularioDestaque}`} onSubmit={aoEnviar}>
-      <h3>Nova solicitação</h3>
+    <form className={ui.formulario} onSubmit={aoEnviar}>
       <Alerta tipo="erro">{erro}</Alerta>
       <div className={ui.linhaCampos}>
         <div>

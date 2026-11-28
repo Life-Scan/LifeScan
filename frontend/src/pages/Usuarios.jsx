@@ -6,6 +6,7 @@ import { mensagemDeErro } from '../api/cliente'
 import { atualizarConta, excluirPaciente, obterPagina, reenviarAcesso } from '../api/servicos'
 import Paginacao from '../components/Paginacao'
 import { useConfirmar } from '../components/Confirmacao'
+import Modal from '../components/Modal'
 import { Alerta, Avatar, ErroCarregamento, EsqueletoLista, EstadoVazio, Etiqueta, Faixa, estilos as ui } from '../components/ui'
 import { cn } from '@/lib/utils'
 import { useAtualizacaoPeriodica } from '../hooks/useAtualizacaoPeriodica'
@@ -269,14 +270,6 @@ function ItemConta({ conta, aoAlterar }) {
       : `Dados do ${tipo} atualizados.`) + avisoEnvio)
   }
 
-  if (editando && conta.ativo) {
-    return (
-      <li className={ui.itemLista}>
-        <FormularioEdicaoConta conta={conta} aoSalvar={salvarEdicao} aoCancelar={() => setEditando(false)} />
-      </li>
-    )
-  }
-
   return (
     <li className={ui.itemLista}>
       <div className={ui.linhaComAcoes}>
@@ -326,6 +319,10 @@ function ItemConta({ conta, aoAlterar }) {
       </div>
       <Alerta tipo="erro">{erro}</Alerta>
       <Alerta tipo="sucesso">{aviso}</Alerta>
+
+      <Modal aberto={editando && conta.ativo} aoFechar={() => setEditando(false)} titulo={`Editar ${tipo}`} descricao={conta.nome}>
+        <FormularioEdicaoConta conta={conta} aoSalvar={salvarEdicao} aoCancelar={() => setEditando(false)} />
+      </Modal>
     </li>
   )
 }
@@ -355,7 +352,6 @@ function FormularioEdicaoConta({ conta, aoSalvar, aoCancelar }) {
 
   return (
     <form className={ui.formulario} onSubmit={enviar} aria-label={`Editar ${tipo} ${conta.nome}`}>
-      <h3>Editar {tipo}</h3>
       <fieldset className={estilos.camposEdicao} disabled={salvando}>
         <legend className="visualmente-oculto">Dados do {tipo}</legend>
         <div className={ui.linhaCampos}>
