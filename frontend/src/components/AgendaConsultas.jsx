@@ -51,6 +51,19 @@ const VARIANTES_STATUS = { agendada: 'info', realizada: 'sucesso', faltou: 'peri
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 const formatoMesAno = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' })
+
+/**
+ * Luz da grade mensal: "centro" no dia sob o cursor, "vizinho" nos 8 ao redor (lados e diagonais),
+ * nada nos demais. A grade tem 7 colunas, então linha e coluna saem do índice.
+ */
+function luzDaCelula(indice, indiceSobCursor) {
+  if (indiceSobCursor === null) return undefined
+  if (indice === indiceSobCursor) return 'centro'
+  const colunas = DIAS_SEMANA.length
+  const distanciaLinha = Math.abs(Math.floor(indice / colunas) - Math.floor(indiceSobCursor / colunas))
+  const distanciaColuna = Math.abs((indice % colunas) - (indiceSobCursor % colunas))
+  return distanciaLinha <= 1 && distanciaColuna <= 1 ? 'vizinho' : undefined
+}
 function gerarGradeMes(ano, mes) {
   const primeiroDia = new Date(ano, mes, 1)
   const ultimoDia = new Date(ano, mes + 1, 0)
@@ -142,6 +155,8 @@ export default function AgendaConsultas() {
   const modalInicialAberto = useRef(false)
 
   const diasGrade = useMemo(() => gerarGradeMes(mesReferencia.ano, mesReferencia.mes), [mesReferencia])
+  // Índice do dia sob o mouse na grade (null = cursor fora dela); alimenta a luz verde das células
+  const [celulaSobCursor, setCelulaSobCursor] = useState(null)
 
   const {
     dados: dadosCalendario,
@@ -349,8 +364,9 @@ export default function AgendaConsultas() {
               )}
               role="grid"
               aria-label="Calendário mensal de consultas"
+              onPointerLeave={() => setCelulaSobCursor(null)}
             >
-              {diasGrade.map((dia) => {
+              {diasGrade.map((dia, indice) => {
                 const chave = chaveDiaLocal(dia)
                 const eventos = agendamentosPorDia.get(chave) || []
                 const foraMes = dia.getMonth() !== mesReferencia.mes
@@ -362,6 +378,9 @@ export default function AgendaConsultas() {
                     key={chave}
                     type="button"
                     className={classesCelulaDia({ foraMes, temEventos, ehHoje })}
+                    data-luz={luzDaCelula(indice, celulaSobCursor)}
+                    // Só mouse: no toque, o "hover" do tap deixaria a luz presa no dia tocado
+                    onPointerEnter={(evento) => evento.pointerType === 'mouse' && setCelulaSobCursor(indice)}
                     onClick={() => abrirModalDia(dia)}
                     aria-label={`${formatarData(dia.toISOString())}: ${eventos.length} ${eventos.length === 1 ? 'compromisso' : 'compromissos'}`}
                   >

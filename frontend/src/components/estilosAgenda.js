@@ -112,20 +112,24 @@ export const agendaEstilos = {
 }
 
 const CELULA =
-  'flex min-h-[92px] cursor-pointer flex-col items-stretch gap-[0.28rem] rounded-raio-pequeno p-[0.45rem] text-left ' +
+  'relative isolate flex min-h-[92px] cursor-pointer flex-col items-stretch gap-[0.28rem] rounded-raio-pequeno p-[0.45rem] text-left ' +
   'transition-[border-color,background,box-shadow,translate] duration-150 ease-saida hover:-translate-y-px hover:border-primaria ' +
-  'ate-720:min-h-[64px] ate-720:p-[0.3rem]'
+  'ate-720:min-h-[64px] ate-720:p-[0.3rem] ' +
+  // Luz verde que segue o mouse (data-luz, ver AgendaConsultas): camada atrás do conteúdo, animada só
+  // por opacidade. 100% no dia sob o cursor, 20% nos 8 vizinhos. Cor sem movimento: fica com reduced motion.
+  'before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:bg-primaria-borda ' +
+  'before:opacity-0 before:transition-opacity before:duration-150 before:ease-[ease] ' +
+  'data-[luz=centro]:before:opacity-100 data-[luz=vizinho]:before:opacity-20'
 
 /**
  * Classes de uma célula do calendário. Os estados se combinam como no CSS original: "com eventos"
- * vence o fundo de "fora do mês"; "hoje" troca a borda por uma de 2px; o hover muda borda e fundo.
+ * vence o fundo de "fora do mês"; "hoje" troca a borda por uma de 2px; o hover muda a borda (o fundo
+ * do hover é a luz verde da CELULA).
  */
 export function classesCelulaDia({ foraMes, temEventos, ehHoje }) {
   const borda = ehHoje
     ? 'border-2 border-primaria shadow-[0_0_0_2px_var(--cor-primaria-anel)]'
     : `border ${temEventos ? 'border-primaria-borda' : 'border-borda'}`
-  const fundo = temEventos
-    ? 'bg-primaria-suave hover:bg-primaria-clara'
-    : `${foraMes ? 'bg-superficie-suave' : 'bg-superficie'} hover:bg-superficie-suave`
+  const fundo = temEventos ? 'bg-primaria-suave' : foraMes ? 'bg-superficie-suave' : 'bg-superficie'
   return `${CELULA} ${borda} ${fundo} ${foraMes ? 'text-texto-suave opacity-65' : ''}`
 }
