@@ -40,10 +40,25 @@ export default function Layout() {
       <aside className="sticky top-0 flex h-screen flex-col gap-6 border-r border-menu-borda/60 bg-menu [background-image:var(--gradiente-menu)] px-[0.9rem] pt-5 pb-4 text-menu-texto [&_:focus-visible]:outline-menu-destaque ate-900:z-10 ate-900:h-auto ate-900:flex-row ate-900:flex-wrap ate-900:items-center ate-900:gap-x-3 ate-900:gap-y-2 ate-900:border-r-0 ate-900:border-b ate-900:py-[0.6rem]">
         <NavLink
           to="/painel"
-          className="inline-flex items-center gap-[0.6rem] px-2 text-[1.2rem] font-bold tracking-[-0.01em] text-menu-texto-forte no-underline ate-900:p-0 ate-900:text-[1.1rem]"
+          className="flex flex-col items-center gap-[0.4rem] px-2 text-[1.15rem] font-bold tracking-[-0.01em] text-menu-texto-forte no-underline ate-900:flex-row ate-900:gap-[0.6rem] ate-900:p-0 ate-900:text-[1.1rem]"
         >
-          {/* Borda clara como no login, para o quadrado verde do logo não sumir no fundo escuro */}
-          <img src="/favicon.svg" alt="" width="30" height="30" className="rounded-[8px] border border-menu-borda" />
+          {/*
+           * Só o traço do batimento (o do favicon, sem a caixa), com brilho e um pulso que percorre a
+           * linha (index.css, .logo-batimento). Nome embaixo; na barra do topo (até 900px) lado a lado.
+           */}
+          <svg
+            viewBox="3 7 26 18"
+            width="52"
+            height="36"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="logo-batimento overflow-visible ate-900:h-6 ate-900:w-[35px]"
+            aria-hidden="true"
+          >
+            <path d="M5 17h5l3-7 5 13 3-6h6" pathLength="100" stroke="var(--cor-menu-destaque)" strokeOpacity="0.45" strokeWidth="2.4" />
+            <path d="M5 17h5l3-7 5 13 3-6h6" pathLength="100" stroke="#fff" strokeWidth="2.6" className="logo-batimento-pulso" />
+          </svg>
           LifeScan
         </NavLink>
 

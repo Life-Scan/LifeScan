@@ -84,7 +84,6 @@ export default function Painel() {
             </h1>
             <p className={estilos.subtituloFaixa}>{resumo?.frase ?? subtitulo}</p>
           </div>
-          <span className={estilos.atualizacaoFaixa}>Atualiza sozinho a cada 30 segundos</span>
         </div>
         {carregando && !dados && <ResumosCarregando quantidade={ehMedico ? 3 : ehPaciente ? 4 : ehColaborador ? 0 : 2} />}
         {resumo && (
