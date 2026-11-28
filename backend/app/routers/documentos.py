@@ -15,14 +15,15 @@ from app.models.documento import CategoriaDocumento, Documento, StatusDocumento
 from app.models.acompanhamento import Acompanhamento
 from app.models.solicitacao import TIPOS_ATENDIDOS_POR_ENVIO, Solicitacao, StatusSolicitacao
 from app.models.usuario import TipoUsuario, Usuario
-from app.schemas.documento import DocumentoSaida, RevisaoEntrada
+from app.schemas.documento import DocumentoEdicao, DocumentoSaida, RevisaoEntrada
 from app.schemas.paginacao import Pagina, Paginacao, paginar
 from sqlalchemy.orm import selectinload
-from app.services.armazenamento import confirmar_ou_remover, salvar_upload
+from app.services.armazenamento import confirmar_ou_remover, remover_do_disco, salvar_upload
 
 router = APIRouter(tags=["Documentos"])
 
 SOLICITACAO_NAO_ENCONTRADA = "Solicitação não encontrada neste acompanhamento."
+DOCUMENTO_NAO_ENCONTRADO = "Documento não encontrado."
 
 
 def _validar_solicitacao_para_envio(
@@ -131,3 +132,76 @@ def revisar_documento(
     documento.revisado_em = agora_utc()
     sessao.commit()
     return documento
+
+
+def _carregar_documento_para_alterar(sessao: Session, usuario: Usuario, documento_id: int) -> Documento:
+    """Documento que o usuário pode editar ou excluir, num acompanhamento ativo.
+
+    O médico altera qualquer documento; o parceiro atribuído, só os que ele enviou. Paciente e
+    colaborador não alteram documentos (o paciente só envia).
+    """
+    documento = sessao.get(Documento, documento_id)
+    if documento is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, DOCUMENTO_NAO_ENCONTRADO)
+    acompanhamento = carregar_acompanhamento_com_acesso(
+        sessao, usuario, documento.acompanhamento_id, permitir_parceiro=True
+    )
+
+    if usuario.tipo_usuario == TipoUsuario.parceiro and documento.enviado_por_id != usuario.id:
+        # O parceiro nem enxerga os documentos de outras pessoas
+        raise HTTPException(status.HTTP_404_NOT_FOUND, DOCUMENTO_NAO_ENCONTRADO)
+    if usuario.tipo_usuario not in (TipoUsuario.medico, TipoUsuario.parceiro):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, "Somente o médico ou o parceiro que enviou pode alterar este documento."
+        )
+
+    garantir_acompanhamento_editavel(acompanhamento)
+    return documento
+
+
+@router.patch("/documents/{documento_id}", response_model=DocumentoSaida)
+def editar_documento(
+    documento_id: int,
+    dados: DocumentoEdicao,
+    usuario: Usuario = Depends(obter_usuario_atual),
+    sessao: Session = Depends(obter_sessao),
+) -> Documento:
+    """Edita título e categoria. O arquivo, a revisão e a solicitação atendida não mudam."""
+    documento = _carregar_documento_para_alterar(sessao, usuario, documento_id)
+    if dados.titulo is not None:
+        documento.titulo = dados.titulo
+    if dados.categoria is not None:
+        documento.categoria = dados.categoria
+    sessao.commit()
+    return documento
+
+
+@router.delete("/documents/{documento_id}", status_code=status.HTTP_204_NO_CONTENT)
+def excluir_documento(
+    documento_id: int,
+    usuario: Usuario = Depends(obter_usuario_atual),
+    sessao: Session = Depends(obter_sessao),
+) -> None:
+    """Exclui o documento e o arquivo dele.
+
+    Se ele atendia uma solicitação e nenhum outro documento a atende, ela volta a ficar pendente.
+    """
+    documento = _carregar_documento_para_alterar(sessao, usuario, documento_id)
+    arquivo = documento.arquivo
+
+    if documento.solicitacao_id is not None:
+        solicitacao = sessao.get(Solicitacao, documento.solicitacao_id)
+        outro_envio = sessao.scalar(
+            select(Documento.id)
+            .where(Documento.solicitacao_id == documento.solicitacao_id, Documento.id != documento.id)
+            .limit(1)
+        )
+        if solicitacao is not None and solicitacao.status == StatusSolicitacao.atendida and outro_envio is None:
+            solicitacao.reabrir()
+
+    sessao.delete(documento)
+    sessao.flush()  # o documento sai antes do arquivo, que ele referencia
+    sessao.delete(arquivo)
+    sessao.commit()
+    # Só depois do commit: se ele falhar, o arquivo continua em disco junto com o registro
+    remover_do_disco(arquivo)

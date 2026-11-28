@@ -57,6 +57,7 @@ com prazo, documentos e uma linha do tempo.
 | RF31 | O médico cria, edita, desativa e reativa contas de colaborador (nome e email), na tela Colaboradores. | Implementado |
 | RF32 | O médico e o colaborador agendam, remarcam e cancelam consultas e, depois do horário, registram se ela foi realizada ou se o paciente faltou. | Implementado |
 | RF33 | O paciente vê no painel as próximas consultas agendadas para ele. | Implementado |
+| RF34 | O médico edita (título e categoria) e exclui qualquer documento; o parceiro atribuído, só os próprios envios. Paciente e colaborador não alteram documentos. | Implementado |
 
 Removidos em relação à primeira versão: cadastro público, vínculo médico-paciente por busca de
 email e o chat entre médico e paciente.
@@ -140,6 +141,10 @@ email e o chat entre médico e paciente.
 - "Próxima do prazo" = vence em até `DUE_SOON_DAYS` dias (padrão 3).
 - Os envios se chamam **documentos** e têm categoria: `exame`, `laudo`, `plano_alimentar`,
   `plano_treino`, `orientacao`, `outro` (as rotas são `/documents`).
+- Editar documento (`PATCH /documents/{id}`) muda só título e categoria; arquivo, autor e revisão ficam.
+  Para trocar o arquivo, exclui e envia de novo. Excluir (`DELETE /documents/{id}`) apaga o registro e o
+  arquivo em disco; se o documento atendia uma solicitação e nenhum outro a atende, ela volta a `pendente`.
+  Só em acompanhamento ativo (encerrado = 409). O parceiro recebe 404 para documentos de outras pessoas.
 - Toda solicitação tem um **destinatário**: o paciente do acompanhamento (padrão) ou um parceiro atribuído.
   A consulta extra só pode ser destinada ao paciente.
 - Enviar um documento vinculado a uma solicitação `exame` ou `orientacao_profissional` marca a
