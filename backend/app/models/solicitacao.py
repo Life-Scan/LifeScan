@@ -56,3 +56,8 @@ class Solicitacao(Base):
     def marcar_atendida(self) -> None:
         self.status = StatusSolicitacao.atendida
         self.atendida_em = agora_utc()
+
+    def reabrir(self) -> None:
+        """Volta a pendente, quando o documento que a atendia é excluído."""
+        self.status = StatusSolicitacao.pendente
+        self.atendida_em = None

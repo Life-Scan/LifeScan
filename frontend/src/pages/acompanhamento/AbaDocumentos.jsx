@@ -1,8 +1,9 @@
-import { FileText, Pencil, Upload } from 'lucide-react'
+import { FileText, Pencil, Trash2, Upload } from 'lucide-react'
 import { useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
-import { enviarDocumento, revisarDocumento } from '../../api/servicos'
+import { editarDocumento, enviarDocumento, excluirDocumento, revisarDocumento } from '../../api/servicos'
+import { useConfirmar } from '../../components/Confirmacao'
 import { Alerta, Anexo, CampoArquivo, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from '../../components/ui'
 import { cn } from '@/lib/utils'
 import {
@@ -120,6 +121,8 @@ export default function AbaDocumentos({
               documento={documento}
               solicitacao={solicitacoes.find((s) => s.id === documento.solicitacao_id)}
               podeRevisar={ehMedico && editavel}
+              // Espelha o backend (que é quem garante): o médico altera qualquer um; o parceiro, os próprios
+              podeAlterar={editavel && (ehMedico || (ehParceiro && documento.enviado_por.id === usuario.id))}
               atualizar={atualizar}
             />
           ))}
@@ -129,12 +132,36 @@ export default function AbaDocumentos({
   )
 }
 
-function ItemDocumento({ documento, solicitacao, podeRevisar, atualizar }) {
+function ItemDocumento({ documento, solicitacao, podeRevisar, podeAlterar, atualizar }) {
+  const confirmar = useConfirmar()
   const [revisando, setRevisando] = useState(false)
+  const [editando, setEditando] = useState(false)
   const [observacao, setObservacao] = useState(documento.observacao_revisao || '')
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
   const revisado = documento.status === 'revisado'
+
+  async function excluir() {
+    const confirmado = await confirmar({
+      titulo: 'Excluir este documento?',
+      // A lista de solicitações desta aba só traz as pendentes, então o vínculo vem do próprio documento
+      mensagem: documento.solicitacao_id
+        ? `"${documento.titulo}" e o arquivo serão apagados, e a solicitação que ele atendia volta a ficar pendente.`
+        : `"${documento.titulo}" e o arquivo serão apagados. Não dá para desfazer.`,
+      rotuloConfirmar: 'Excluir documento',
+      perigo: true,
+    })
+    if (!confirmado) return
+    setErro('')
+    setEnviando(true)
+    try {
+      await excluirDocumento(documento.id)
+      await atualizar()
+    } catch (erroExclusao) {
+      setErro(mensagemDeErro(erroExclusao))
+      setEnviando(false)
+    }
+  }
 
   async function salvarRevisao(evento) {
     evento.preventDefault()
@@ -176,13 +203,50 @@ function ItemDocumento({ documento, solicitacao, podeRevisar, atualizar }) {
         </div>
       )}
 
-      {podeRevisar && !revisando && (
-        <div className={estilos.acoesItem}>
-          <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={() => setRevisando(true)}>
-            <Pencil size={14} aria-hidden="true" />
-            {revisado ? 'Editar revisão' : 'Revisar documento'}
-          </button>
+      {(podeRevisar || podeAlterar) && !revisando && !editando && (
+        <div className={cn(estilos.acoesItem, ui.acoes)}>
+          {podeRevisar && (
+            <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={() => setRevisando(true)}>
+              <Pencil size={14} aria-hidden="true" />
+              {revisado ? 'Editar revisão' : 'Revisar documento'}
+            </button>
+          )}
+          {podeAlterar && (
+            <>
+              <button
+                type="button"
+                className={cn(ui.botaoSecundario, ui.botaoPequeno)}
+                onClick={() => setEditando(true)}
+                disabled={enviando}
+              >
+                <Pencil size={14} aria-hidden="true" />
+                Editar
+              </button>
+              <button
+                type="button"
+                className={cn(ui.botaoPerigo, ui.botaoPequeno)}
+                onClick={excluir}
+                disabled={enviando}
+              >
+                <Trash2 size={14} aria-hidden="true" />
+                {enviando ? 'Excluindo…' : 'Excluir'}
+              </button>
+            </>
+          )}
         </div>
+      )}
+
+      {!editando && !revisando && <Alerta tipo="erro">{erro}</Alerta>}
+
+      {editando && (
+        <FormularioEdicao
+          documento={documento}
+          aoConcluir={async () => {
+            setEditando(false)
+            await atualizar()
+          }}
+          aoCancelar={() => setEditando(false)}
+        />
       )}
 
       {revisando && (
@@ -213,6 +277,69 @@ function ItemDocumento({ documento, solicitacao, podeRevisar, atualizar }) {
         </form>
       )}
     </li>
+  )
+}
+
+/** Edição básica no próprio item: título e categoria. O arquivo não muda (para trocar, exclua e envie). */
+function FormularioEdicao({ documento, aoConcluir, aoCancelar }) {
+  const [titulo, setTitulo] = useState(documento.titulo)
+  const [categoria, setCategoria] = useState(documento.categoria)
+  const [erro, setErro] = useState('')
+  const [salvando, setSalvando] = useState(false)
+
+  async function salvar(evento) {
+    evento.preventDefault()
+    setErro('')
+    setSalvando(true)
+    try {
+      await editarDocumento(documento.id, { titulo, categoria })
+      await aoConcluir()
+    } catch (erroEdicao) {
+      setErro(mensagemDeErro(erroEdicao))
+      setSalvando(false)
+    }
+  }
+
+  return (
+    <form className={`${ui.formulario} ${estilos.acoesItem}`} onSubmit={salvar}>
+      <div className={ui.linhaCampos}>
+        <div>
+          <label htmlFor={`edicao-titulo-${documento.id}`}>Título</label>
+          <input
+            id={`edicao-titulo-${documento.id}`}
+            value={titulo}
+            onChange={(e) => setTitulo(e.target.value)}
+            required
+            minLength={3}
+            maxLength={150}
+          />
+        </div>
+        <div>
+          <label htmlFor={`edicao-categoria-${documento.id}`}>Categoria</label>
+          <select
+            id={`edicao-categoria-${documento.id}`}
+            value={categoria}
+            onChange={(e) => setCategoria(e.target.value)}
+          >
+            {Object.entries(ROTULOS_CATEGORIA).map(([valor, rotulo]) => (
+              <option key={valor} value={valor}>
+                {rotulo}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <p className={ui.ajuda}>Para trocar o arquivo, exclua este documento e envie o novo.</p>
+      <Alerta tipo="erro">{erro}</Alerta>
+      <div className={ui.acoes}>
+        <button type="submit" className={cn(ui.botao, ui.botaoPequeno)} disabled={salvando}>
+          {salvando ? 'Salvando…' : 'Salvar'}
+        </button>
+        <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={aoCancelar} disabled={salvando}>
+          Cancelar
+        </button>
+      </div>
+    </form>
   )
 }
 

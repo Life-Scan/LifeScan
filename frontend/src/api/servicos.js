@@ -75,6 +75,9 @@ export function verificarQualidade(arquivo) {
 }
 export const revisarDocumento = (id, observacao) =>
   dados(api.patch(`/documents/${id}/review`, { observacao_revisao: observacao }))
+/** Só título e categoria; trocar o arquivo é excluir e enviar de novo. */
+export const editarDocumento = (id, { titulo, categoria }) => dados(api.patch(`/documents/${id}`, { titulo, categoria }))
+export const excluirDocumento = (id) => dados(api.delete(`/documents/${id}`))
 
 // Agenda de consultas (médico e colaboradores; o paciente só lista as próprias)
 export const listarAgendamentos = (parametros) => dados(api.get('/appointments', { params: parametros }))
