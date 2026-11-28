@@ -118,6 +118,15 @@ export const estilos = {
   dialogoConteudo: 'grid gap-[0.6rem] p-[1.4rem]',
   dialogoMensagem: 'text-texto-suave',
   dialogoAcoes: 'flex justify-end gap-2 flex-wrap mt-3',
+  // Modal de formulário (components/Modal.jsx): a largura vem do Modal; cabeçalho fixo e corpo com rolagem
+  modal: 'max-h-[calc(100dvh-2rem)] flex-col open:flex',
+  modalCabecalho: 'flex items-start justify-between gap-3 border-b border-borda px-[1.4rem] pt-[1.1rem] pb-[0.9rem]',
+  modalTitulo: 'm-0 text-[1.1rem] font-bold leading-[1.3]',
+  modalCorpo: 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-[1.4rem] pt-4 pb-[1.4rem]',
+  modalFechar:
+    'inline-flex size-9 shrink-0 items-center justify-center rounded-raio-pequeno border-0 bg-transparent text-texto-suave ' +
+    'cursor-pointer transition-[background-color,color] duration-150 hover:bg-superficie-suave hover:text-texto ' +
+    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria',
 
   pessoa: 'flex items-center gap-3 min-w-0 flex-1 [&>div]:min-w-0',
   pessoaNome: 'flex items-center gap-2 flex-wrap font-semibold',

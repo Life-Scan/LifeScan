@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
 import { acessosAnamnese, corrigirDadosBasicosAnamnese, exportarAnamnese, salvarAnamnese } from '../../api/servicos'
+import Modal from '../../components/Modal'
 import { Alerta, EstadoVazio, estilos as ui } from '../../components/ui'
 import { useAgora } from '../../hooks/useAgora'
 import { baixarBlob } from '../../utils/arquivos'
@@ -36,13 +37,13 @@ export default function AbaAnamnese({ anamnese, acompanhamento, ehMedico, ehParc
           <h2>Anamnese de {anamnese.paciente.nome}</h2>
           {anamnese.atualizado_em && <p className={ui.ajuda}>Atualizada em {formatarDataHora(anamnese.atualizado_em)}</p>}
         </div>
-        {ehMedico && !editando && (
+        {ehMedico && (
           <button type="button" className={ui.botao} onClick={() => setEditando('completo')}>
             <Pencil size={15} aria-hidden="true" />
             {anamnese.preenchida ? 'Editar anamnese' : 'Preencher anamnese'}
           </button>
         )}
-        {!ehMedico && !ehParceiro && !editando && (
+        {!ehMedico && !ehParceiro && (
           <button type="button" className={ui.botaoSecundario} onClick={() => setEditando('basicos')}>
             <Pencil size={15} aria-hidden="true" />
             Corrigir meus dados
@@ -53,7 +54,13 @@ export default function AbaAnamnese({ anamnese, acompanhamento, ehMedico, ehParc
         )}
       </div>
 
-      {editando === 'completo' && (
+      <Modal
+        aberto={editando === 'completo'}
+        aoFechar={() => setEditando(null)}
+        titulo={anamnese.preenchida ? 'Editar anamnese' : 'Preencher anamnese'}
+        descricao={anamnese.paciente.nome}
+        largura="grande"
+      >
         <FormularioAnamnese
           anamnese={anamnese}
           acompanhamentoId={acompanhamento.id}
@@ -63,8 +70,8 @@ export default function AbaAnamnese({ anamnese, acompanhamento, ehMedico, ehParc
           }}
           aoCancelar={() => setEditando(null)}
         />
-      )}
-      {editando === 'basicos' && (
+      </Modal>
+      <Modal aberto={editando === 'basicos'} aoFechar={() => setEditando(null)} titulo="Corrigir meus dados">
         <FormularioDadosBasicos
           anamnese={anamnese}
           acompanhamentoId={acompanhamento.id}
@@ -74,8 +81,8 @@ export default function AbaAnamnese({ anamnese, acompanhamento, ehMedico, ehParc
           }}
           aoCancelar={() => setEditando(null)}
         />
-      )}
-      {!editando && (anamnese.preenchida ? <VisualizacaoAnamnese anamnese={anamnese} ehParceiro={ehParceiro} /> : (
+      </Modal>
+      {(anamnese.preenchida ? <VisualizacaoAnamnese anamnese={anamnese} ehParceiro={ehParceiro} /> : (
         <EstadoVazio icone={NotebookPen} titulo="Anamnese ainda não preenchida">
           {ehMedico
             ? 'Ela resume o paciente para você e para os parceiros atribuídos.'
@@ -83,7 +90,7 @@ export default function AbaAnamnese({ anamnese, acompanhamento, ehMedico, ehParc
         </EstadoVazio>
       ))}
 
-      {ehMedico && !editando && (
+      {ehMedico && (
         <p className={ui.ajuda}>
           Os parceiros atribuídos a este acompanhamento veem esta anamnese, mas não veem consultas, prescrições nem exames.
         </p>
@@ -200,7 +207,7 @@ function FormularioDadosBasicos({ anamnese, acompanhamentoId, aoConcluir, aoCanc
   }
 
   return (
-    <form className={`${ui.formulario} ${estilos.formularioDestaque}`} onSubmit={aoEnviar}>
+    <form className={ui.formulario} onSubmit={aoEnviar}>
       <Alerta tipo="erro">{erro}</Alerta>
       <p className={ui.ajuda}>
         Você corrige aqui nascimento, sexo, altura e peso. Diagnósticos e tratamento continuam sob
@@ -315,7 +322,7 @@ function FormularioAnamnese({ anamnese, acompanhamentoId, aoConcluir, aoCancelar
   }
 
   return (
-    <form className={`${ui.formulario} ${estilos.formularioDestaque}`} onSubmit={aoEnviar}>
+    <form className={ui.formulario} onSubmit={aoEnviar}>
       <Alerta tipo="erro">{erro}</Alerta>
       <div className={ui.linhaCampos}>
         <div>

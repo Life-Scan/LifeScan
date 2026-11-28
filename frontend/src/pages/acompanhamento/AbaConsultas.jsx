@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
 import { registrarConsulta } from '../../api/servicos'
+import Modal from '../../components/Modal'
 import { Alerta, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from '../../components/ui'
 import { cn } from '@/lib/utils'
 import {
@@ -27,7 +28,7 @@ export default function AbaConsultas({ consultas, acompanhamento, ehMedico, edit
           </IconeTipo>
           Consultas e retornos
         </h2>
-        {ehMedico && editavel && !formularioAberto && (
+        {ehMedico && editavel && (
           <button type="button" className={ui.botao} onClick={() => setFormularioAberto(true)}>
             <Plus size={16} aria-hidden="true" />
             Registrar consulta
@@ -35,7 +36,7 @@ export default function AbaConsultas({ consultas, acompanhamento, ehMedico, edit
         )}
       </div>
 
-      {formularioAberto && (
+      <Modal aberto={formularioAberto} aoFechar={() => setFormularioAberto(false)} titulo="Registrar consulta" largura="grande">
         <FormularioConsulta
           acompanhamentoId={acompanhamento.id}
           aoConcluir={async () => {
@@ -44,7 +45,7 @@ export default function AbaConsultas({ consultas, acompanhamento, ehMedico, edit
           }}
           aoCancelar={() => setFormularioAberto(false)}
         />
-      )}
+      </Modal>
 
       {consultas.length === 0 ? (
         <EstadoVazio icone={Stethoscope} titulo="Nenhuma consulta registrada">
@@ -119,8 +120,7 @@ function FormularioConsulta({ acompanhamentoId, aoConcluir, aoCancelar }) {
   }
 
   return (
-    <form className={`${ui.formulario} ${estilos.formularioDestaque}`} onSubmit={aoEnviar}>
-      <h3>Nova consulta</h3>
+    <form className={ui.formulario} onSubmit={aoEnviar}>
       <Alerta tipo="erro">{erro}</Alerta>
       <div className={ui.linhaCampos}>
         <div>

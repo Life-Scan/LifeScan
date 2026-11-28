@@ -40,6 +40,7 @@ import {
 } from '../utils/formatacao'
 import { estilos } from '../pages/estilosPaginas'
 import { useConfirmar } from './Confirmacao'
+import Modal from './Modal'
 import { agendaEstilos, classesCelulaDia } from './estilosAgenda'
 import Paginacao from './Paginacao'
 import { Alerta, Avatar, ErroCarregamento, EsqueletoLista, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from './ui'
@@ -704,21 +705,6 @@ function ItemAgendamento({ agendamento, aoAlterar }) {
     if (confirmado) mudarStatus('cancelada')
   }
 
-  if (editando) {
-    return (
-      <li className={ui.itemLista}>
-        <FormularioRemarcacao
-          agendamento={agendamento}
-          aoSalvar={async () => {
-            setEditando(false)
-            await aoAlterar()
-          }}
-          aoCancelar={() => setEditando(false)}
-        />
-      </li>
-    )
-  }
-
   return (
     <li className={ui.itemListaConsulta}>
       <div className={ui.linhaComAcoes}>
@@ -768,6 +754,22 @@ function ItemAgendamento({ agendamento, aoAlterar }) {
         )}
       </div>
       <Alerta tipo="erro">{erro}</Alerta>
+
+      <Modal
+        aberto={editando}
+        aoFechar={() => setEditando(false)}
+        titulo="Remarcar consulta"
+        descricao={`${paciente.nome} · marcada para ${formatarDataHora(agendamento.data_hora)}`}
+      >
+        <FormularioRemarcacao
+          agendamento={agendamento}
+          aoSalvar={async () => {
+            setEditando(false)
+            await aoAlterar()
+          }}
+          aoCancelar={() => setEditando(false)}
+        />
+      </Modal>
     </li>
   )
 }
@@ -794,7 +796,6 @@ function FormularioRemarcacao({ agendamento, aoSalvar, aoCancelar }) {
 
   return (
     <form className={ui.formulario} onSubmit={enviar} aria-label={`Remarcar a consulta de ${agendamento.paciente.nome}`}>
-      <h3>Remarcar a consulta de {agendamento.paciente.nome}</h3>
       <fieldset className={estilos.camposEdicao} disabled={salvando}>
         <legend className="visualmente-oculto">Nova data e observação</legend>
         <div className={ui.linhaCampos}>
@@ -823,7 +824,7 @@ function FormularioRemarcacao({ agendamento, aoSalvar, aoCancelar }) {
         <Alerta tipo="erro">{erro}</Alerta>
         <div className={ui.acoes}>
           <button type="submit" className={ui.botao}>{salvando ? 'Salvando…' : 'Salvar'}</button>
-          <button type="button" className={ui.botaoSecundario} onClick={aoCancelar}>Voltar</button>
+          <button type="button" className={ui.botaoSecundario} onClick={aoCancelar}>Cancelar</button>
         </div>
       </fieldset>
     </form>

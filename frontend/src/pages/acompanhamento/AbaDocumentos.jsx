@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { mensagemDeErro } from '../../api/cliente'
 import { editarDocumento, enviarDocumento, excluirDocumento, revisarDocumento } from '../../api/servicos'
 import { useConfirmar } from '../../components/Confirmacao'
+import Modal from '../../components/Modal'
 import { Alerta, Anexo, CampoArquivo, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from '../../components/ui'
 import { cn } from '@/lib/utils'
 import {
@@ -53,7 +54,7 @@ export default function AbaDocumentos({
           </IconeTipo>
           {ehParceiro ? 'Meus envios' : 'Documentos'}
         </h2>
-        {editavel && !formularioAberto && (
+        {editavel && (
           <button type="button" className={ui.botao} onClick={() => setFormularioAberto(true)}>
             <Upload size={16} aria-hidden="true" />
             Enviar documento
@@ -61,7 +62,7 @@ export default function AbaDocumentos({
         )}
       </div>
 
-      {formularioAberto && (
+      <Modal aberto={formularioAberto} aoFechar={() => setFormularioAberto(false)} titulo="Enviar documento">
         <FormularioDocumento
           acompanhamentoId={acompanhamento.id}
           solicitacoes={atendiveis}
@@ -74,7 +75,7 @@ export default function AbaDocumentos({
           }}
           aoCancelar={() => setFormularioAberto(false)}
         />
-      )}
+      </Modal>
 
       {(
         <div className={estilos.filtros} role="group" aria-label="Filtrar por categoria">
@@ -136,7 +137,6 @@ function ItemDocumento({ documento, solicitacao, podeRevisar, podeAlterar, atual
   const confirmar = useConfirmar()
   const [revisando, setRevisando] = useState(false)
   const [editando, setEditando] = useState(false)
-  const [observacao, setObservacao] = useState(documento.observacao_revisao || '')
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
   const revisado = documento.status === 'revisado'
@@ -163,21 +163,6 @@ function ItemDocumento({ documento, solicitacao, podeRevisar, podeAlterar, atual
     }
   }
 
-  async function salvarRevisao(evento) {
-    evento.preventDefault()
-    setErro('')
-    setEnviando(true)
-    try {
-      await revisarDocumento(documento.id, observacao.trim() || null)
-      setRevisando(false)
-      await atualizar()
-    } catch (erroRevisao) {
-      setErro(mensagemDeErro(erroRevisao))
-    } finally {
-      setEnviando(false)
-    }
-  }
-
   return (
     <li className={ui.itemListaDocumento}>
       <div className={ui.cabecalhoItem}>
@@ -196,14 +181,14 @@ function ItemDocumento({ documento, solicitacao, podeRevisar, podeAlterar, atual
         <Anexo arquivo={documento.arquivo} />
       </div>
 
-      {revisado && !revisando && (
+      {revisado && (
         <div className={estilos.revisao}>
           <strong>Revisão do médico</strong> <span className={ui.suave}>({formatarData(documento.revisado_em)})</span>
           <p className={estilos.texto}>{documento.observacao_revisao || 'Revisado sem observações.'}</p>
         </div>
       )}
 
-      {(podeRevisar || podeAlterar) && !revisando && !editando && (
+      {(podeRevisar || podeAlterar) && (
         <div className={cn(estilos.acoesItem, ui.acoes)}>
           {podeRevisar && (
             <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={() => setRevisando(true)}>
@@ -236,9 +221,9 @@ function ItemDocumento({ documento, solicitacao, podeRevisar, podeAlterar, atual
         </div>
       )}
 
-      {!editando && !revisando && <Alerta tipo="erro">{erro}</Alerta>}
+      <Alerta tipo="erro">{erro}</Alerta>
 
-      {editando && (
+      <Modal aberto={editando} aoFechar={() => setEditando(false)} titulo="Editar documento" descricao={documento.titulo}>
         <FormularioEdicao
           documento={documento}
           aoConcluir={async () => {
@@ -247,40 +232,70 @@ function ItemDocumento({ documento, solicitacao, podeRevisar, podeAlterar, atual
           }}
           aoCancelar={() => setEditando(false)}
         />
-      )}
+      </Modal>
 
-      {revisando && (
-        <form className={`${ui.formulario} ${estilos.acoesItem}`} onSubmit={salvarRevisao}>
-          <div>
-            <label htmlFor={`revisao-${documento.id}`}>Observação da revisão</label>
-            <textarea
-              id={`revisao-${documento.id}`}
-              value={observacao}
-              onChange={(e) => setObservacao(e.target.value)}
-              placeholder="Ex.: Valores dentro da normalidade."
-            />
-          </div>
-          <Alerta tipo="erro">{erro}</Alerta>
-          <div className={ui.acoes}>
-            <button type="submit" className={cn(ui.botao, ui.botaoPequeno)} disabled={enviando}>
-              {enviando ? 'Salvando…' : 'Marcar como revisado'}
-            </button>
-            <button
-              type="button"
-              className={cn(ui.botaoSecundario, ui.botaoPequeno)}
-              onClick={() => setRevisando(false)}
-              disabled={enviando}
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      )}
+      <Modal
+        aberto={revisando}
+        aoFechar={() => setRevisando(false)}
+        titulo={revisado ? 'Editar revisão' : 'Revisar documento'}
+        descricao={documento.titulo}
+      >
+        <FormularioRevisao
+          documento={documento}
+          aoConcluir={async () => {
+            setRevisando(false)
+            await atualizar()
+          }}
+          aoCancelar={() => setRevisando(false)}
+        />
+      </Modal>
     </li>
   )
 }
 
-/** Edição básica no próprio item: título e categoria. O arquivo não muda (para trocar, exclua e envie). */
+function FormularioRevisao({ documento, aoConcluir, aoCancelar }) {
+  const [observacao, setObservacao] = useState(documento.observacao_revisao || '')
+  const [erro, setErro] = useState('')
+  const [salvando, setSalvando] = useState(false)
+
+  async function salvar(evento) {
+    evento.preventDefault()
+    setErro('')
+    setSalvando(true)
+    try {
+      await revisarDocumento(documento.id, observacao.trim() || null)
+      await aoConcluir()
+    } catch (erroRevisao) {
+      setErro(mensagemDeErro(erroRevisao))
+      setSalvando(false)
+    }
+  }
+
+  return (
+    <form className={ui.formulario} onSubmit={salvar}>
+      <div>
+        <label htmlFor={`revisao-${documento.id}`}>Observação da revisão</label>
+        <textarea
+          id={`revisao-${documento.id}`}
+          value={observacao}
+          onChange={(e) => setObservacao(e.target.value)}
+          placeholder="Ex.: Valores dentro da normalidade."
+        />
+      </div>
+      <Alerta tipo="erro">{erro}</Alerta>
+      <div className={ui.acoes}>
+        <button type="submit" className={ui.botao} disabled={salvando}>
+          {salvando ? 'Salvando…' : 'Marcar como revisado'}
+        </button>
+        <button type="button" className={ui.botaoSecundario} onClick={aoCancelar} disabled={salvando}>
+          Cancelar
+        </button>
+      </div>
+    </form>
+  )
+}
+
+/** Edição básica: título e categoria. O arquivo não muda (para trocar, exclua e envie). */
 function FormularioEdicao({ documento, aoConcluir, aoCancelar }) {
   const [titulo, setTitulo] = useState(documento.titulo)
   const [categoria, setCategoria] = useState(documento.categoria)
@@ -301,7 +316,7 @@ function FormularioEdicao({ documento, aoConcluir, aoCancelar }) {
   }
 
   return (
-    <form className={`${ui.formulario} ${estilos.acoesItem}`} onSubmit={salvar}>
+    <form className={ui.formulario} onSubmit={salvar}>
       <div className={ui.linhaCampos}>
         <div>
           <label htmlFor={`edicao-titulo-${documento.id}`}>Título</label>
@@ -332,10 +347,10 @@ function FormularioEdicao({ documento, aoConcluir, aoCancelar }) {
       <p className={ui.ajuda}>Para trocar o arquivo, exclua este documento e envie o novo.</p>
       <Alerta tipo="erro">{erro}</Alerta>
       <div className={ui.acoes}>
-        <button type="submit" className={cn(ui.botao, ui.botaoPequeno)} disabled={salvando}>
+        <button type="submit" className={ui.botao} disabled={salvando}>
           {salvando ? 'Salvando…' : 'Salvar'}
         </button>
-        <button type="button" className={cn(ui.botaoSecundario, ui.botaoPequeno)} onClick={aoCancelar} disabled={salvando}>
+        <button type="button" className={ui.botaoSecundario} onClick={aoCancelar} disabled={salvando}>
           Cancelar
         </button>
       </div>
@@ -378,8 +393,7 @@ function FormularioDocumento({
   }
 
   return (
-    <form className={`${ui.formulario} ${estilos.formularioDestaque}`} onSubmit={aoEnviar}>
-      <h3>Enviar documento</h3>
+    <form className={ui.formulario} onSubmit={aoEnviar}>
       <Alerta tipo="erro">{erro}</Alerta>
       <div className={ui.linhaCampos}>
         <div>
