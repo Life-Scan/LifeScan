@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
 import { acessosAnamnese, corrigirDadosBasicosAnamnese, exportarAnamnese, salvarAnamnese } from '../../api/servicos'
+import { CampoData } from '../../components/CamposMascarados'
 import Modal from '../../components/Modal'
 import { Alerta, EstadoVazio, estilos as ui } from '../../components/ui'
 import { useAgora } from '../../hooks/useAgora'
@@ -216,12 +217,11 @@ function FormularioDadosBasicos({ anamnese, acompanhamentoId, aoConcluir, aoCanc
       <div className={ui.linhaCampos}>
         <div>
           <label htmlFor="dados-nascimento">Data de nascimento</label>
-          <input
+          <CampoData
             id="dados-nascimento"
-            type="date"
             value={formulario.data_nascimento}
             max={hoje}
-            onChange={alterar('data_nascimento')}
+            onChange={(valor) => setFormulario((atual) => ({ ...atual, data_nascimento: valor }))}
           />
         </div>
         <div>
@@ -327,12 +327,11 @@ function FormularioAnamnese({ anamnese, acompanhamentoId, aoConcluir, aoCancelar
       <div className={ui.linhaCampos}>
         <div>
           <label htmlFor="anamnese-nascimento">Data de nascimento</label>
-          <input
+          <CampoData
             id="anamnese-nascimento"
-            type="date"
             value={formulario.data_nascimento}
             max={hoje}
-            onChange={alterar('data_nascimento')}
+            onChange={(valor) => setFormulario((atual) => ({ ...atual, data_nascimento: valor }))}
           />
         </div>
         <div>

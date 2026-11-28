@@ -6,6 +6,7 @@ import { mensagemDeErro } from '../api/cliente'
 import { atualizarConta, excluirPaciente, obterPagina, reenviarAcesso } from '../api/servicos'
 import Paginacao from '../components/Paginacao'
 import { useConfirmar } from '../components/Confirmacao'
+import { CampoEmail } from '../components/CamposMascarados'
 import Modal from '../components/Modal'
 import { Alerta, Avatar, ErroCarregamento, EsqueletoLista, EstadoVazio, Etiqueta, Faixa, estilos as ui } from '../components/ui'
 import { cn } from '@/lib/utils'
@@ -361,7 +362,7 @@ function FormularioEdicaoConta({ conta, aoSalvar, aoCancelar }) {
           </div>
           <div>
             <label htmlFor={`editar-email-${conta.id}`}>Email</label>
-            <input id={`editar-email-${conta.id}`} type="email" value={email} onChange={(evento) => setEmail(evento.target.value)} required maxLength={255} aria-describedby={`ajuda-email-${conta.id}`} />
+            <CampoEmail id={`editar-email-${conta.id}`} placeholder="voce@exemplo.com" value={email} onChange={setEmail} required maxLength={255} aria-describedby={`ajuda-email-${conta.id}`} />
           </div>
           {ehParceiro && (
             <div>

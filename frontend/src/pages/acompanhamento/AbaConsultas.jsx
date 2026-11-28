@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { mensagemDeErro } from '../../api/cliente'
 import { registrarConsulta } from '../../api/servicos'
+import { CampoDataHora } from '../../components/CamposMascarados'
 import Modal from '../../components/Modal'
 import { Alerta, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from '../../components/ui'
 import { cn } from '@/lib/utils'
@@ -132,7 +133,7 @@ function FormularioConsulta({ acompanhamentoId, aoConcluir, aoCancelar }) {
         </div>
         <div>
           <label htmlFor="consulta-data">Data e hora</label>
-          <input id="consulta-data" type="datetime-local" value={data} onChange={(e) => setData(e.target.value)} required />
+          <CampoDataHora id="consulta-data" value={data} onChange={setData} required />
         </div>
       </div>
       <div>

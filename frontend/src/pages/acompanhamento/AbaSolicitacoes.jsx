@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { mensagemDeErro } from '../../api/cliente'
 import { cancelarSolicitacao, concluirSolicitacao, criarSolicitacao } from '../../api/servicos'
 import { useConfirmar } from '../../components/Confirmacao'
+import { CampoDataHora } from '../../components/CamposMascarados'
 import Modal from '../../components/Modal'
 import { Alerta, EstadoVazio, Etiqueta, IconeTipo, estilos as ui } from '../../components/ui'
 import { cn } from '@/lib/utils'
@@ -255,12 +256,11 @@ function FormularioSolicitacao({ acompanhamento, parceiros, aoConcluir, aoCancel
         </div>
         <div>
           <label htmlFor="solicitacao-prazo">{tipo === 'consulta_extra' ? 'Data da consulta' : 'Prazo'}</label>
-          <input
+          <CampoDataHora
             id="solicitacao-prazo"
-            type="datetime-local"
             value={prazo}
             min={paraCampoDataHora(agora)}
-            onChange={(e) => setPrazo(e.target.value)}
+            onChange={setPrazo}
             required
           />
         </div>

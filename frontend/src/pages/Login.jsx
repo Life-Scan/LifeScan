@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
+import { CampoEmail } from '../components/CamposMascarados'
 import { Alerta } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 
@@ -112,13 +113,12 @@ export default function Login() {
               <Alerta tipo="erro">{erro}</Alerta>
               <div>
                 <label htmlFor="email" className={ROTULO}>Email</label>
-                <input
+                <CampoEmail
                   id="email"
-                  type="email"
                   autoComplete="email"
                   placeholder="voce@exemplo.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={setEmail}
                   required
                   autoFocus
                   className={`${CAMPO} pr-[15px]`}

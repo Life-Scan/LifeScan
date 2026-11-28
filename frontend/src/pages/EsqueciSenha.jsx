@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { mensagemDeErro } from '../api/cliente'
 import { esqueciSenha } from '../api/servicos'
+import { CampoEmail } from '../components/CamposMascarados'
 import TelaAcesso from '../components/TelaAcesso'
 import { Alerta, estilos as ui } from '../components/ui'
 
@@ -48,12 +49,12 @@ export default function EsqueciSenha() {
           <Alerta tipo="erro">{erro}</Alerta>
           <div>
             <label htmlFor="email">Email da sua conta</label>
-            <input
+            <CampoEmail
               id="email"
-              type="email"
               autoComplete="email"
+              placeholder="voce@exemplo.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={setEmail}
               required
               autoFocus
             />

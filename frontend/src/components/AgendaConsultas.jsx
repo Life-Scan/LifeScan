@@ -15,6 +15,7 @@ import {
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 
 import { mensagemDeErro } from '../api/cliente'
+import { CampoDataHora } from './CamposMascarados'
 import {
   agendarConsulta,
   alterarStatusAgendamento,
@@ -627,12 +628,11 @@ function FormularioAgendamento({ aoAgendar, dataPredefinida }) {
           </div>
           <div>
             <label htmlFor="agenda-data">Data e hora</label>
-            <input
+            <CampoDataHora
               id="agenda-data"
-              type="datetime-local"
               value={dataHora}
               min={paraCampoDataHora(agora)}
-              onChange={(evento) => setDataHora(evento.target.value)}
+              onChange={setDataHora}
               required
             />
           </div>
@@ -801,12 +801,11 @@ function FormularioRemarcacao({ agendamento, aoSalvar, aoCancelar }) {
         <div className={ui.linhaCampos}>
           <div>
             <label htmlFor={`remarcar-data-${agendamento.id}`}>Nova data e hora</label>
-            <input
+            <CampoDataHora
               id={`remarcar-data-${agendamento.id}`}
-              type="datetime-local"
               value={dataHora}
               min={paraCampoDataHora(agora)}
-              onChange={(evento) => setDataHora(evento.target.value)}
+              onChange={setDataHora}
               required
               autoFocus
             />

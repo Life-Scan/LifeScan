@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { mensagemDeErro } from '../api/cliente'
 import { criarConta } from '../api/servicos'
 import { TIPOS_CONTA } from '../utils/formatacao'
+import { CampoEmail } from './CamposMascarados'
 import { Alerta, estilos as ui } from './ui'
 import { estilos } from '../pages/estilosPaginas'
 
@@ -76,7 +77,13 @@ export default function FormularioConta({ aoCriar }) {
           </div>
           <div>
             <label htmlFor="conta-email">Email</label>
-            <input id="conta-email" type="email" value={formulario.email} onChange={alterar('email')} required />
+            <CampoEmail
+              id="conta-email"
+              placeholder="voce@exemplo.com"
+              value={formulario.email}
+              onChange={(valor) => setFormulario((atual) => ({ ...atual, email: valor }))}
+              required
+            />
           </div>
           {ehParceiro && (
             <div>
